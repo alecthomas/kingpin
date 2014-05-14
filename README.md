@@ -1,4 +1,4 @@
-# Kingpin - A Go (golang) command line and flag parser
+# Kingpin - A Go (golang) command line and flag parser [![Build Status](https://travis-ci.org/alecthomas/kingpin.png)](https://travis-ci.org/alecthomas/kingpin)
 
 ## Features
 
