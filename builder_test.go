@@ -78,3 +78,18 @@ func TestDispatchCallbackIsCalled(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, dispatched)
 }
+
+func TestTopLevelArgWorks(t *testing.T) {
+	c := New("test", "test")
+	s := c.Arg("arg", "help").String()
+	_, err := c.Parse([]string{"foo"})
+	assert.NoError(t, err)
+	assert.Equal(t, "foo", *s)
+}
+
+func TestTopLevelArgCantBeUsedWithCommands(t *testing.T) {
+	c := New("test", "test")
+	c.Arg("arg", "help").String()
+	c.Command("cmd", "help")
+	assert.Panics(t, func() { c.Parse([]string{}) })
+}

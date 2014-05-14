@@ -1,0 +1,192 @@
+package kingpin
+
+import (
+	"fmt"
+	"strings"
+)
+
+type flagGroup struct {
+	short map[string]*FlagClause
+	long  map[string]*FlagClause
+}
+
+func newFlagGroup() flagGroup {
+	return flagGroup{
+		short: make(map[string]*FlagClause),
+		long:  make(map[string]*FlagClause),
+	}
+}
+
+// Flag defines a new flag with the given long name and help.
+func (f *flagGroup) Flag(name, help string) *FlagClause {
+	flag := newFlag(name, help)
+	f.long[name] = flag
+	return flag
+}
+
+func (f *flagGroup) init() {
+	for _, flag := range f.long {
+		flag.init()
+		if flag.Shorthand != 0 {
+			f.short[string(flag.Shorthand)] = flag
+		}
+	}
+}
+
+func (f *flagGroup) parse(tokens Tokens) (Tokens, error) {
+	remaining := make(map[string]struct{})
+	for k, flag := range f.long {
+		if flag.required {
+			remaining[k] = struct{}{}
+		}
+	}
+
+	var token *Token
+
+loop:
+	for {
+		token, tokens = tokens.Next()
+		switch token.Type {
+		case TokenEOF:
+			break loop
+
+		case TokenLong, TokenShort:
+			flagToken := token
+			DefValue := ""
+			var flag *FlagClause
+			var ok bool
+
+			if token.Type == TokenLong {
+				flag, ok = f.long[token.Value]
+				if !ok {
+					flag, ok = f.long["no-"+token.Value]
+					if !ok {
+						return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+					}
+					DefValue = "false"
+				}
+			} else {
+				flag, ok = f.short[token.Value]
+				if !ok {
+					return nil, fmt.Errorf("unknown short flag '%s", flagToken)
+				}
+			}
+
+			delete(remaining, flag.Name)
+
+			if !flag.boolean {
+				token, tokens = tokens.Next()
+				if token.Type != TokenArg {
+					return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
+				}
+				DefValue = token.Value
+			}
+
+			if err := flag.parser(DefValue); err != nil {
+				return nil, err
+			}
+
+			if flag.dispatch != nil {
+				if err := flag.dispatch(); err != nil {
+					return nil, err
+				}
+			}
+
+		default:
+			tokens = tokens.Return(token)
+			break loop
+		}
+	}
+
+	// Check that required flags were provided.
+	if len(remaining) == 1 {
+		for k := range remaining {
+			return nil, fmt.Errorf("required flag --%s not provided", k)
+		}
+	} else if len(remaining) > 1 {
+		flags := make([]string, 0, len(remaining))
+		for k := range remaining {
+			flags = append(flags, "--"+k)
+		}
+		return nil, fmt.Errorf("required flags %s not provided", strings.Join(flags, ", "))
+	}
+	return tokens, nil
+}
+
+// FlagClause is a fluid interface used to build flags.
+type FlagClause struct {
+	parserMixin
+	Name      string
+	Shorthand byte
+	Help      string
+	DefValue  string
+	metavar   string
+	boolean   bool
+	dispatch  Dispatch
+}
+
+func newFlag(name, help string) *FlagClause {
+	f := &FlagClause{
+		Name: name,
+		Help: help,
+	}
+	return f
+}
+
+func (f *FlagClause) formatMetaVar() string {
+	if f.metavar != "" {
+		return f.metavar
+	}
+	return strings.ToUpper(f.Name)
+}
+
+func (f *FlagClause) init() {
+	if f.parser == nil {
+		panic(fmt.Sprintf("no parser defined for --%s", f.Name))
+	}
+	if f.DefValue != "" {
+		if err := f.parser(f.DefValue); err != nil {
+			panic(fmt.Sprintf("default value for --%s is invalid: %s", f.Name, err))
+		}
+	}
+}
+
+// Dispatch to the given function when the flag is parsed.
+func (f *FlagClause) Dispatch(dispatch Dispatch) *FlagClause {
+	f.dispatch = dispatch
+	return f
+}
+
+// Default value for this flag.
+func (f *FlagClause) Default(value string) *FlagClause {
+	f.DefValue = value
+	return f
+}
+
+// MetaVar sets the placeholder string used for flag values in the help.
+func (f *FlagClause) MetaVar(metavar string) *FlagClause {
+	f.metavar = metavar
+	return f
+}
+
+// Required makes the flag required.
+func (f *FlagClause) Required() *FlagClause {
+	f.required = true
+	return f
+}
+
+// Short sets the short flag name.
+func (f *FlagClause) Short(name byte) *FlagClause {
+	f.Shorthand = name
+	return f
+}
+
+func (f *FlagClause) Bool() (target *bool) {
+	return BoolParser(f)
+}
+
+// SetIsBoolean tells the parser that this is a boolean flag. Typically only
+// used by Parser implementations.
+func (f *FlagClause) SetIsBoolean() {
+	f.boolean = true
+}

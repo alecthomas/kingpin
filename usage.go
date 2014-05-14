@@ -62,7 +62,7 @@ func (c *Commander) help(width int, w io.Writer) {
 	}
 	fmt.Fprintf(w, "usage: %s%s\n", strings.Join(s, " "), helpSummary)
 
-	c.Flags.help(2, width, w)
+	c.flagGroup.help(2, width, w)
 
 	if len(c.commands) > 0 {
 		fmt.Fprintf(w, "\nCommands:\n")
@@ -93,7 +93,7 @@ func (c *Commander) helpCommands(width int, w io.Writer) {
 	}
 }
 
-func (f *Flags) help(indent, width int, w io.Writer) {
+func (f *flagGroup) help(indent, width int, w io.Writer) {
 	if len(f.long) == 0 {
 		return
 	}
@@ -122,7 +122,7 @@ func (f *Flags) help(indent, width int, w io.Writer) {
 	}
 }
 
-func (f *Flags) gatherFlagSummary() (out []string) {
+func (f *flagGroup) gatherFlagSummary() (out []string) {
 	for _, flag := range f.long {
 		if flag.required {
 			if flag.boolean {
@@ -139,7 +139,7 @@ func (f *Flags) gatherFlagSummary() (out []string) {
 }
 
 func (c *CmdClause) help(width int, w io.Writer) {
-	c.Flags.help(2, width, w)
+	c.flagGroup.help(2, width, w)
 }
 
 func formatCommand(cmd *CmdClause) string {
