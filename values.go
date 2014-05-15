@@ -49,6 +49,10 @@ func newBoolValue(val bool, p *bool) *boolValue {
 }
 
 func (b *boolValue) Set(s string) error {
+	if s == "" {
+		*b = boolValue(false)
+		return nil
+	}
 	v, err := strconv.ParseBool(s)
 	*b = boolValue(v)
 	return err

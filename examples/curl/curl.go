@@ -25,17 +25,24 @@ var (
 	postURL        = post.Arg("url", "URL to POST to.").Required().URL()
 )
 
-// HTTPHeader cumulatively parses
+type HTTPHeaderValue http.Header
+
+func (h *HTTPHeaderValue) Set(value string) error {
+	parts := strings.SplitN(value, ":", 2)
+	if len(parts) != 2 {
+		return fmt.Errorf("expected HEADER:VALUE got '%s'", value)
+	}
+	(*http.Header)(h).Add(parts[0], parts[1])
+	return nil
+}
+
+func (h *HTTPHeaderValue) String() string {
+	return ""
+}
+
 func HTTPHeader(s kingpin.Settings) (target *http.Header) {
-	target = &http.Header{}
-	s.SetParser(func(value string) error {
-		parts := strings.SplitN(value, ":", 2)
-		if len(parts) != 2 {
-			return fmt.Errorf("expected HEADER:VALUE got '%s'", value)
-		}
-		target.Add(parts[0], parts[1])
-		return nil
-	})
+	target = new(http.Header)
+	s.SetValue((*HTTPHeaderValue)(target))
 	return
 }
 
@@ -66,8 +73,8 @@ func applyPOST() error {
 	if err != nil {
 		return err
 	}
-	if len(postData) > 0 {
-		for key, value := range postData {
+	if len(*postData) > 0 {
+		for key, value := range *postData {
 			req.Form.Set(key, value)
 		}
 	} else if postBinaryFile != nil {

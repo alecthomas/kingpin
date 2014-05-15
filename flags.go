@@ -34,6 +34,7 @@ func (f *flagGroup) init() {
 }
 
 func (f *flagGroup) parse(tokens tokens) (tokens, error) {
+	// Track how many required flags we've seen.
 	remaining := make(map[string]struct{})
 	for k, flag := range f.long {
 		if flag.required {
@@ -186,12 +187,7 @@ func (f *FlagClause) Short(name byte) *FlagClause {
 
 func (f *FlagClause) Bool() (target *bool) {
 	target = new(bool)
+	f.boolean = true
 	f.SetValue(newBoolValue(false, target))
 	return
-}
-
-// SetIsBoolean tells the parser that this is a boolean flag. Typically only
-// used by Parser implementations.
-func (f *FlagClause) SetIsBoolean() {
-	f.boolean = true
 }
