@@ -94,7 +94,7 @@ func (c *Commander) onCommandHelp() error {
 	return nil
 }
 
-func (c *Commander) parse(tokens Tokens) (command string, err error) {
+func (c *Commander) parse(tokens tokens) (command string, err error) {
 	tokens, err = c.flagGroup.parse(tokens)
 	if err != nil {
 		return "", err
@@ -154,7 +154,7 @@ func (c *CmdClause) init() {
 	c.argGroup.init()
 }
 
-func (c *CmdClause) parse(tokens Tokens) (Tokens, error) {
+func (c *CmdClause) parse(tokens tokens) (tokens, error) {
 	tokens, err := c.flagGroup.parse(tokens)
 	if err != nil {
 		return nil, err

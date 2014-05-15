@@ -33,7 +33,7 @@ func (f *flagGroup) init() {
 	}
 }
 
-func (f *flagGroup) parse(tokens Tokens) (Tokens, error) {
+func (f *flagGroup) parse(tokens tokens) (tokens, error) {
 	remaining := make(map[string]struct{})
 	for k, flag := range f.long {
 		if flag.required {
@@ -41,7 +41,7 @@ func (f *flagGroup) parse(tokens Tokens) (Tokens, error) {
 		}
 	}
 
-	var token *Token
+	var token *token
 
 loop:
 	for {
@@ -52,7 +52,7 @@ loop:
 
 		case TokenLong, TokenShort:
 			flagToken := token
-			DefValue := ""
+			defaultValue := ""
 			var flag *FlagClause
 			var ok bool
 
@@ -63,7 +63,7 @@ loop:
 					if !ok {
 						return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
 					}
-					DefValue = "false"
+					defaultValue = "false"
 				}
 			} else {
 				flag, ok = f.short[token.Value]
@@ -79,10 +79,10 @@ loop:
 				if token.Type != TokenArg {
 					return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
 				}
-				DefValue = token.Value
+				defaultValue = token.Value
 			}
 
-			if err := flag.parser(DefValue); err != nil {
+			if err := flag.value.Set(defaultValue); err != nil {
 				return nil, err
 			}
 
@@ -144,11 +144,11 @@ func (f *FlagClause) init() {
 	if f.required && f.DefValue != "" {
 		panic(fmt.Sprintf("required flag '%s' with unusable default value", f.name))
 	}
-	if f.parser == nil {
-		panic(fmt.Sprintf("no parser defined for --%s", f.name))
+	if f.value == nil {
+		panic(fmt.Sprintf("no value defined for --%s", f.name))
 	}
 	if f.DefValue != "" {
-		if err := f.parser(f.DefValue); err != nil {
+		if err := f.value.Set(f.DefValue); err != nil {
 			panic(fmt.Sprintf("default value for --%s is invalid: %s", f.name, err))
 		}
 	}
@@ -185,7 +185,9 @@ func (f *FlagClause) Short(name byte) *FlagClause {
 }
 
 func (f *FlagClause) Bool() (target *bool) {
-	return BoolParser(f)
+	target = new(bool)
+	f.SetValue(newBoolValue(false, target))
+	return
 }
 
 // SetIsBoolean tells the parser that this is a boolean flag. Typically only

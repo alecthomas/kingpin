@@ -16,7 +16,7 @@ func (a *argGroup) Arg(name, help string) *ArgClause {
 	return arg
 }
 
-func (a *argGroup) parse(tokens Tokens) (Tokens, error) {
+func (a *argGroup) parse(tokens tokens) (tokens, error) {
 	for _, arg := range a.args {
 		token := tokens.Peek()
 		if token.IsFlag() {
@@ -92,19 +92,19 @@ func (a *ArgClause) init() {
 	if a.required && a.DefValue != "" {
 		panic(fmt.Sprintf("required argument '%s' with unusable default value", a.name))
 	}
-	if a.parser == nil {
+	if a.value == nil {
 		panic(fmt.Sprintf("no parser defined for arg '%s'", a.name))
 	}
 	if a.DefValue != "" {
-		if err := a.parser(a.DefValue); err != nil {
+		if err := a.value.Set(a.DefValue); err != nil {
 			panic(fmt.Sprintf("invalid default value '%s' for argument '%s'", a.DefValue, a.name))
 		}
 	}
 }
 
-func (a *ArgClause) parse(tokens Tokens) (Tokens, error) {
+func (a *ArgClause) parse(tokens tokens) (tokens, error) {
 	if token, tokens := tokens.Next(); token.Type == TokenArg {
-		if err := a.parser(token.Value); err != nil {
+		if err := a.value.Set(token.Value); err != nil {
 			return nil, err
 		}
 		if a.dispatch != nil {
