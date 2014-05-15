@@ -97,19 +97,23 @@ func (f *flagGroup) writeHelp(indent, width int, w io.Writer) {
 		return
 	}
 
+	names := []string{}
 	fmt.Fprintf(w, "\nFlags:\n")
 	l := 0
 	for _, flag := range f.long {
 		if fl := len(formatFlag(flag)); fl > l {
 			l = fl
 		}
+		names = append(names, flag.name)
 	}
+	sort.Strings(names)
 
 	l += 3 + indent
 
 	indentStr := strings.Repeat(" ", l)
 
-	for _, flag := range f.long {
+	for _, name := range names {
+		flag := f.long[name]
 		prefix := fmt.Sprintf("  %-*s", l-2, formatFlag(flag))
 		buf := bytes.NewBuffer(nil)
 		doc.ToText(buf, flag.help, "", "", width-l)
