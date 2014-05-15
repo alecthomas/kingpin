@@ -117,13 +117,13 @@ loop:
 // FlagClause is a fluid interface used to build flags.
 type FlagClause struct {
 	parserMixin
-	name      string
-	Shorthand byte
-	help      string
-	DefValue  string
-	metavar   string
-	boolean   bool
-	dispatch  Dispatch
+	name         string
+	Shorthand    byte
+	help         string
+	defaultValue string
+	metavar      string
+	boolean      bool
+	dispatch     Dispatch
 }
 
 func newFlag(name, help string) *FlagClause {
@@ -136,20 +136,23 @@ func newFlag(name, help string) *FlagClause {
 
 func (f *FlagClause) formatMetaVar() string {
 	if f.metavar != "" {
+		if f.metavar == "%DEFAULT%" {
+			return f.defaultValue
+		}
 		return f.metavar
 	}
 	return strings.ToUpper(f.name)
 }
 
 func (f *FlagClause) init() {
-	if f.required && f.DefValue != "" {
+	if f.required && f.defaultValue != "" {
 		panic(fmt.Sprintf("required flag '%s' with unusable default value", f.name))
 	}
 	if f.value == nil {
 		panic(fmt.Sprintf("no value defined for --%s", f.name))
 	}
-	if f.DefValue != "" {
-		if err := f.value.Set(f.DefValue); err != nil {
+	if f.defaultValue != "" {
+		if err := f.value.Set(f.defaultValue); err != nil {
 			panic(fmt.Sprintf("default value for --%s is invalid: %s", f.name, err))
 		}
 	}
@@ -163,13 +166,21 @@ func (f *FlagClause) Dispatch(dispatch Dispatch) *FlagClause {
 
 // Default value for this flag.
 func (f *FlagClause) Default(value string) *FlagClause {
-	f.DefValue = value
+	f.defaultValue = value
 	return f
 }
 
-// MetaVar sets the placeholder string used for flag values in the help.
+// MetaVar sets the placeholder string used for flag values in the help. If
+// the magic string "%DEFAULT%" is used, the Default() value of the flag will
+// be used.
 func (f *FlagClause) MetaVar(metavar string) *FlagClause {
 	f.metavar = metavar
+	return f
+}
+
+// MetaVarFromDefault uses the default value for the flag as the MetaVar.
+func (f *FlagClause) MetaVarFromDefault() *FlagClause {
+	f.metavar = "%DEFAULT%"
 	return f
 }
 

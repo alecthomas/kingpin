@@ -65,30 +65,23 @@ func (c *Commander) writeHelp(width int, w io.Writer) {
 }
 
 func (c *Commander) helpCommands(width int, w io.Writer) {
-	l := 0
 	commands := []string{}
 	for _, cmd := range c.commands {
-		if cl := len(formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup, false)); cl > l {
-			l = cl
-		}
 		commands = append(commands, cmd.name)
 	}
 
 	sort.Strings(commands)
 
-	l += 5
-	indentStr := strings.Repeat(" ", l)
-
 	for _, name := range commands {
 		cmd := c.commands[name]
-		prefix := fmt.Sprintf("  %-*s", l-2, formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup, false))
+		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup, false))
 		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, cmd.help, "", "", width-l)
+		doc.ToText(buf, cmd.help, "", "", width-4)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
-		fmt.Fprintf(w, "%s%s\n", prefix, lines[0])
-		for _, line := range lines[1:] {
-			fmt.Fprintf(w, "%s%s\n", indentStr, line)
+		for _, line := range lines {
+			fmt.Fprintf(w, "    %s\n", line)
 		}
+		fmt.Fprintf(w, "\n")
 	}
 }
 

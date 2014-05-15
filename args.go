@@ -58,11 +58,11 @@ func (a *argGroup) init() {
 
 type ArgClause struct {
 	parserMixin
-	name     string
-	help     string
-	DefValue string
-	required bool
-	dispatch Dispatch
+	name         string
+	help         string
+	defaultValue string
+	required     bool
+	dispatch     Dispatch
 }
 
 func newArg(name, help string) *ArgClause {
@@ -79,7 +79,7 @@ func (a *ArgClause) Required() *ArgClause {
 }
 
 func (a *ArgClause) Default(value string) *ArgClause {
-	a.DefValue = value
+	a.defaultValue = value
 	return a
 }
 
@@ -89,15 +89,15 @@ func (a *ArgClause) Dispatch(dispatch Dispatch) *ArgClause {
 }
 
 func (a *ArgClause) init() {
-	if a.required && a.DefValue != "" {
+	if a.required && a.defaultValue != "" {
 		panic(fmt.Sprintf("required argument '%s' with unusable default value", a.name))
 	}
 	if a.value == nil {
 		panic(fmt.Sprintf("no parser defined for arg '%s'", a.name))
 	}
-	if a.DefValue != "" {
-		if err := a.value.Set(a.DefValue); err != nil {
-			panic(fmt.Sprintf("invalid default value '%s' for argument '%s'", a.DefValue, a.name))
+	if a.defaultValue != "" {
+		if err := a.value.Set(a.defaultValue); err != nil {
+			panic(fmt.Sprintf("invalid default value '%s' for argument '%s'", a.defaultValue, a.name))
 		}
 	}
 }
