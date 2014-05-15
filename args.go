@@ -6,8 +6,8 @@ type argGroup struct {
 	args []*ArgClause
 }
 
-func newArgGroup() argGroup {
-	return argGroup{}
+func newArgGroup() *argGroup {
+	return &argGroup{}
 }
 
 func (a *argGroup) Arg(name, help string) *ArgClause {
@@ -89,6 +89,9 @@ func (a *ArgClause) Dispatch(dispatch Dispatch) *ArgClause {
 }
 
 func (a *ArgClause) init() {
+	if a.required && a.DefValue != "" {
+		panic(fmt.Sprintf("required argument '%s' with unusable default value", a.name))
+	}
 	if a.parser == nil {
 		panic(fmt.Sprintf("no parser defined for arg '%s'", a.name))
 	}

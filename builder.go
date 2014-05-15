@@ -35,10 +35,10 @@ import (
 type Dispatch func() error
 
 type Commander struct {
-	flagGroup
-	argGroup
-	Name        string
-	Help        string
+	*flagGroup
+	*argGroup
+	name        string
+	help        string
 	commands    map[string]*CmdClause
 	commandHelp *string
 }
@@ -46,8 +46,9 @@ type Commander struct {
 func New(name, help string) *Commander {
 	c := &Commander{
 		flagGroup: newFlagGroup(),
-		Name:      name,
-		Help:      help,
+		argGroup:  newArgGroup(),
+		name:      name,
+		help:      help,
 		commands:  make(map[string]*CmdClause),
 	}
 	c.Flag("help", "Show help.").Dispatch(c.onFlagHelp).Bool()
@@ -81,6 +82,7 @@ func (c *Commander) init() {
 		c.commandHelp = cmd.Arg("command", "Command name.").Required().Dispatch(c.onCommandHelp).String()
 	}
 	c.flagGroup.init()
+	c.argGroup.init()
 	for _, cmd := range c.commands {
 		cmd.init()
 	}
@@ -115,7 +117,7 @@ func (c *Commander) parse(tokens Tokens) (command string, err error) {
 			if err != nil {
 				return "", err
 			}
-			return cmd.Name, nil
+			return cmd.name, nil
 
 		case TokenEOF:
 		default:
@@ -126,18 +128,19 @@ func (c *Commander) parse(tokens Tokens) (command string, err error) {
 }
 
 type CmdClause struct {
-	flagGroup
-	argGroup
-	Name     string
-	Help     string
+	*flagGroup
+	*argGroup
+	name     string
+	help     string
 	dispatch Dispatch
 }
 
 func newCommand(name, help string) *CmdClause {
 	return &CmdClause{
 		flagGroup: newFlagGroup(),
-		Name:      name,
-		Help:      help,
+		argGroup:  newArgGroup(),
+		name:      name,
+		help:      help,
 	}
 }
 
@@ -156,7 +159,9 @@ func (c *CmdClause) parse(tokens Tokens) (Tokens, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	if tokens, err = c.argGroup.parse(tokens); err != nil {
+		return nil, err
+	}
 	if c.dispatch != nil {
 		return tokens, c.dispatch()
 	}

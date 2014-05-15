@@ -9,8 +9,7 @@
 
 ## Example
 
-Kingpin supports command line interfaces like this:
-
+Kingpin supports basic command line interfaces like this (simple):
 
 ```bash
 $ chat server <ip>

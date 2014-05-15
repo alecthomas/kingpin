@@ -32,7 +32,7 @@ func (p *parserMixin) StringMap() (target map[string]string) {
 	return StringMapParser(p)
 }
 
-// Bool sets the parser to a boolean parser.
+// Bool sets the parser to a boolean parser. Supports --no-<X> to disable the flag.
 func (p *parserMixin) Bool() (target *bool) {
 	return BoolParser(p)
 }

@@ -10,8 +10,8 @@ type flagGroup struct {
 	long  map[string]*FlagClause
 }
 
-func newFlagGroup() flagGroup {
-	return flagGroup{
+func newFlagGroup() *flagGroup {
+	return &flagGroup{
 		short: make(map[string]*FlagClause),
 		long:  make(map[string]*FlagClause),
 	}
@@ -72,7 +72,7 @@ loop:
 				}
 			}
 
-			delete(remaining, flag.Name)
+			delete(remaining, flag.name)
 
 			if !flag.boolean {
 				token, tokens = tokens.Next()
@@ -116,9 +116,9 @@ loop:
 // FlagClause is a fluid interface used to build flags.
 type FlagClause struct {
 	parserMixin
-	Name      string
+	name      string
 	Shorthand byte
-	Help      string
+	help      string
 	DefValue  string
 	metavar   string
 	boolean   bool
@@ -127,8 +127,8 @@ type FlagClause struct {
 
 func newFlag(name, help string) *FlagClause {
 	f := &FlagClause{
-		Name: name,
-		Help: help,
+		name: name,
+		help: help,
 	}
 	return f
 }
@@ -137,16 +137,19 @@ func (f *FlagClause) formatMetaVar() string {
 	if f.metavar != "" {
 		return f.metavar
 	}
-	return strings.ToUpper(f.Name)
+	return strings.ToUpper(f.name)
 }
 
 func (f *FlagClause) init() {
+	if f.required && f.DefValue != "" {
+		panic(fmt.Sprintf("required flag '%s' with unusable default value", f.name))
+	}
 	if f.parser == nil {
-		panic(fmt.Sprintf("no parser defined for --%s", f.Name))
+		panic(fmt.Sprintf("no parser defined for --%s", f.name))
 	}
 	if f.DefValue != "" {
 		if err := f.parser(f.DefValue); err != nil {
-			panic(fmt.Sprintf("default value for --%s is invalid: %s", f.Name, err))
+			panic(fmt.Sprintf("default value for --%s is invalid: %s", f.name, err))
 		}
 	}
 }

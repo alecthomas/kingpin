@@ -7,11 +7,20 @@ import (
 )
 
 var (
-	CommandLine     = New(filepath.Base(os.Args[0]), "")
-	Command         = CommandLine.Command
-	Flag            = CommandLine.Flag
-	SelectedCommand = ""
+	CommandLine = New(filepath.Base(os.Args[0]), "")
 )
+
+func Command(name, help string) *CmdClause {
+	return CommandLine.Command(name, help)
+}
+
+func Flag(name, help string) *FlagClause {
+	return CommandLine.Flag(name, help)
+}
+
+func Arg(name, help string) *ArgClause {
+	return CommandLine.Arg(name, help)
+}
 
 func Parse() string {
 	selected, err := CommandLine.Parse(os.Args[1:])
