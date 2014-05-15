@@ -74,7 +74,7 @@ func applyPOST() error {
 		if headers.Get("Content-Type") != "" {
 			headers.Set("Content-Type", "application/octet-stream")
 		}
-		req.Body = postBinaryFile
+		req.Body = *postBinaryFile
 	} else {
 		return errors.New("--data or --data-binary must be provided to POST")
 	}
