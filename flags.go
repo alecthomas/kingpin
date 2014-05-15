@@ -33,11 +33,11 @@ func (f *flagGroup) init() {
 	}
 }
 
-func (f *flagGroup) parse(tokens tokens) (tokens, error) {
+func (f *flagGroup) parse(tokens tokens, ignoreRequired bool) (tokens, error) {
 	// Track how many required flags we've seen.
 	remaining := make(map[string]struct{})
 	for k, flag := range f.long {
-		if flag.required {
+		if flag.required && !ignoreRequired {
 			remaining[k] = struct{}{}
 		}
 	}

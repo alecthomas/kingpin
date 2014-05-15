@@ -95,7 +95,10 @@ func (c *Commander) onCommandHelp() error {
 }
 
 func (c *Commander) parse(tokens tokens) (command string, err error) {
-	tokens, err = c.flagGroup.parse(tokens)
+	// Special-case "help" to avoid issues with required flags.
+	runHelp := (tokens.Peek().Value == "help")
+
+	tokens, err = c.flagGroup.parse(tokens, runHelp)
 	if err != nil {
 		return "", err
 	}
@@ -155,7 +158,7 @@ func (c *CmdClause) init() {
 }
 
 func (c *CmdClause) parse(tokens tokens) (tokens, error) {
-	tokens, err := c.flagGroup.parse(tokens)
+	tokens, err := c.flagGroup.parse(tokens, false)
 	if err != nil {
 		return nil, err
 	}
