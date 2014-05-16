@@ -166,7 +166,7 @@ func (f *FlagClause) Dispatch(dispatch Dispatch) *FlagClause {
 	return f
 }
 
-// Default value for this flag.
+// Default value for this flag. It *must* be parseable by the value of the flag.
 func (f *FlagClause) Default(value string) *FlagClause {
 	f.defaultValue = value
 	return f
@@ -186,7 +186,7 @@ func (f *FlagClause) MetaVarFromDefault() *FlagClause {
 	return f
 }
 
-// Required makes the flag required.
+// Required makes the flag required. You can not provide a Default() value to a Required() flag.
 func (f *FlagClause) Required() *FlagClause {
 	f.required = true
 	return f
@@ -198,6 +198,7 @@ func (f *FlagClause) Short(name byte) *FlagClause {
 	return f
 }
 
+// Bool makes this flag a boolean flag.
 func (f *FlagClause) Bool() (target *bool) {
 	target = new(bool)
 	f.boolean = true

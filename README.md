@@ -157,3 +157,10 @@ If this weren't a builtin parser you would use it like so:
 ```go
 ip = IP(cmd.Flag("ip", "IP address of server.").Required())
 ```
+
+## Default Values
+
+The default value is the zero value for a type. This can be overridden with
+the `Default(value)` function on flags and arguments. This function accepts a
+string, which is parsed by the value itself, so it *must* be compliant with
+the format expected.

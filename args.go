@@ -73,11 +73,13 @@ func newArg(name, help string) *ArgClause {
 	return a
 }
 
+// Required arguments must be input by the user. They can not have a Default() value provided.
 func (a *ArgClause) Required() *ArgClause {
 	a.required = true
 	return a
 }
 
+// Default value for this argument. It *must* be parseable by the value of the argument.
 func (a *ArgClause) Default(value string) *ArgClause {
 	a.defaultValue = value
 	return a
