@@ -1,40 +1,68 @@
 // Package kingpin provides command line interfaces like this:
 //
-//    $ chat server <ip>
-//    $ chat [--debug] register [--name <name>] <nick>
-//    $ chat post --channel|-c <channel> [--image <image>] [<text>]
+//     $ chat
+//     usage: chat [<flags>] <command> [<flags>] [<args> ...]
+//
+//     Flags:
+//       --debug              enable debug mode
+//       --help               Show help.
+//       --server=127.0.0.1   server address
+//
+//     Commands:
+//       help <command>
+//         Show help for a command.
+//
+//       post [<flags>] <channel>
+//         Post a message to a channel.
+//
+//       register <nick> <name>
+//         Register a new user.
+//
+//     $ chat help post
+//     usage: chat [<flags>] post [<flags>] <channel> [<text>]
+//
+//     Post a message to a channel.
+//
+//     Flags:
+//       --image=IMAGE   image to post
+//
+//     Args:
+//       <channel>   channel to post to
+//       [<text>]    text to post
+//     $ chat post --image=~/Downloads/owls.jpg pics
 //
 // From code like this:
 //
-//    var (
-//      chat  = kingpin.New("chat", "A command line chat application.")
-//      debug = chat.Flag("debug", "enable debug mode").Default("false").Bool()
+//     package main
 //
-//      server   = chat.Command("server", "Server to connect to.")
-//      serverIP = server.Arg("server", "server address").Required().IP()
+//     import "github.com/alecthomas/kingpin"
 //
-//      register     = chat.Command("register", "Register a new user.")
-//      registerName = register.Flag("name", "name of user").Required().String()
-//      registerNick = register.Arg("nick", "nickname for user").Required().String()
+//     var (
+//       debug    = kingpin.Flag("debug", "enable debug mode").Default("false").Bool()
+//       serverIP = kingpin.Flag("server", "server address").Default("127.0.0.1").MetaVarFromDefault().IP()
 //
-//      post        = chat.Command("post", "Post a message to a channel.")
-//      postChannel = post.Flag("channel", "channel to post to").Short('c').Required().String()
-//      postImage   = post.Flag("image", "image to post").File()
-//      postText    = post.Arg("text", "text to post").String()
-//    )
+//       register     = kingpin.Command("register", "Register a new user.")
+//       registerNick = register.Arg("nick", "nickname for user").Required().String()
+//       registerName = register.Arg("name", "name of user").Required().String()
 //
-//    func main() {
-//      switch kingpin.Parse() {
-//      case "register":
-//        // Register user
-//        println(*registerNick)
+//       post        = kingpin.Command("post", "Post a message to a channel.")
+//       postImage   = post.Flag("image", "image to post").File()
+//       postChannel = post.Arg("channel", "channel to post to").Required().String()
+//       postText    = post.Arg("text", "text to post").String()
+//     )
 //
-//      case "post":
-//        // Post message
-//        if *postImage != nil {
-//        }
-//        if *postText != "" {
-//        }
-//      }
-//    }
+//     func main() {
+//       switch kingpin.Parse() {
+//       // Register user
+//       case "register":
+//         println(*registerNick)
+//
+//       // Post message
+//       case "post":
+//         if *postImage != nil {
+//         }
+//         if *postText != "" {
+//         }
+//       }
+//     }
 package kingpin
