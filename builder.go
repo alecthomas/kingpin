@@ -82,7 +82,7 @@ func (c *Commander) init() {
 	if len(c.commands) > 0 {
 		cmd := c.Command("help", "Show help for a command.")
 		c.commandHelp = cmd.Arg("command", "Command name.").Required().Dispatch(c.onCommandHelp).String()
-		// Make "help" command first in order.
+		// Make "help" command first in order. Also, Go's slice operations are woeful.
 		c.commandOrder = append(c.commandOrder[len(c.commandOrder)-1:], c.commandOrder[:len(c.commandOrder)-1]...)
 	}
 	c.flagGroup.init()

@@ -33,8 +33,8 @@ func (c *Commander) CommandUsage(w io.Writer, command string) {
 	if !ok {
 		UsageErrorf("unknown command '%s'", command)
 	}
-	s := []string{formatArgsAndFlags(c.name, c.argGroup, c.flagGroup, true)}
-	s = append(s, formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup, true))
+	s := []string{formatArgsAndFlags(c.name, c.argGroup, c.flagGroup)}
+	s = append(s, formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup))
 	fmt.Fprintf(w, "usage: %s\n", strings.Join(s, " "))
 	if cmd.help != "" {
 		fmt.Fprintf(w, "\n%s\n", cmd.help)
@@ -43,7 +43,7 @@ func (c *Commander) CommandUsage(w io.Writer, command string) {
 }
 
 func (c *Commander) writeHelp(width int, w io.Writer) {
-	s := []string{formatArgsAndFlags(c.name, c.argGroup, c.flagGroup, true)}
+	s := []string{formatArgsAndFlags(c.name, c.argGroup, c.flagGroup)}
 	if len(c.commands) > 0 {
 		s = append(s, "<command>", "[<flags>]", "[<args> ...]")
 	}
@@ -65,7 +65,7 @@ func (c *Commander) writeHelp(width int, w io.Writer) {
 
 func (c *Commander) helpCommands(width int, w io.Writer) {
 	for _, cmd := range c.commandOrder {
-		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup, false))
+		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup))
 		buf := bytes.NewBuffer(nil)
 		doc.ToText(buf, cmd.help, "", "", width-4)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
@@ -163,19 +163,15 @@ func (c *CmdClause) writeHelp(width int, w io.Writer) {
 	c.argGroup.writeHelp(2, width, w)
 }
 
-func formatArgsAndFlags(name string, args *argGroup, flags *flagGroup, showOptionalArgs bool) string {
+func formatArgsAndFlags(name string, args *argGroup, flags *flagGroup) string {
 	s := []string{name}
 	s = append(s, flags.gatherFlagSummary()...)
 	depth := 0
 	for _, arg := range args.args {
 		h := "<" + arg.name + ">"
 		if !arg.required {
-			if showOptionalArgs {
-				h = "[" + h
-				depth++
-			} else {
-				break
-			}
+			h = "[" + h
+			depth++
 		}
 		s = append(s, h)
 	}
