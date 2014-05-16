@@ -6,8 +6,9 @@ import (
 )
 
 type flagGroup struct {
-	short map[string]*FlagClause
-	long  map[string]*FlagClause
+	short     map[string]*FlagClause
+	long      map[string]*FlagClause
+	flagOrder []*FlagClause
 }
 
 func newFlagGroup() *flagGroup {
@@ -21,6 +22,7 @@ func newFlagGroup() *flagGroup {
 func (f *flagGroup) Flag(name, help string) *FlagClause {
 	flag := newFlag(name, help)
 	f.long[name] = flag
+	f.flagOrder = append(f.flagOrder, flag)
 	return flag
 }
 

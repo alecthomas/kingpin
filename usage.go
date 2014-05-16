@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"strings"
 
 	"go/doc"
@@ -65,15 +64,7 @@ func (c *Commander) writeHelp(width int, w io.Writer) {
 }
 
 func (c *Commander) helpCommands(width int, w io.Writer) {
-	commands := []string{}
-	for _, cmd := range c.commands {
-		commands = append(commands, cmd.name)
-	}
-
-	sort.Strings(commands)
-
-	for _, name := range commands {
-		cmd := c.commands[name]
+	for _, cmd := range c.commandOrder {
 		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup, false))
 		buf := bytes.NewBuffer(nil)
 		doc.ToText(buf, cmd.help, "", "", width-4)
@@ -90,23 +81,19 @@ func (f *flagGroup) writeHelp(indent, width int, w io.Writer) {
 		return
 	}
 
-	names := []string{}
 	fmt.Fprintf(w, "\nFlags:\n")
 	l := 0
 	for _, flag := range f.long {
 		if fl := len(formatFlag(flag)); fl > l {
 			l = fl
 		}
-		names = append(names, flag.name)
 	}
-	sort.Strings(names)
 
 	l += 3 + indent
 
 	indentStr := strings.Repeat(" ", l)
 
-	for _, name := range names {
-		flag := f.long[name]
+	for _, flag := range f.flagOrder {
 		prefix := fmt.Sprintf("  %-*s", l-2, formatFlag(flag))
 		buf := bytes.NewBuffer(nil)
 		doc.ToText(buf, flag.help, "", "", width-l)

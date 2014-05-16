@@ -37,10 +37,11 @@ type Dispatch func() error
 type Commander struct {
 	*flagGroup
 	*argGroup
-	name        string
-	help        string
-	commands    map[string]*CmdClause
-	commandHelp *string
+	name         string
+	help         string
+	commands     map[string]*CmdClause
+	commandOrder []*CmdClause
+	commandHelp  *string
 }
 
 func New(name, help string) *Commander {
@@ -64,6 +65,7 @@ func (c *Commander) onFlagHelp() error {
 func (c *Commander) Command(name, help string) *CmdClause {
 	cmd := newCommand(name, help)
 	c.commands[name] = cmd
+	c.commandOrder = append(c.commandOrder, cmd)
 	return cmd
 }
 
@@ -80,6 +82,8 @@ func (c *Commander) init() {
 	if len(c.commands) > 0 {
 		cmd := c.Command("help", "Show help for a command.")
 		c.commandHelp = cmd.Arg("command", "Command name.").Required().Dispatch(c.onCommandHelp).String()
+		// Make "help" command first in order.
+		c.commandOrder = append(c.commandOrder[len(c.commandOrder)-1:], c.commandOrder[:len(c.commandOrder)-1]...)
 	}
 	c.flagGroup.init()
 	c.argGroup.init()
