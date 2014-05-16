@@ -77,7 +77,8 @@ loop:
 
 			delete(remaining, flag.name)
 
-			if !flag.boolean {
+			fb, ok := flag.value.(boolFlag)
+			if !ok || !fb.IsBoolFlag() {
 				token, tokens = tokens.Next()
 				if token.Type != TokenArg {
 					return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
@@ -124,7 +125,6 @@ type FlagClause struct {
 	help         string
 	defaultValue string
 	metavar      string
-	boolean      bool
 	dispatch     Dispatch
 }
 
@@ -201,7 +201,6 @@ func (f *FlagClause) Short(name byte) *FlagClause {
 // Bool makes this flag a boolean flag.
 func (f *FlagClause) Bool() (target *bool) {
 	target = new(bool)
-	f.boolean = true
 	f.SetValue(newBoolValue(false, target))
 	return
 }

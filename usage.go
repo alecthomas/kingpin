@@ -106,9 +106,10 @@ func (f *flagGroup) writeHelp(indent, width int, w io.Writer) {
 }
 
 func (f *flagGroup) gatherFlagSummary() (out []string) {
-	for _, flag := range f.long {
+	for _, flag := range f.flagOrder {
 		if flag.required {
-			if flag.boolean {
+			fb, ok := flag.value.(boolFlag)
+			if ok && fb.IsBoolFlag() {
 				out = append(out, fmt.Sprintf("--%s", flag.name))
 			} else {
 				out = append(out, fmt.Sprintf("--%s=%s", flag.name, flag.formatMetaVar()))
@@ -185,7 +186,8 @@ func formatFlag(flag *FlagClause) string {
 		flagString += fmt.Sprintf("-%c, ", flag.Shorthand)
 	}
 	flagString += fmt.Sprintf("--%s", flag.name)
-	if !flag.boolean {
+	fb, ok := flag.value.(boolFlag)
+	if !ok || !fb.IsBoolFlag() {
 		flagString += fmt.Sprintf("=%s", flag.formatMetaVar())
 	}
 	return flagString

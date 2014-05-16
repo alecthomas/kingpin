@@ -11,14 +11,15 @@ import (
 )
 
 // NOTE: Most of the base type values were lifted from:
-// http://golang.org/src/pkg/flag/flag.go?s=20146:20222#L79
+// http://golang.org/src/pkg/flag/flag.go?s=20146:20222
 
 // Value is the interface to the dynamic value stored in a flag.
 // (The default value is represented as a string.)
 //
-// If a Value has an IsBoolFlag() bool method returning true,
-// the command-line parser makes -name equivalent to -name=true
-// rather than using the next command-line argument.
+// If a Value has an IsBoolFlag() bool method returning true, the command-line
+// parser makes --name equivalent to -name=true rather than using the next
+// command-line argument, and adds a --no-name counterpart for negating the
+// flag.
 type Value interface {
 	String() string
 	Set(string) error
@@ -33,8 +34,8 @@ type Getter interface {
 	Get() interface{}
 }
 
-// optional interface to indicate boolean flags that can be
-// supplied without "=value" text
+// Optional interface to indicate boolean flags that don't accept a value, and
+// implicitly have a --no-<x> negation counterpart.
 type boolFlag interface {
 	Value
 	IsBoolFlag() bool
