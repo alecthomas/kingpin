@@ -5,7 +5,7 @@
 - POSIX-style short flag combining.
 - Parsed, type-safe flags.
 - Parsed, type-safe positional arguments.
-- Support for required flags and positional arguments
+- Support for required flags and required positional arguments
 - Callbacks per command, flag and argument.
 
 ## Simple Example
