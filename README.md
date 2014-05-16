@@ -5,46 +5,121 @@
 - POSIX-style short flag combining.
 - Parsed, type-safe flags.
 - Parsed, type-safe positional arguments.
-- Callbacks per command, flag and argument callbacks.
+- Support for required flags and positional arguments
+- Callbacks per command, flag and argument.
 
-## Example
+## Simple Example
 
-Kingpin supports basic command line interfaces like this (simple):
+Kingpin can be used for simple flag+arg applications like so:
 
-```bash
-$ chat server <ip>
-$ chat [--debug] register [--name <name>] <nick>
-$ chat post --channel|-c <channel> [--image <image>] [<text>]
+```shell
+$ ping --help
+usage: ping [<flags>] <ip> [<count>]
+
+Flags:
+  --debug            Enable debug mode.
+  --help             Show help.
+  -t, --timeout=5s   Timeout waiting for ping.
+
+Args:
+  <ip>        IP address to ping.
+  [<count>]   Number of packets to send
+$ ping 1.2.3.4 5
+Would ping: 1.2.3.4 with timeout 5s%
 ```
 
-From code like this:
+From the following source:
 
 ```go
+package main
+
+import (
+  "fmt"
+
+  "github.com/alecthomas/kingpin"
+)
+
 var (
-  chat  = kingpin.New("chat", "A command line chat application.")
-  debug = chat.Flag("debug", "enable debug mode").Default("false").Bool()
+  debug   = kingpin.Flag("debug", "Enable debug mode.").Bool()
+  timeout = kingpin.Flag("timeout", "Timeout waiting for ping.").Required().Short('t').Duration()
+  ip      = kingpin.Arg("ip", "IP address to ping.").Required().IP()
+  moo     = kingpin.Arg("moo", "moo").String()
+)
 
-  server   = chat.Command("server", "Server to connect to.")
-  serverIP = server.Arg("server", "server address").Required().IP()
+func main() {
+  kingpin.Parse()
+  fmt.Printf("Would ping: %s with timeout %s", *ip, *timeout)
+}
+```
 
-  register     = chat.Command("register", "Register a new user.")
-  registerName = register.Flag("name", "name of user").Required().String()
+## Complex Example
+
+Kingpin can also produce complex command-line applications with global flags,
+subcommands, and per-subcommand flags, like this:
+
+```shell
+$ chat
+usage: chat [<flags>] <command> [<flags>] [<args> ...]
+
+Flags:
+  --debug              enable debug mode
+  --help               Show help.
+  --server=127.0.0.1   server address
+
+Commands:
+  help <command>
+    Show help for a command.
+
+  post [<flags>] <channel>
+    Post a message to a channel.
+
+  register <nick> <name>
+    Register a new user.
+
+$ chat help post
+usage: chat [<flags>] post [<flags>] <channel> [<text>]
+
+Post a message to a channel.
+
+Flags:
+  --image=IMAGE   image to post
+
+Args:
+  <channel>   channel to post to
+  [<text>]    text to post
+$ chat post --image=~/Downloads/owls.jpg pics
+...
+```
+
+From this code:
+
+```go
+package main
+
+import "github.com/alecthomas/kingpin"
+
+var (
+  debug    = kingpin.Flag("debug", "enable debug mode").Default("false").Bool()
+  serverIP = kingpin.Flag("server", "server address").Default("127.0.0.1").MetaVarFromDefault().IP()
+
+  register     = kingpin.Command("register", "Register a new user.")
   registerNick = register.Arg("nick", "nickname for user").Required().String()
+  registerName = register.Arg("name", "name of user").Required().String()
 
-  post        = chat.Command("post", "Post a message to a channel.")
-  postChannel = post.Flag("channel", "channel to post to").Short('c').Required().String()
+  post        = kingpin.Command("post", "Post a message to a channel.")
   postImage   = post.Flag("image", "image to post").File()
+  postChannel = post.Arg("channel", "channel to post to").Required().String()
   postText    = post.Arg("text", "text to post").String()
 )
 
 func main() {
   switch kingpin.Parse() {
+  // Register user
   case "register":
-    // Register user
     println(*registerNick)
 
+  // Post message
   case "post":
-    // Post message
     if *postImage != nil {
     }
     if *postText != "" {
