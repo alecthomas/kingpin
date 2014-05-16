@@ -7,21 +7,27 @@ import (
 )
 
 var (
+	// CommandLine is the default Kingpin parser.
 	CommandLine = New(filepath.Base(os.Args[0]), "")
 )
 
+// Command adds a new command to the default parser.
 func Command(name, help string) *CmdClause {
 	return CommandLine.Command(name, help)
 }
 
+// Flag adds a new flag to the default parser.
 func Flag(name, help string) *FlagClause {
 	return CommandLine.Flag(name, help)
 }
 
+// Arg adds a new argument to the top-level of the default parser.
 func Arg(name, help string) *ArgClause {
 	return CommandLine.Arg(name, help)
 }
 
+// Parse and return the selected command. Will exit with a non-zero status if
+// an error was encountered.
 func Parse() string {
 	selected, err := CommandLine.Parse(os.Args[1:])
 	if err != nil {

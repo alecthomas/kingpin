@@ -11,10 +11,6 @@ type Settings interface {
 	SetValue(value Value)
 }
 
-type FlagSettings interface {
-	SetIsBoolean()
-}
-
 type parserMixin struct {
 	value    Value
 	required bool
