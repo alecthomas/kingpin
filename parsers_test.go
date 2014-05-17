@@ -51,3 +51,13 @@ func TestParseExistingFile(t *testing.T) {
 	err = p.value.Set("/etc/hostsDEFINITELYMISSING")
 	assert.Error(t, err)
 }
+
+func TestParseTCPAddr(t *testing.T) {
+	p := parserMixin{}
+	v := p.TCP()
+	err := p.value.Set("127.0.0.1:1234")
+	assert.NoError(t, err)
+	expected, err := net.ResolveTCPAddr("tcp", "127.0.0.1:1234")
+	assert.NoError(t, err)
+	assert.Equal(t, *expected, **v)
+}

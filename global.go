@@ -50,7 +50,10 @@ func Fatalf(format string, args ...interface{}) {
 // with the given prefix.
 func FatalIfError(err error, prefix string) {
 	if err != nil {
-		Fatalf(prefix+": %s", err)
+		if prefix != "" {
+			prefix += ": "
+		}
+		Fatalf(prefix+"%s", err)
 	}
 }
 
@@ -65,4 +68,12 @@ func UsageErrorf(format string, args ...interface{}) {
 // Usage prints usage to stderr.
 func Usage() {
 	CommandLine.Usage(os.Stderr)
+}
+
+// MustParse can be used with app.Parse(args) to exit with an error if parsing fails.
+func MustParse(command string, err error) string {
+	if err != nil {
+		Fatalf("%s", err)
+	}
+	return command
 }

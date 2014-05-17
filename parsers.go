@@ -90,6 +90,18 @@ func (p *parserMixin) IP() (target *net.IP) {
 	return
 }
 
+// TCP (host:port) address.
+func (p *parserMixin) TCP() (target **net.TCPAddr) {
+	target = new(*net.TCPAddr)
+	p.TCPVar(target)
+	return
+}
+
+// TCPVar (host:port) address.
+func (p *parserMixin) TCPVar(target **net.TCPAddr) {
+	p.SetValue(newTCPAddrValue(target))
+}
+
 // ExistingFile sets the parser to one that requires and returns an existing file.
 func (p *parserMixin) ExistingFile() (target *string) {
 	target = new(string)

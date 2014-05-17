@@ -33,7 +33,7 @@ func (c *Commander) CommandUsage(w io.Writer, command string) {
 	if !ok {
 		UsageErrorf("unknown command '%s'", command)
 	}
-	s := []string{formatArgsAndFlags(c.name, c.argGroup, c.flagGroup)}
+	s := []string{formatArgsAndFlags(c.Name, c.argGroup, c.flagGroup)}
 	s = append(s, formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup))
 	fmt.Fprintf(w, "usage: %s\n", strings.Join(s, " "))
 	if cmd.help != "" {
@@ -43,14 +43,14 @@ func (c *Commander) CommandUsage(w io.Writer, command string) {
 }
 
 func (c *Commander) writeHelp(width int, w io.Writer) {
-	s := []string{formatArgsAndFlags(c.name, c.argGroup, c.flagGroup)}
+	s := []string{formatArgsAndFlags(c.Name, c.argGroup, c.flagGroup)}
 	if len(c.commands) > 0 {
 		s = append(s, "<command>", "[<flags>]", "[<args> ...]")
 	}
 
 	helpSummary := ""
-	if c.help != "" {
-		helpSummary = "\n\n" + c.help
+	if c.Help != "" {
+		helpSummary = "\n\n" + c.Help
 	}
 	fmt.Fprintf(w, "usage: %s%s\n", strings.Join(s, " "), helpSummary)
 

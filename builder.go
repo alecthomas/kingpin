@@ -37,8 +37,8 @@ type Dispatch func() error
 type Commander struct {
 	*flagGroup
 	*argGroup
-	name         string
-	help         string
+	Name         string
+	Help         string
 	commands     map[string]*CmdClause
 	commandOrder []*CmdClause
 	commandHelp  *string
@@ -48,8 +48,8 @@ func New(name, help string) *Commander {
 	c := &Commander{
 		flagGroup: newFlagGroup(),
 		argGroup:  newArgGroup(),
-		name:      name,
-		help:      help,
+		Name:      name,
+		Help:      help,
 		commands:  make(map[string]*CmdClause),
 	}
 	c.Flag("help", "Show help.").Dispatch(c.onFlagHelp).Bool()

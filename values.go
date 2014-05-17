@@ -245,6 +245,28 @@ func (i *ipValue) String() string {
 	return (*net.IP)(i).String()
 }
 
+// -- net.IP Value
+type tcpAddrValue struct {
+	addr **net.TCPAddr
+}
+
+func newTCPAddrValue(p **net.TCPAddr) *tcpAddrValue {
+	return &tcpAddrValue{p}
+}
+
+func (i *tcpAddrValue) Set(value string) error {
+	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
+		return fmt.Errorf("'%s' is not a valid TCP address: %s", value, err)
+	} else {
+		*i.addr = addr
+		return nil
+	}
+}
+
+func (i *tcpAddrValue) String() string {
+	return (*i.addr).String()
+}
+
 // -- existingFile Value
 
 type fileStatValue string
