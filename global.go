@@ -46,7 +46,7 @@ func Fatalf(format string, args ...interface{}) {
 	os.Exit(1)
 }
 
-// FatalIfError prints an error and exits, if err is not nil. The error is printed
+// FatalIfError prints an error and exits if err is not nil. The error is printed
 // with the given prefix.
 func FatalIfError(err error, prefix string) {
 	if err != nil {
