@@ -134,28 +134,42 @@ Kingpin supports both flag and positional argument parsers for converting to
 Go types. For example, some included parsers are `Int()`, `Float()`,
 `Duration()` and `ExistingFile()`.
 
-A goal of Kingpin is to make extending the supported types simple. As an
-example, here's the source for the builtin IP parser:
+Parser conform to Go's [`flag.Value`](http://godoc.org/flag#Value)
+interface, so any existing implementations will work.
+
+For example, a parser for accumulating HTTP header values might look like this:
 
 ```go
-func IP(s Settings) (target *net.IP) {
-  target = new(net.IP)
-  s.SetParser(func(value string) error {
-    if ip := net.ParseIP(value); ip == nil {
-      return fmt.Errorf("'%s' is not an IP address", value)
-    } else {
-      *target = ip
-      return nil
-    }
-  })
+type HTTPHeaderValue http.Header
+
+func (h *HTTPHeaderValue) Set(value string) error {
+  parts := strings.SplitN(value, ":", 2)
+  if len(parts) != 2 {
+    return fmt.Errorf("expected HEADER:VALUE got '%s'", value)
+  }
+  (*http.Header)(h).Add(parts[0], parts[1])
+  return nil
+}
+
+func (h *HTTPHeaderValue) String() string {
+  return ""
+}
+```
+
+As a convenience, I would recommend something like this:
+
+```go
+func HTTPHeader(s Settings) (target *http.Header) {
+  target = new(http.Header)
+  s.SetValue((*HTTPHeaderValue)(target))
   return
 }
 ```
 
-If this weren't a builtin parser you would use it like so:
+You would use it like so:
 
 ```go
-ip = IP(cmd.Flag("ip", "IP address of server.").Required())
+headers = HTTPHeader(kingpin.Flag("--header", "Add a HTTP header to the request.").Short('-H'))
 ```
 
 ## Default Values
