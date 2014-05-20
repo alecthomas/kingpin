@@ -12,7 +12,7 @@
 
 Kingpin can be used for simple flag+arg applications like so:
 
-```shell
+```
 $ ping --help
 usage: ping [<flags>] <ip> [<count>]
 
@@ -57,7 +57,7 @@ func main() {
 Kingpin can also produce complex command-line applications with global flags,
 subcommands, and per-subcommand flags, like this:
 
-```shell
+```
 $ chat
 usage: chat [<flags>] <command> [<flags>] [<args> ...]
 
@@ -96,24 +96,28 @@ From this code:
 ```go
 package main
 
-import "github.com/alecthomas/kingpin"
+import (
+  "os"
+  "github.com/alecthomas/kingpin"
+)
 
 var (
-  debug    = kingpin.Flag("debug", "enable debug mode").Default("false").Bool()
-  serverIP = kingpin.Flag("server", "server address").Default("127.0.0.1").MetaVarFromDefault().IP()
+  app      = kingpin.New("chat", "A command-line chat application.")
+  debug    = app.Flag("debug", "enable debug mode").Default("false").Bool()
+  serverIP = app.Flag("server", "server address").Default("127.0.0.1").MetaVarFromDefault().IP()
 
-  register     = kingpin.Command("register", "Register a new user.")
+  register     = app.Command("register", "Register a new user.")
   registerNick = register.Arg("nick", "nickname for user").Required().String()
   registerName = register.Arg("name", "name of user").Required().String()
 
-  post        = kingpin.Command("post", "Post a message to a channel.")
+  post        = app.Command("post", "Post a message to a channel.")
   postImage   = post.Flag("image", "image to post").File()
   postChannel = post.Arg("channel", "channel to post to").Required().String()
   postText    = post.Arg("text", "text to post").String()
 )
 
 func main() {
-  switch kingpin.Parse() {
+  switch kingpin.MustParse(app.Parse(os.Argv[1:])) {
   // Register user
   case "register":
     println(*registerNick)
@@ -134,7 +138,7 @@ Kingpin supports both flag and positional argument parsers for converting to
 Go types. For example, some included parsers are `Int()`, `Float()`,
 `Duration()` and `ExistingFile()`.
 
-Parser conform to Go's [`flag.Value`](http://godoc.org/flag#Value)
+Parsers conform to Go's [`flag.Value`](http://godoc.org/flag#Value)
 interface, so any existing implementations will work.
 
 For example, a parser for accumulating HTTP header values might look like this:

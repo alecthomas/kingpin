@@ -24,11 +24,11 @@ func guessWidth(w io.Writer) int {
 	return width
 }
 
-func (c *Commander) Usage(w io.Writer) {
+func (c *Application) Usage(w io.Writer) {
 	c.writeHelp(guessWidth(w), w)
 }
 
-func (c *Commander) CommandUsage(w io.Writer, command string) {
+func (c *Application) CommandUsage(w io.Writer, command string) {
 	cmd, ok := c.commands[command]
 	if !ok {
 		UsageErrorf("unknown command '%s'", command)
@@ -42,7 +42,7 @@ func (c *Commander) CommandUsage(w io.Writer, command string) {
 	cmd.writeHelp(guessWidth(w), w)
 }
 
-func (c *Commander) writeHelp(width int, w io.Writer) {
+func (c *Application) writeHelp(width int, w io.Writer) {
 	s := []string{formatArgsAndFlags(c.Name, c.argGroup, c.flagGroup)}
 	if len(c.commands) > 0 {
 		s = append(s, "<command>", "[<flags>]", "[<args> ...]")
@@ -63,7 +63,7 @@ func (c *Commander) writeHelp(width int, w io.Writer) {
 	}
 }
 
-func (c *Commander) helpCommands(width int, w io.Writer) {
+func (c *Application) helpCommands(width int, w io.Writer) {
 	for _, cmd := range c.commandOrder {
 		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup))
 		buf := bytes.NewBuffer(nil)

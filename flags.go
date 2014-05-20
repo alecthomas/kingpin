@@ -139,7 +139,10 @@ func newFlag(name, help string) *FlagClause {
 func (f *FlagClause) formatMetaVar() string {
 	if f.metavar != "" {
 		if f.metavar == "%DEFAULT%" {
-			return f.defaultValue
+			if _, ok := f.value.(*stringValue); ok {
+				return fmt.Sprintf("%q", f.value)
+			}
+			return f.value.String()
 		}
 		return f.metavar
 	}

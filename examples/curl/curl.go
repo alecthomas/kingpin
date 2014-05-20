@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	timeout = kingpin.Flag("timeout", "Set connection timeout.").Short('t').Duration()
+	timeout = kingpin.Flag("timeout", "Set connection timeout.").Short('t').Default("5s").MetaVarFromDefault().Duration()
 	headers = HTTPHeader(kingpin.Flag("headers", "Add HTTP headers to the request.").Short('H').MetaVar("HEADER:VALUE"))
 
 	get    = kingpin.Command("get", "GET a resource.")

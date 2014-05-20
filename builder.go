@@ -34,7 +34,9 @@ import (
 
 type Dispatch func() error
 
-type Commander struct {
+// An Application contains the definitions of flags, arguments and commands
+// for an application.
+type Application struct {
 	*flagGroup
 	*argGroup
 	Name         string
@@ -44,8 +46,9 @@ type Commander struct {
 	commandHelp  *string
 }
 
-func New(name, help string) *Commander {
-	c := &Commander{
+// New creates a new Kingpin application instance.
+func New(name, help string) *Application {
+	c := &Application{
 		flagGroup: newFlagGroup(),
 		argGroup:  newArgGroup(),
 		Name:      name,
@@ -56,26 +59,28 @@ func New(name, help string) *Commander {
 	return c
 }
 
-func (c *Commander) onFlagHelp() error {
+func (c *Application) onFlagHelp() error {
 	c.Usage(os.Stderr)
 	os.Exit(0)
 	return nil
 }
 
-func (c *Commander) Command(name, help string) *CmdClause {
+// Command adds a new top-level command to the application.
+func (c *Application) Command(name, help string) *CmdClause {
 	cmd := newCommand(name, help)
 	c.commands[name] = cmd
 	c.commandOrder = append(c.commandOrder, cmd)
 	return cmd
 }
 
-func (c *Commander) Parse(args []string) (command string, err error) {
+// Parse parses command-line arguments.
+func (c *Application) Parse(args []string) (command string, err error) {
 	c.init()
 	tokens := Tokenize(args)
 	return c.parse(tokens)
 }
 
-func (c *Commander) init() {
+func (c *Application) init() {
 	if len(c.commands) > 0 && len(c.args) > 0 {
 		panic("can't mix top-level Arg()s with Command()s")
 	}
@@ -92,13 +97,13 @@ func (c *Commander) init() {
 	}
 }
 
-func (c *Commander) onCommandHelp() error {
+func (c *Application) onCommandHelp() error {
 	c.CommandUsage(os.Stderr, *c.commandHelp)
 	os.Exit(0)
 	return nil
 }
 
-func (c *Commander) parse(tokens tokens) (command string, err error) {
+func (c *Application) parse(tokens tokens) (command string, err error) {
 	// Special-case "help" to avoid issues with required flags.
 	runHelp := (tokens.Peek().Value == "help")
 
