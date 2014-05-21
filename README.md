@@ -7,6 +7,7 @@
 - Parsed, type-safe positional arguments.
 - Support for required flags and required positional arguments
 - Callbacks per command, flag and argument.
+- Help output that isn't as ugly as sin.
 
 ## Simple Example
 
@@ -60,6 +61,8 @@ subcommands, and per-subcommand flags, like this:
 ```
 $ chat
 usage: chat [<flags>] <command> [<flags>] [<args> ...]
+
+A command-line chat application.
 
 Flags:
   --debug              enable debug mode
