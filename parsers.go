@@ -102,6 +102,18 @@ func (p *parserMixin) TCPVar(target **net.TCPAddr) {
 	p.SetValue(newTCPAddrValue(target))
 }
 
+// TCP (host:port) address list.
+func (p *parserMixin) TCPList() (target *[]*net.TCPAddr) {
+	target = new([]*net.TCPAddr)
+	p.TCPListVar(target)
+	return
+}
+
+// TCPVar (host:port) address list.
+func (p *parserMixin) TCPListVar(target *[]*net.TCPAddr) {
+	p.SetValue(newTCPAddrsValue(target))
+}
+
 // ExistingFile sets the parser to one that requires and returns an existing file.
 func (p *parserMixin) ExistingFile() (target *string) {
 	target = new(string)

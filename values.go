@@ -245,7 +245,7 @@ func (i *ipValue) String() string {
 	return (*net.IP)(i).String()
 }
 
-// -- net.IP Value
+// -- *net.TCPAddr Value
 type tcpAddrValue struct {
 	addr **net.TCPAddr
 }
@@ -265,6 +265,30 @@ func (i *tcpAddrValue) Set(value string) error {
 
 func (i *tcpAddrValue) String() string {
 	return (*i.addr).String()
+}
+
+// -- []*net.TCPAddr Value
+type tcpAddrsValue []*net.TCPAddr
+
+func newTCPAddrsValue(p *[]*net.TCPAddr) *tcpAddrsValue {
+	return (*tcpAddrsValue)(p)
+}
+
+func (i *tcpAddrsValue) Set(value string) error {
+	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
+		return fmt.Errorf("'%s' is not a valid TCP address: %s", value, err)
+	} else {
+		*i = append(*i, addr)
+		return nil
+	}
+}
+
+func (i *tcpAddrsValue) String() string {
+	s := make([]string, 0, len(*i))
+	for _, a := range *i {
+		s = append(s, a.String())
+	}
+	return strings.Join(s, ",")
 }
 
 // -- existingFile Value
