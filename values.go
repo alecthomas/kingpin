@@ -293,22 +293,32 @@ func (i *tcpAddrsValue) String() string {
 
 // -- existingFile Value
 
-type fileStatValue string
+type fileStatValue struct {
+	path      *string
+	predicate func(os.FileInfo) error
+}
 
-func newFileStatValue(p *string, predicate func(os.FileInfo) bool) *fileStatValue {
-	return (*fileStatValue)(p)
+func newFileStatValue(p *string, predicate func(os.FileInfo) error) *fileStatValue {
+	return &fileStatValue{
+		path:      p,
+		predicate: predicate,
+	}
 }
 
 func (e *fileStatValue) Set(value string) error {
-	if s, err := os.Stat(value); err != nil || s.IsDir() {
-		return fmt.Errorf("'%s' is a directory", value)
+	if s, err := os.Stat(value); os.IsNotExist(err) {
+		return fmt.Errorf("path '%s' not exists", value)
+	} else if err != nil {
+		return err
+	} else if err := e.predicate(s); err != nil {
+		return err
 	}
-	*e = fileStatValue(value)
+	*e.path = value
 	return nil
 }
 
 func (e *fileStatValue) String() string {
-	return (string)(*e)
+	return *e.path
 }
 
 // -- os.File value
