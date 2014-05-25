@@ -1,6 +1,7 @@
 package kingpin
 
 import (
+	"fmt"
 	"net"
 	"net/url"
 	"os"
@@ -194,12 +195,22 @@ func (p *parserMixin) IPVar(target *net.IP) {
 
 // ExistingFile sets the parser to one that requires and returns an existing file.
 func (p *parserMixin) ExistingFileVar(target *string) {
-	p.SetValue(newFileStatValue(target, func(s os.FileInfo) bool { return !s.IsDir() }))
+	p.SetValue(newFileStatValue(target, func(s os.FileInfo) error {
+		if s.IsDir() {
+			return fmt.Errorf("'%s' is a directory", s.Name())
+		}
+		return nil
+	}))
 }
 
 // ExistingDir sets the parser to one that requires and returns an existing directory.
 func (p *parserMixin) ExistingDirVar(target *string) {
-	p.SetValue(newFileStatValue(target, func(s os.FileInfo) bool { return s.IsDir() }))
+	p.SetValue(newFileStatValue(target, func(s os.FileInfo) error {
+		if !s.IsDir() {
+			return fmt.Errorf("'%s' is a file", s.Name())
+		}
+		return nil
+	}))
 }
 
 // File sets the parser to one that requires and opens a valid os.File.
