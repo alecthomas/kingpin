@@ -361,3 +361,27 @@ func (u *urlValue) String() string {
 	}
 	return (*u.u).String()
 }
+
+// -- []*url.URL Value
+type urlListValue []*url.URL
+
+func newURLListValue(p *[]*url.URL) *urlListValue {
+	return (*urlListValue)(p)
+}
+
+func (u *urlListValue) Set(value string) error {
+	if url, err := url.Parse(value); err != nil {
+		return fmt.Errorf("invalid URL: %s", err)
+	} else {
+		*u = append(*u, url)
+		return nil
+	}
+}
+
+func (u *urlListValue) String() string {
+	out := []string{}
+	for _, url := range *u {
+		out = append(out, url.String())
+	}
+	return strings.Join(out, ",")
+}

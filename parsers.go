@@ -211,3 +211,15 @@ func (p *parserMixin) FileVar(target **os.File) {
 func (p *parserMixin) URLVar(target **url.URL) {
 	p.SetValue(newURLValue(target))
 }
+
+// URLList provides a parsed list of url.URL values.
+func (p *parserMixin) URLList() (target *[]*url.URL) {
+	target = new([]*url.URL)
+	p.URLListVar(target)
+	return
+}
+
+// URLListVar provides a parsed list of url.URL values.
+func (p *parserMixin) URLListVar(target *[]*url.URL) {
+	p.SetValue(newURLListValue(target))
+}
