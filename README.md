@@ -120,7 +120,7 @@ var (
 )
 
 func main() {
-  switch kingpin.MustParse(app.Parse(os.Argv[1:])) {
+  switch kingpin.MustParse(app.Parse(os.Args[1:])) {
   // Register user
   case "register":
     println(*registerNick)
