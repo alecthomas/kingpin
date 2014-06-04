@@ -58,18 +58,20 @@ loop:
 			defaultValue := ""
 			var flag *FlagClause
 			var ok bool
+			invert := false
 
+			name := token.Value
 			if token.Type == TokenLong {
-				flag, ok = f.long[token.Value]
+				if strings.HasPrefix(name, "no-") {
+					name = name[3:]
+					invert = true
+				}
+				flag, ok = f.long[name]
 				if !ok {
-					flag, ok = f.long["no-"+token.Value]
-					if !ok {
-						return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
-					}
-					defaultValue = "false"
+					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
 				}
 			} else {
-				flag, ok = f.short[token.Value]
+				flag, ok = f.short[name]
 				if !ok {
 					return nil, fmt.Errorf("unknown short flag '%s", flagToken)
 				}
@@ -78,7 +80,16 @@ loop:
 			delete(remaining, flag.name)
 
 			fb, ok := flag.value.(boolFlag)
-			if !ok || !fb.IsBoolFlag() {
+			if ok && fb.IsBoolFlag() {
+				if invert {
+					defaultValue = "false"
+				} else {
+					defaultValue = "true"
+				}
+			} else {
+				if invert {
+					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+				}
 				token, tokens = tokens.Next()
 				if token.Type != TokenArg {
 					return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
