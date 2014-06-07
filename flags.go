@@ -162,7 +162,7 @@ func (f *FlagClause) formatMetaVar() string {
 
 func (f *FlagClause) init() {
 	if f.required && f.defaultValue != "" {
-		panic(fmt.Sprintf("required flag '%s' with unusable default value", f.name))
+		panic(fmt.Sprintf("required flag '%s' with default value that will never be used", f.name))
 	}
 	if f.value == nil {
 		panic(fmt.Sprintf("no value defined for --%s", f.name))
