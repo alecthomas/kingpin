@@ -32,7 +32,7 @@ func HTTPHeader(s Settings) (target *http.Header) {
 func ExampleValue() {
 	var (
 		curl    = New("curl", "transfer a URL")
-		headers = HTTPHeader(curl.Flag("headers", "Add HTTP headers to the request.").Short('H').MetaVar("HEADER:VALUE"))
+		headers = HTTPHeader(curl.Flag("headers", "Add HTTP headers to the request.").Short('H').PlaceHolder("HEADER:VALUE"))
 	)
 
 	curl.Parse([]string{"-H Content-Type:application/octet-stream"})

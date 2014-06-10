@@ -13,14 +13,14 @@ import (
 )
 
 var (
-	timeout = kingpin.Flag("timeout", "Set connection timeout.").Short('t').Default("5s").MetaVarFromDefault().Duration()
-	headers = HTTPHeader(kingpin.Flag("headers", "Add HTTP headers to the request.").Short('H').MetaVar("HEADER:VALUE"))
+	timeout = kingpin.Flag("timeout", "Set connection timeout.").Short('t').Default("5s").Duration()
+	headers = HTTPHeader(kingpin.Flag("headers", "Add HTTP headers to the request.").Short('H').PlaceHolder("HEADER:VALUE"))
 
 	get    = kingpin.Command("get", "GET a resource.")
 	getURL = get.Arg("url", "URL to GET.").Required().URL()
 
 	post           = kingpin.Command("post", "POST a resource.")
-	postData       = post.Flag("data", "Key-value data to POST").Short('d').MetaVar("KEY:VALUE").StringMap()
+	postData       = post.Flag("data", "Key-value data to POST").Short('d').PlaceHolder("KEY:VALUE").StringMap()
 	postBinaryFile = post.Flag("data-binary", "File with binary data to POST.").File()
 	postURL        = post.Arg("url", "URL to POST to.").Required().URL()
 )

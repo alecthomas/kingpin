@@ -9,6 +9,13 @@
 - Callbacks per command, flag and argument.
 - Help output that isn't as ugly as sin.
 
+## Changes
+
+- *2014-06-10* -- Place-holder streamlining.
+    - Renamed `MetaVar` to `PlaceHolder`.
+    - Removed `MetaVarFromDefault`. Kingpin now uses [heuristics](#place-holders-in-help)
+      to determine what to display.
+
 ## Simple Example
 
 Kingpin can be used for simple flag+arg applications like so:
@@ -26,7 +33,7 @@ Args:
   <ip>        IP address to ping.
   [<count>]   Number of packets to send
 $ ping 1.2.3.4 5
-Would ping: 1.2.3.4 with timeout 5s%
+Would ping: 1.2.3.4 with timeout 5s and count 0
 ```
 
 From the following source:
@@ -42,14 +49,14 @@ import (
 
 var (
   debug   = kingpin.Flag("debug", "Enable debug mode.").Bool()
-  timeout = kingpin.Flag("timeout", "Timeout waiting for ping.").Default("5s").MetaVarFromDefault().Short('t').Duration()
+  timeout = kingpin.Flag("timeout", "Timeout waiting for ping.").Short('t').Default("5s").Duration()
   ip      = kingpin.Arg("ip", "IP address to ping.").Required().IP()
   count   = kingpin.Arg("count", "Number of packets to send").Int()
 )
 
 func main() {
   kingpin.Parse()
-  fmt.Printf("Would ping: %s with timeout %s", *ip, *timeout)
+  fmt.Printf("Would ping: %s with timeout %s and count %d", *ip, *timeout, *count)
 }
 ```
 
@@ -106,17 +113,17 @@ import (
 
 var (
   app      = kingpin.New("chat", "A command-line chat application.")
-  debug    = app.Flag("debug", "enable debug mode").Default("false").Bool()
-  serverIP = app.Flag("server", "server address").Default("127.0.0.1").MetaVarFromDefault().IP()
+  debug    = app.Flag("debug", "Enable debug mode.").Bool()
+  serverIP = app.Flag("server", "Server address.").Default("127.0.0.1").IP()
 
   register     = app.Command("register", "Register a new user.")
-  registerNick = register.Arg("nick", "nickname for user").Required().String()
-  registerName = register.Arg("name", "name of user").Required().String()
+  registerNick = register.Arg("nick", "Nickname for user.").Required().String()
+  registerName = register.Arg("name", "Name of user.").Required().String()
 
   post        = app.Command("post", "Post a message to a channel.")
-  postImage   = post.Flag("image", "image to post").File()
-  postChannel = post.Arg("channel", "channel to post to").Required().String()
-  postText    = post.Arg("text", "text to post").String()
+  postImage   = post.Flag("image", "Image to post.").File()
+  postChannel = post.Arg("channel", "Channel to post to.").Required().String()
+  postText    = post.Arg("text", "Text to post.").String()
 )
 
 func main() {
@@ -185,3 +192,18 @@ The default value is the zero value for a type. This can be overridden with
 the `Default(value)` function on flags and arguments. This function accepts a
 string, which is parsed by the value itself, so it *must* be compliant with
 the format expected.
+
+## Place-holders in Help
+
+The place-holder value for a flag is the value used in the help to describe
+the value of a non-boolean flag.
+
+The value provided to PlaceHolder() is used if provided, then the value
+provided by Default() if provided, then finally the capitalised flag name is
+used.
+
+Here are some examples of flags with various permutations:
+
+    --name=NAME           // Flag(...).String()
+    --name="Harry"        // Flag(...).Default("Harry").String()
+    --name=FULL-NAME      // flag(...).PlaceHolder("FULL-NAME").Default("Harry").String()

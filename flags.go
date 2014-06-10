@@ -29,8 +29,8 @@ func (f *flagGroup) Flag(name, help string) *FlagClause {
 func (f *flagGroup) init() {
 	for _, flag := range f.long {
 		flag.init()
-		if flag.Shorthand != 0 {
-			f.short[string(flag.Shorthand)] = flag
+		if flag.shorthand != 0 {
+			f.short[string(flag.shorthand)] = flag
 		}
 	}
 }
@@ -132,10 +132,10 @@ loop:
 type FlagClause struct {
 	parserMixin
 	name         string
-	Shorthand    byte
+	shorthand    byte
 	help         string
 	defaultValue string
-	metavar      string
+	placeholder  string
 	dispatch     Dispatch
 }
 
@@ -147,22 +147,22 @@ func newFlag(name, help string) *FlagClause {
 	return f
 }
 
-func (f *FlagClause) formatMetaVar() string {
-	if f.metavar != "" {
-		if f.metavar == "%DEFAULT%" {
-			if _, ok := f.value.(*stringValue); ok {
-				return fmt.Sprintf("%q", f.value)
-			}
-			return f.value.String()
+func (f *FlagClause) formatPlaceHolder() string {
+	if f.placeholder != "" {
+		return f.placeholder
+	}
+	if f.defaultValue != "" {
+		if _, ok := f.value.(*stringValue); ok {
+			return fmt.Sprintf("%q", f.value)
 		}
-		return f.metavar
+		return f.value.String()
 	}
 	return strings.ToUpper(f.name)
 }
 
 func (f *FlagClause) init() {
 	if f.required && f.defaultValue != "" {
-		panic(fmt.Sprintf("required flag '%s' with default value that will never be used", f.name))
+		panic(fmt.Sprintf("required flag '--%s' with default value that will never be used", f.name))
 	}
 	if f.value == nil {
 		panic(fmt.Sprintf("no value defined for --%s", f.name))
@@ -186,17 +186,11 @@ func (f *FlagClause) Default(value string) *FlagClause {
 	return f
 }
 
-// MetaVar sets the placeholder string used for flag values in the help. If
-// the magic string "%DEFAULT%" is used, the Default() value of the flag will
-// be used.
-func (f *FlagClause) MetaVar(metavar string) *FlagClause {
-	f.metavar = metavar
-	return f
-}
-
-// MetaVarFromDefault uses the default value for the flag as the MetaVar.
-func (f *FlagClause) MetaVarFromDefault() *FlagClause {
-	f.metavar = "%DEFAULT%"
+// PlaceHolder sets the place-holder string used for flag values in the help. The
+// default behaviour is to use the value provided by Default() if provided,
+// then fall back on the capitalized flag name.
+func (f *FlagClause) PlaceHolder(placeholder string) *FlagClause {
+	f.placeholder = placeholder
 	return f
 }
 
@@ -208,7 +202,7 @@ func (f *FlagClause) Required() *FlagClause {
 
 // Short sets the short flag name.
 func (f *FlagClause) Short(name byte) *FlagClause {
-	f.Shorthand = name
+	f.shorthand = name
 	return f
 }
 

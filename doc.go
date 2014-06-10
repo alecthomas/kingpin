@@ -39,7 +39,7 @@
 //
 //     var (
 //       debug    = kingpin.Flag("debug", "enable debug mode").Default("false").Bool()
-//       serverIP = kingpin.Flag("server", "server address").Default("127.0.0.1").MetaVarFromDefault().IP()
+//       serverIP = kingpin.Flag("server", "server address").Default("127.0.0.1").IP()
 //
 //       register     = kingpin.Command("register", "Register a new user.")
 //       registerNick = register.Arg("nick", "nickname for user").Required().String()
