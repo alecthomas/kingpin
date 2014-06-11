@@ -15,7 +15,7 @@ func (c *Application) Usage(w io.Writer) {
 func (c *Application) CommandUsage(w io.Writer, command string) {
 	cmd, ok := c.commands[command]
 	if !ok {
-		UsageErrorf("unknown command '%s'", command)
+		Fatalf("unknown command '%s'", command)
 	}
 	s := []string{formatArgsAndFlags(c.Name, c.argGroup, c.flagGroup)}
 	s = append(s, formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup))
