@@ -2,6 +2,7 @@ package kingpin
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -134,6 +135,7 @@ type FlagClause struct {
 	name         string
 	shorthand    byte
 	help         string
+	envar        string
 	defaultValue string
 	placeholder  string
 	dispatch     Dispatch
@@ -167,6 +169,11 @@ func (f *FlagClause) init() {
 	if f.value == nil {
 		panic(fmt.Sprintf("no value defined for --%s", f.name))
 	}
+	if f.envar != "" {
+		if v := os.Getenv(f.envar); v != "" {
+			f.defaultValue = v
+		}
+	}
 	if f.defaultValue != "" {
 		if err := f.value.Set(f.defaultValue); err != nil {
 			panic(fmt.Sprintf("default value for --%s is invalid: %s", f.name, err))
@@ -183,6 +190,13 @@ func (f *FlagClause) Dispatch(dispatch Dispatch) *FlagClause {
 // Default value for this flag. It *must* be parseable by the value of the flag.
 func (f *FlagClause) Default(value string) *FlagClause {
 	f.defaultValue = value
+	return f
+}
+
+// OverrideDefaultFromEnvar overrides the default value for a flag from an
+// environment variable, if available.
+func (f *FlagClause) OverrideDefaultFromEnvar(envar string) *FlagClause {
+	f.envar = envar
 	return f
 }
 
