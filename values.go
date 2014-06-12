@@ -321,7 +321,7 @@ func newFileStatValue(p *string, predicate func(os.FileInfo) error) *fileStatVal
 
 func (e *fileStatValue) Set(value string) error {
 	if s, err := os.Stat(value); os.IsNotExist(err) {
-		return fmt.Errorf("path '%s' not exists", value)
+		return fmt.Errorf("path '%s' does not exist", value)
 	} else if err != nil {
 		return err
 	} else if err := e.predicate(s); err != nil {

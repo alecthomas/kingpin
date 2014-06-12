@@ -18,6 +18,7 @@ func (a *argGroup) Arg(name, help string) *ArgClause {
 
 func (a *argGroup) parse(tokens tokens) (tokens, error) {
 	i := 0
+	consumed := 0
 	for i < len(a.args) {
 		arg := a.args[i]
 		token := tokens.Peek()
@@ -25,7 +26,7 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 			return nil, fmt.Errorf("unknown flag '%s'", token)
 		}
 		if token.Type != TokenArg {
-			if arg.required {
+			if consumed == 0 && arg.required {
 				return nil, fmt.Errorf("'%s' is required", arg.name)
 			}
 			break
@@ -38,6 +39,7 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 		}
 
 		if !arg.consumesRemainder() {
+			consumed++
 			i++
 		}
 	}
