@@ -77,3 +77,8 @@ func MustParse(command string, err error) string {
 	}
 	return command
 }
+
+// Version adds a flag for displaying the application version number.
+func Version(version string) {
+	CommandLine.Version(version)
+}

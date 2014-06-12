@@ -80,6 +80,16 @@ func (c *Application) Parse(args []string) (command string, err error) {
 	return c.parse(tokens)
 }
 
+// Version adds a --version flag for displaying the application version.
+func (a *Application) Version(version string) *Application {
+	a.Flag("version", "Show application version.").Dispatch(func() error {
+		fmt.Println(version)
+		os.Exit(0)
+		return nil
+	}).Bool()
+	return a
+}
+
 func (c *Application) init() {
 	if len(c.commands) > 0 && len(c.args) > 0 {
 		panic("can't mix top-level Arg()s with Command()s")
