@@ -124,7 +124,7 @@ var (
   post        = app.Command("post", "Post a message to a channel.")
   postImage   = post.Flag("image", "Image to post.").File()
   postChannel = post.Arg("channel", "Channel to post to.").Required().String()
-  postText    = post.Arg("text", "Text to post.").String()
+  postText    = post.Arg("text", "Text to post.").Strings()
 )
 
 func main() {
@@ -137,13 +137,14 @@ func main() {
   case "post":
     if *postImage != nil {
     }
-    if *postText != "" {
-    }
+    text := strings.Join(*postText, " ")
   }
 }
 ```
 
-## Parsers
+## Reference Documentation
+
+### Custom Parsers
 
 Kingpin supports both flag and positional argument parsers for converting to
 Go types. For example, some included parsers are `Int()`, `Float()`,
@@ -184,17 +185,17 @@ func HTTPHeader(s Settings) (target *http.Header) {
 You would use it like so:
 
 ```go
-headers = HTTPHeader(kingpin.Flag("--header", "Add a HTTP header to the request.").Short('-H'))
+headers = HTTPHeader(kingpin.Flag("header", "Add a HTTP header to the request.").Short('H'))
 ```
 
-## Default Values
+### Default Values
 
 The default value is the zero value for a type. This can be overridden with
 the `Default(value)` function on flags and arguments. This function accepts a
 string, which is parsed by the value itself, so it *must* be compliant with
 the format expected.
 
-## Place-holders in Help
+### Place-holders in Help
 
 The place-holder value for a flag is the value used in the help to describe
 the value of a non-boolean flag.
@@ -208,3 +209,52 @@ Here are some examples of flags with various permutations:
     --name=NAME           // Flag(...).String()
     --name="Harry"        // Flag(...).Default("Harry").String()
     --name=FULL-NAME      // flag(...).PlaceHolder("FULL-NAME").Default("Harry").String()
+
+### Consuming all remaining arguments
+
+A common command-line idiom is to use all remaining arguments for some
+purpose. eg. The following command accepts an arbitrary number of
+IP addresses as positional arguments:
+
+    ./cmd ping 10.1.1.1 192.168.1.1
+
+Kingpin supports this by having `Value` provide a `IsCumulative() bool`
+function. If this function exists and returns true, the value parser will be
+called repeatedly for every remaining argument.
+
+Examples of this are the `Strings()` and `StringMap()` values.
+
+To implement the above example we might do something like this:
+
+```go
+type ipList []net.IP
+
+func (i *ipList) Set(value string) error {
+  if ip := net.ParseIP(value); ip == nil {
+    return fmt.Errorf("'%s' is not an IP address", value)
+  } else {
+    *i = append(*i, ip)
+    return nil
+  }
+}
+
+func (i *ipList) String() string {
+  return ""
+}
+
+func (i *ipList) IsCumulative() bool {
+  return true
+}
+
+func IPList(s Settings) (target *[]net.IP) {
+  target = new([]net.IP)
+  s.SetValue((*ipList)(target))
+  return
+}
+```
+
+And use it like so:
+
+```go
+ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
+```

@@ -17,7 +17,9 @@ func (a *argGroup) Arg(name, help string) *ArgClause {
 }
 
 func (a *argGroup) parse(tokens tokens) (tokens, error) {
-	for _, arg := range a.args {
+	i := 0
+	for i < len(a.args) {
+		arg := a.args[i]
 		token := tokens.Peek()
 		if token.IsFlag() {
 			return nil, fmt.Errorf("unknown flag '%s'", token)
@@ -34,6 +36,10 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 		if err != nil {
 			return nil, err
 		}
+
+		if !arg.consumesRemainder() {
+			i++
+		}
 	}
 	return tokens, nil
 }
@@ -41,7 +47,14 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 func (a *argGroup) init() {
 	required := 0
 	seen := map[string]struct{}{}
+	previousArgMustBeLast := false
 	for i, arg := range a.args {
+		if previousArgMustBeLast {
+			panic(fmt.Sprintf("Args() can't be followed by another argument '%s'", arg.name))
+		}
+		if arg.consumesRemainder() {
+			previousArgMustBeLast = true
+		}
 		if _, ok := seen[arg.name]; ok {
 			panic(fmt.Sprintf("duplicate argument '%s'", arg.name))
 		}
@@ -71,6 +84,13 @@ func newArg(name, help string) *ArgClause {
 		help: help,
 	}
 	return a
+}
+
+func (a *ArgClause) consumesRemainder() bool {
+	if r, ok := a.value.(remainderArg); ok {
+		return r.IsCumulative()
+	}
+	return false
 }
 
 // Required arguments must be input by the user. They can not have a Default() value provided.

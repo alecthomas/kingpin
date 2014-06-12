@@ -41,6 +41,13 @@ type boolFlag interface {
 	IsBoolFlag() bool
 }
 
+// Optional interface for arguments that cumulatively consume all remaining
+// input.
+type remainderArg interface {
+	Value
+	IsCumulative() bool
+}
+
 // -- bool Value
 type boolValue bool
 
@@ -205,6 +212,10 @@ func (s *stringsValue) String() string {
 	return strings.Join(*s, ",")
 }
 
+func (s *stringsValue) IsCumulative() bool {
+	return true
+}
+
 // -- map[string]string Value
 type stringMapValue map[string]string
 
@@ -222,6 +233,10 @@ func (s *stringMapValue) Set(value string) error {
 }
 func (s *stringMapValue) String() string {
 	return fmt.Sprintf("%s", map[string]string(*s))
+}
+
+func (s *stringMapValue) IsCumulative() bool {
+	return true
 }
 
 // -- net.IP Value
