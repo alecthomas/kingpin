@@ -40,7 +40,7 @@ func (f *flagGroup) parse(tokens tokens, ignoreRequired bool) (tokens, error) {
 	// Track how many required flags we've seen.
 	remaining := make(map[string]struct{})
 	for k, flag := range f.long {
-		if flag.required && !ignoreRequired {
+		if !ignoreRequired && flag.needsValue() {
 			remaining[k] = struct{}{}
 		}
 	}
@@ -147,6 +147,10 @@ func newFlag(name, help string) *FlagClause {
 		help: help,
 	}
 	return f
+}
+
+func (f *FlagClause) needsValue() bool {
+	return f.required && f.defaultValue == ""
 }
 
 func (f *FlagClause) formatPlaceHolder() string {
