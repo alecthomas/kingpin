@@ -22,3 +22,17 @@ func TestArgRemainderPanicsWhenNotLast(t *testing.T) {
 	a.Arg("test2", "").String()
 	assert.Panics(t, func() { a.init() })
 }
+
+func TestArgMultipleRequired(t *testing.T) {
+	a := newArgGroup()
+	a.Arg("a", "").Required().String()
+	a.Arg("b", "").Required().String()
+	a.init()
+
+	_, err := a.parse(Tokenize([]string{}))
+	assert.Error(t, err)
+	_, err = a.parse(Tokenize([]string{"A"}))
+	assert.Error(t, err)
+	_, err = a.parse(Tokenize([]string{"A", "B"}))
+	assert.NoError(t, err)
+}

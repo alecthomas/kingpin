@@ -39,8 +39,9 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 		}
 
 		if !arg.consumesRemainder() {
-			consumed++
 			i++
+		} else {
+			consumed++
 		}
 	}
 	return tokens, nil
