@@ -180,7 +180,7 @@ func (f *FlagClause) init() {
 	}
 	if f.defaultValue != "" {
 		if err := f.value.Set(f.defaultValue); err != nil {
-			panic(fmt.Sprintf("default value for --%s is invalid: %s", f.name, err))
+			Fatalf("default value for --%s is invalid: %s", f.name, err)
 		}
 	}
 }
