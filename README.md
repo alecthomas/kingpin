@@ -44,7 +44,7 @@ package main
 import (
   "fmt"
 
-  "github.com/alecthomas/kingpin"
+  "gopkg.in/alecthomas/kingpin.v0"
 )
 
 var (
@@ -109,7 +109,7 @@ package main
 
 import (
   "os"
-  "github.com/alecthomas/kingpin"
+  "gopkg.in/alecthomas/kingpin.v0"
 )
 
 var (
