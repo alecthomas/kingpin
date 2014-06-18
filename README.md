@@ -13,6 +13,11 @@
 
 Kingpin uses [gopkgin.in](https://gopkg.in/alecthomas/kingpin.v1) for versioning.
 
+Usage:
+
+```go
+```
+
 ## Changes
 
 - *2014-06-19* -- Stable v1.0.0 release.
