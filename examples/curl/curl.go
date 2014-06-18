@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/alecthomas/kingpin"
+	"gopkg.in/alecthomas/kingpin.v0"
 )
 
 var (

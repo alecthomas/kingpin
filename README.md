@@ -9,7 +9,17 @@
 - Callbacks per command, flag and argument.
 - Help output that isn't as ugly as sin.
 
+## Versions
+
+Kingpin uses [gopkgin.in](https://gopkg.in/alecthomas/kingpin.v1) for versioning.
+
 ## Changes
+
+- *2014-06-19* -- Stable v1.0.0 release.
+    - Support [cumulative positional](#consuming-all-remaining-arguments) arguments.
+    - Return error rather than panic when there are fatal errors not caught by
+      the type system. eg. when a default value is invalid.
+    - Use gokpg.in.
 
 - *2014-06-10* -- Place-holder streamlining.
     - Renamed `MetaVar` to `PlaceHolder`.
@@ -44,7 +54,7 @@ package main
 import (
   "fmt"
 
-  "gopkg.in/alecthomas/kingpin.v0"
+  "gopkg.in/alecthomas/kingpin.v1"
 )
 
 var (
@@ -109,7 +119,7 @@ package main
 
 import (
   "os"
-  "gopkg.in/alecthomas/kingpin.v0"
+  "gopkg.in/alecthomas/kingpin.v1"
 )
 
 var (
