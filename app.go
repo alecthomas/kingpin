@@ -59,25 +59,27 @@ func New(name, help string) *Application {
 	return c
 }
 
-func (c *Application) onFlagHelp() error {
-	c.Usage(os.Stderr)
+func (a *Application) onFlagHelp() error {
+	a.Usage(os.Stderr)
 	os.Exit(0)
 	return nil
 }
 
 // Command adds a new top-level command to the application.
-func (c *Application) Command(name, help string) *CmdClause {
+func (a *Application) Command(name, help string) *CmdClause {
 	cmd := newCommand(name, help)
-	c.commands[name] = cmd
-	c.commandOrder = append(c.commandOrder, cmd)
+	a.commands[name] = cmd
+	a.commandOrder = append(a.commandOrder, cmd)
 	return cmd
 }
 
 // Parse parses command-line arguments.
-func (c *Application) Parse(args []string) (command string, err error) {
-	c.init()
+func (a *Application) Parse(args []string) (command string, err error) {
+	if err := a.init(); err != nil {
+		return "", err
+	}
 	tokens := Tokenize(args)
-	return c.parse(tokens)
+	return a.parse(tokens)
 }
 
 // Version adds a --version flag for displaying the application version.
@@ -90,9 +92,9 @@ func (a *Application) Version(version string) *Application {
 	return a
 }
 
-func (c *Application) init() {
+func (c *Application) init() error {
 	if len(c.commands) > 0 && len(c.args) > 0 {
-		panic("can't mix top-level Arg()s with Command()s")
+		return fmt.Errorf("can't mix top-level Arg()s with Command()s")
 	}
 	if len(c.commands) > 0 {
 		cmd := c.Command("help", "Show help for a command.")
@@ -100,11 +102,18 @@ func (c *Application) init() {
 		// Make "help" command first in order. Also, Go's slice operations are woeful.
 		c.commandOrder = append(c.commandOrder[len(c.commandOrder)-1:], c.commandOrder[:len(c.commandOrder)-1]...)
 	}
-	c.flagGroup.init()
-	c.argGroup.init()
-	for _, cmd := range c.commands {
-		cmd.init()
+	if err := c.flagGroup.init(); err != nil {
+		return err
 	}
+	if err := c.argGroup.init(); err != nil {
+		return err
+	}
+	for _, cmd := range c.commands {
+		if err := cmd.init(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (c *Application) onCommandHelp() error {

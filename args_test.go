@@ -20,7 +20,7 @@ func TestArgRemainderPanicsWhenNotLast(t *testing.T) {
 	a := newArgGroup()
 	a.Arg("test", "").Strings()
 	a.Arg("test2", "").String()
-	assert.Panics(t, func() { a.init() })
+	assert.Error(t, a.init())
 }
 
 func TestArgMultipleRequired(t *testing.T) {

@@ -22,9 +22,14 @@ func (c *CmdClause) Dispatch(dispatch Dispatch) *CmdClause {
 	return c
 }
 
-func (c *CmdClause) init() {
-	c.flagGroup.init()
-	c.argGroup.init()
+func (c *CmdClause) init() error {
+	if err := c.flagGroup.init(); err != nil {
+		return err
+	}
+	if err := c.argGroup.init(); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (c *CmdClause) parse(tokens tokens) (tokens, error) {

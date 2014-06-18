@@ -37,14 +37,16 @@ func TestRequiredFlags(t *testing.T) {
 func TestInvalidDefaultFlagValuePanics(t *testing.T) {
 	c := New("test", "test")
 	c.Flag("foo", "foo").Default("a").Int()
-	assert.Panics(t, func() { c.Parse([]string{}) })
+	_, err := c.Parse([]string{})
+	assert.Error(t, err)
 }
 
 func TestInvalidDefaultArgValuePanics(t *testing.T) {
 	c := New("test", "test")
 	cmd := c.Command("cmd", "cmd")
 	cmd.Arg("arg", "arg").Default("one").Int()
-	assert.Panics(t, func() { c.Parse([]string{}) })
+	_, err := c.Parse([]string{})
+	assert.Error(t, err)
 }
 
 func TestArgsRequiredAfterNonRequiredPanics(t *testing.T) {
@@ -52,7 +54,8 @@ func TestArgsRequiredAfterNonRequiredPanics(t *testing.T) {
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").String()
 	cmd.Arg("b", "b").Required().String()
-	assert.Panics(t, func() { c.Parse([]string{}) })
+	_, err := c.Parse([]string{})
+	assert.Error(t, err)
 }
 
 func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
@@ -91,5 +94,6 @@ func TestTopLevelArgCantBeUsedWithCommands(t *testing.T) {
 	c := New("test", "test")
 	c.Arg("arg", "help").String()
 	c.Command("cmd", "help")
-	assert.Panics(t, func() { c.Parse([]string{}) })
+	_, err := c.Parse([]string{})
+	assert.Error(t, err)
 }

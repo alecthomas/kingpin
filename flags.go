@@ -27,13 +27,16 @@ func (f *flagGroup) Flag(name, help string) *FlagClause {
 	return flag
 }
 
-func (f *flagGroup) init() {
+func (f *flagGroup) init() error {
 	for _, flag := range f.long {
-		flag.init()
+		if err := flag.init(); err != nil {
+			return err
+		}
 		if flag.shorthand != 0 {
 			f.short[string(flag.shorthand)] = flag
 		}
 	}
+	return nil
 }
 
 func (f *flagGroup) parse(tokens tokens, ignoreRequired bool) (tokens, error) {
@@ -166,12 +169,12 @@ func (f *FlagClause) formatPlaceHolder() string {
 	return strings.ToUpper(f.name)
 }
 
-func (f *FlagClause) init() {
+func (f *FlagClause) init() error {
 	if f.required && f.defaultValue != "" {
-		panic(fmt.Sprintf("required flag '--%s' with default value that will never be used", f.name))
+		return fmt.Errorf("required flag '--%s' with default value that will never be used", f.name)
 	}
 	if f.value == nil {
-		panic(fmt.Sprintf("no value defined for --%s", f.name))
+		return fmt.Errorf("no value defined for --%s", f.name)
 	}
 	if f.envar != "" {
 		if v := os.Getenv(f.envar); v != "" {
@@ -180,9 +183,10 @@ func (f *FlagClause) init() {
 	}
 	if f.defaultValue != "" {
 		if err := f.value.Set(f.defaultValue); err != nil {
-			Fatalf("default value for --%s is invalid: %s", f.name, err)
+			return fmt.Errorf("default value for --%s is invalid: %s", f.name, err)
 		}
 	}
+	return nil
 }
 
 // Dispatch to the given function when the flag is parsed.

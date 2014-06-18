@@ -47,29 +47,32 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 	return tokens, nil
 }
 
-func (a *argGroup) init() {
+func (a *argGroup) init() error {
 	required := 0
 	seen := map[string]struct{}{}
 	previousArgMustBeLast := false
 	for i, arg := range a.args {
 		if previousArgMustBeLast {
-			panic(fmt.Sprintf("Args() can't be followed by another argument '%s'", arg.name))
+			return fmt.Errorf("Args() can't be followed by another argument '%s'", arg.name)
 		}
 		if arg.consumesRemainder() {
 			previousArgMustBeLast = true
 		}
 		if _, ok := seen[arg.name]; ok {
-			panic(fmt.Sprintf("duplicate argument '%s'", arg.name))
+			return fmt.Errorf("duplicate argument '%s'", arg.name)
 		}
 		seen[arg.name] = struct{}{}
 		if arg.required && required != i {
-			panic("required arguments found after non-required")
+			return fmt.Errorf("required arguments found after non-required")
 		}
 		if arg.required {
 			required++
 		}
-		arg.init()
+		if err := arg.init(); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 type ArgClause struct {
@@ -113,18 +116,19 @@ func (a *ArgClause) Dispatch(dispatch Dispatch) *ArgClause {
 	return a
 }
 
-func (a *ArgClause) init() {
+func (a *ArgClause) init() error {
 	if a.required && a.defaultValue != "" {
-		panic(fmt.Sprintf("required argument '%s' with unusable default value", a.name))
+		return fmt.Errorf("required argument '%s' with unusable default value", a.name)
 	}
 	if a.value == nil {
-		panic(fmt.Sprintf("no parser defined for arg '%s'", a.name))
+		return fmt.Errorf("no parser defined for arg '%s'", a.name)
 	}
 	if a.defaultValue != "" {
 		if err := a.value.Set(a.defaultValue); err != nil {
-			panic(fmt.Sprintf("invalid default value '%s' for argument '%s'", a.defaultValue, a.name))
+			return fmt.Errorf("invalid default value '%s' for argument '%s'", a.defaultValue, a.name)
 		}
 	}
+	return nil
 }
 
 func (a *ArgClause) parse(tokens tokens) (tokens, error) {
