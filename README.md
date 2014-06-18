@@ -16,6 +16,7 @@ Kingpin uses [gopkgin.in](https://gopkg.in/alecthomas/kingpin.v1) for versioning
 Usage:
 
 ```go
+import "gopkg.in/alecthomas/kingpin.v1"
 ```
 
 ## Changes
