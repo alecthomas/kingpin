@@ -11,7 +11,7 @@
 
 ## Versions
 
-Kingpin uses [gopkgin.in](https://gopkg.in/alecthomas/kingpin.v1) for versioning.
+Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin.v1) for versioning.
 
 Usage:
 
