@@ -338,15 +338,17 @@ func (e *fileStatValue) String() string {
 // -- os.File value
 
 type fileValue struct {
-	f **os.File
+	f    **os.File
+	flag int
+	perm os.FileMode
 }
 
-func newFileValue(p **os.File) *fileValue {
-	return &fileValue{p}
+func newFileValue(p **os.File, flag int, perm os.FileMode) *fileValue {
+	return &fileValue{p, flag, perm}
 }
 
 func (f *fileValue) Set(value string) error {
-	if fd, err := os.Open(value); err != nil {
+	if fd, err := os.OpenFile(value, f.flag, f.perm); err != nil {
 		return err
 	} else {
 		*f.f = fd

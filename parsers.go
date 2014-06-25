@@ -129,10 +129,17 @@ func (p *parserMixin) ExistingDir() (target *string) {
 	return
 }
 
-// File sets the parser to one that requires and opens a valid os.File.
+// File returns an os.File against an existing file.
 func (p *parserMixin) File() (target **os.File) {
 	target = new(*os.File)
 	p.FileVar(target)
+	return
+}
+
+// File attempts to open a File with os.OpenFile(flag, perm).
+func (p *parserMixin) OpenFile(flag int, perm os.FileMode) (target **os.File) {
+	target = new(*os.File)
+	p.OpenFileVar(target, flag, perm)
 	return
 }
 
@@ -213,9 +220,14 @@ func (p *parserMixin) ExistingDirVar(target *string) {
 	}))
 }
 
-// File sets the parser to one that requires and opens a valid os.File.
+// FileVar opens an existing file.
 func (p *parserMixin) FileVar(target **os.File) {
-	p.SetValue(newFileValue(target))
+	p.SetValue(newFileValue(target, os.O_RDONLY, 0))
+}
+
+// OpenFileVar calls os.OpenFile(flag, perm)
+func (p *parserMixin) OpenFileVar(target **os.File, flag int, perm os.FileMode) {
+	p.SetValue(newFileValue(target, flag, perm))
 }
 
 // URL provides a valid, parsed url.URL.
