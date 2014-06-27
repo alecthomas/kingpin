@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"gopkg.in/alecthomas/kingpin.v0"
+	"github.com/alecthomas/kingpin"
 )
 
 var (

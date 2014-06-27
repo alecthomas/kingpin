@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/alecthomas/kingpin.v0"
+	"github.com/alecthomas/kingpin"
 )
 
 var (
@@ -89,6 +89,7 @@ func applyPOST() error {
 }
 
 func main() {
+	kingpin.CommandLine.Help = "An example implementation of curl."
 	switch kingpin.Parse() {
 	case "get":
 		kingpin.FatalIfError(apply("GET", (*getURL).String()), "GET failed")

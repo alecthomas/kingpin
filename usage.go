@@ -8,6 +8,29 @@ import (
 	"strings"
 )
 
+func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string) {
+	// Find size of first column.
+	s := 0
+	for _, row := range rows {
+		if c := len(row[0]); c > s {
+			s = c
+		}
+	}
+
+	indentStr := strings.Repeat(" ", indent)
+	offsetStr := strings.Repeat(" ", s+padding)
+
+	for _, row := range rows {
+		buf := bytes.NewBuffer(nil)
+		doc.ToText(buf, row[1], "", "", width-s-padding-indent)
+		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
+		fmt.Fprintf(w, "%s%-*s%*s%s\n", indentStr, s, row[0], padding, "", lines[0])
+		for _, line := range lines[1:] {
+			fmt.Fprintf(w, "%s%s%s\n", indentStr, offsetStr, line)
+		}
+	}
+}
+
 func (c *Application) Usage(w io.Writer) {
 	c.writeHelp(guessWidth(w), w)
 }
@@ -32,14 +55,23 @@ func (c *Application) writeHelp(width int, w io.Writer) {
 		s = append(s, "<command>", "[<flags>]", "[<args> ...]")
 	}
 
-	helpSummary := ""
-	if c.Help != "" {
-		helpSummary = "\n\n" + c.Help
-	}
-	fmt.Fprintf(w, "usage: %s%s\n", strings.Join(s, " "), helpSummary)
+	prefix := "usage: "
+	usage := strings.Join(s, " ")
+	buf := bytes.NewBuffer(nil)
+	doc.ToText(buf, usage, "", "", width-len(prefix))
+	lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 
-	c.flagGroup.writeHelp(2, width, w)
-	c.argGroup.writeHelp(2, width, w)
+	fmt.Fprintf(w, "%s%s\n", prefix, lines[0])
+	for _, l := range lines[1:] {
+		fmt.Fprintf(w, "%*s%s\n", len(prefix), "", l)
+	}
+	if c.Help != "" {
+		fmt.Fprintf(w, "\n")
+		doc.ToText(w, c.Help, "", "", width)
+	}
+
+	c.flagGroup.writeHelp(width, w)
+	c.argGroup.writeHelp(width, w)
 
 	if len(c.commands) > 0 {
 		fmt.Fprintf(w, "\nCommands:\n")
@@ -60,33 +92,18 @@ func (c *Application) helpCommands(width int, w io.Writer) {
 	}
 }
 
-func (f *flagGroup) writeHelp(indent, width int, w io.Writer) {
+func (f *flagGroup) writeHelp(width int, w io.Writer) {
 	if len(f.long) == 0 {
 		return
 	}
 
 	fmt.Fprintf(w, "\nFlags:\n")
-	l := 0
+
+	rows := [][2]string{}
 	for _, flag := range f.long {
-		if fl := len(formatFlag(flag)); fl > l {
-			l = fl
-		}
+		rows = append(rows, [2]string{formatFlag(flag), flag.help})
 	}
-
-	l += 3 + indent
-
-	indentStr := strings.Repeat(" ", l)
-
-	for _, flag := range f.flagOrder {
-		prefix := fmt.Sprintf("  %-*s", l-2, formatFlag(flag))
-		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, flag.help, "", "", width-l)
-		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
-		fmt.Fprintf(w, "%s%s\n", prefix, lines[0])
-		for _, line := range lines[1:] {
-			fmt.Fprintf(w, "%s%s\n", indentStr, line)
-		}
-	}
+	formatTwoColumns(w, 2, 2, width, rows)
 }
 
 func (f *flagGroup) gatherFlagSummary() (out []string) {
@@ -106,46 +123,28 @@ func (f *flagGroup) gatherFlagSummary() (out []string) {
 	return
 }
 
-func (a *argGroup) writeHelp(indent, width int, w io.Writer) {
+func (a *argGroup) writeHelp(width int, w io.Writer) {
 	if len(a.args) == 0 {
 		return
 	}
 
 	fmt.Fprintf(w, "\nArgs:\n")
-	l := 0
+
+	rows := [][2]string{}
 	for _, arg := range a.args {
-		if al := len(arg.name) + 2; al > l {
-			l = al
-			if !arg.required {
-				l += 2
-			}
-		}
-	}
-
-	l += 3 + indent
-
-	indentStr := strings.Repeat(" ", l)
-
-	for _, arg := range a.args {
-		argString := "<" + arg.name + ">"
+		s := "<" + arg.name + ">"
 		if !arg.required {
-			argString = "[" + argString + "]"
+			s = "[" + s + "]"
 		}
-		prefix := fmt.Sprintf("  %-*s", l-2, argString)
-		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, arg.help, "", "", width-l)
-		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
-		fmt.Fprintf(w, "%s%s\n", prefix, lines[0])
-		for _, line := range lines[1:] {
-			fmt.Fprintf(w, "%s%s\n", indentStr, line)
-		}
+		rows = append(rows, [2]string{s, arg.help})
 	}
 
+	formatTwoColumns(w, 2, 2, width, rows)
 }
 
 func (c *CmdClause) writeHelp(width int, w io.Writer) {
-	c.flagGroup.writeHelp(2, width, w)
-	c.argGroup.writeHelp(2, width, w)
+	c.flagGroup.writeHelp(width, w)
+	c.argGroup.writeHelp(width, w)
 }
 
 func formatArgsAndFlags(name string, args *argGroup, flags *flagGroup) string {
