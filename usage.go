@@ -12,7 +12,7 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 	// Find size of first column.
 	s := 0
 	for _, row := range rows {
-		if c := len(row[0]); c > s {
+		if c := len(row[0]); c > s && c < 20 {
 			s = c
 		}
 	}
@@ -24,7 +24,11 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 		buf := bytes.NewBuffer(nil)
 		doc.ToText(buf, row[1], "", "", width-s-padding-indent)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
-		fmt.Fprintf(w, "%s%-*s%*s%s\n", indentStr, s, row[0], padding, "", lines[0])
+		fmt.Fprintf(w, "%s%-*s%*s", indentStr, s, row[0], padding, "")
+		if len(row[0]) > 20 {
+			fmt.Fprintf(w, "\n%s%s", indentStr, offsetStr)
+		}
+		fmt.Fprintf(w, "%s\n", lines[0])
 		for _, line := range lines[1:] {
 			fmt.Fprintf(w, "%s%s%s\n", indentStr, offsetStr, line)
 		}
