@@ -34,22 +34,22 @@ func TestRequiredFlags(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestInvalidDefaultFlagValuePanics(t *testing.T) {
+func TestInvalidDefaultFlagValueErrors(t *testing.T) {
 	c := New("test", "test")
 	c.Flag("foo", "foo").Default("a").Int()
 	_, err := c.Parse([]string{})
 	assert.Error(t, err)
 }
 
-func TestInvalidDefaultArgValuePanics(t *testing.T) {
+func TestInvalidDefaultArgValueErrors(t *testing.T) {
 	c := New("test", "test")
 	cmd := c.Command("cmd", "cmd")
 	cmd.Arg("arg", "arg").Default("one").Int()
-	_, err := c.Parse([]string{})
+	_, err := c.Parse([]string{"cmd"})
 	assert.Error(t, err)
 }
 
-func TestArgsRequiredAfterNonRequiredPanics(t *testing.T) {
+func TestArgsRequiredAfterNonRequiredErrors(t *testing.T) {
 	c := New("test", "test")
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").String()
@@ -65,7 +65,6 @@ func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
 	cmd.Arg("b", "b").Required().String()
 	cmd.Arg("c", "c").String()
 	cmd.Arg("d", "d").String()
-
 	assert.NotPanics(t, func() { c.Parse([]string{}) })
 }
 

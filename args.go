@@ -44,6 +44,17 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 			consumed++
 		}
 	}
+
+	// Set defaults for all remaining args.
+	for i < len(a.args) {
+		arg := a.args[i]
+		if arg.defaultValue != "" {
+			if err := arg.value.Set(arg.defaultValue); err != nil {
+				return nil, fmt.Errorf("invalid default value '%s' for argument '%s'", arg.defaultValue, arg.name)
+			}
+		}
+		i++
+	}
 	return tokens, nil
 }
 
@@ -122,11 +133,6 @@ func (a *ArgClause) init() error {
 	}
 	if a.value == nil {
 		return fmt.Errorf("no parser defined for arg '%s'", a.name)
-	}
-	if a.defaultValue != "" {
-		if err := a.value.Set(a.defaultValue); err != nil {
-			return fmt.Errorf("invalid default value '%s' for argument '%s'", a.defaultValue, a.name)
-		}
 	}
 	return nil
 }

@@ -36,3 +36,12 @@ func TestArgMultipleRequired(t *testing.T) {
 	_, err = a.parse(Tokenize([]string{"A", "B"}))
 	assert.NoError(t, err)
 }
+
+func TestInvalidArgsDefaultCanBeOverridden(t *testing.T) {
+	a := newArgGroup()
+	a.Arg("a", "").Default("invalid").Bool()
+	assert.NoError(t, a.init())
+	tokens := Tokenize([]string{})
+	_, err := a.parse(tokens)
+	assert.Error(t, err)
+}

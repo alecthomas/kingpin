@@ -41,10 +41,13 @@ func (f *flagGroup) init() error {
 
 func (f *flagGroup) parse(tokens tokens, ignoreRequired bool) (tokens, error) {
 	// Track how many required flags we've seen.
-	remaining := make(map[string]struct{})
+	required := make(map[string]struct{})
+	// Keep track of any flags that we need to initialise with defaults.
+	defaults := make(map[string]struct{})
 	for k, flag := range f.long {
+		defaults[k] = struct{}{}
 		if !ignoreRequired && flag.needsValue() {
-			remaining[k] = struct{}{}
+			required[k] = struct{}{}
 		}
 	}
 
@@ -81,7 +84,8 @@ loop:
 				}
 			}
 
-			delete(remaining, flag.name)
+			delete(required, flag.name)
+			delete(defaults, flag.name)
 
 			fb, ok := flag.value.(boolFlag)
 			if ok && fb.IsBoolFlag() {
@@ -118,16 +122,26 @@ loop:
 	}
 
 	// Check that required flags were provided.
-	if len(remaining) == 1 {
-		for k := range remaining {
+	if len(required) == 1 {
+		for k := range required {
 			return nil, fmt.Errorf("required flag --%s not provided", k)
 		}
-	} else if len(remaining) > 1 {
-		flags := make([]string, 0, len(remaining))
-		for k := range remaining {
+	} else if len(required) > 1 {
+		flags := make([]string, 0, len(required))
+		for k := range required {
 			flags = append(flags, "--"+k)
 		}
 		return nil, fmt.Errorf("required flags %s not provided", strings.Join(flags, ", "))
+	}
+
+	// Apply defaults to all unprocessed flags.
+	for k := range defaults {
+		flag := f.long[k]
+		if flag.defaultValue != "" {
+			if err := flag.value.Set(flag.defaultValue); err != nil {
+				return nil, fmt.Errorf("default value for --%s is invalid: %s", flag.name, err)
+			}
+		}
 	}
 	return tokens, nil
 }
@@ -179,11 +193,6 @@ func (f *FlagClause) init() error {
 	if f.envar != "" {
 		if v := os.Getenv(f.envar); v != "" {
 			f.defaultValue = v
-		}
-	}
-	if f.defaultValue != "" {
-		if err := f.value.Set(f.defaultValue); err != nil {
-			return fmt.Errorf("default value for --%s is invalid: %s", f.name, err)
 		}
 	}
 	return nil

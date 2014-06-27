@@ -36,3 +36,13 @@ func TestNegateNonBool(t *testing.T) {
 	_, err := fg.parse(tokens, false)
 	assert.Error(t, err)
 }
+
+func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
+	fg := newFlagGroup()
+	f := fg.Flag("a", "").Default("invalid")
+	f.Bool()
+	assert.NoError(t, fg.init())
+	tokens := Tokenize([]string{})
+	_, err := fg.parse(tokens, false)
+	assert.Error(t, err)
+}
