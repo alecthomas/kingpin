@@ -104,7 +104,7 @@ func (f *flagGroup) writeHelp(width int, w io.Writer) {
 	fmt.Fprintf(w, "\nFlags:\n")
 
 	rows := [][2]string{}
-	for _, flag := range f.long {
+	for _, flag := range f.flagOrder {
 		rows = append(rows, [2]string{formatFlag(flag), flag.help})
 	}
 	formatTwoColumns(w, 2, 2, width, rows)
