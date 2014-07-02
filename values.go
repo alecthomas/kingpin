@@ -411,3 +411,31 @@ func (u *urlListValue) String() string {
 	}
 	return strings.Join(out, ",")
 }
+
+// A flag whose value must be in a set of options.
+type enumValue struct {
+	value   *string
+	options []string
+}
+
+func newEnumFlag(target *string, options ...string) *enumValue {
+	value := new(string)
+	return &enumValue{
+		value:   value,
+		options: options,
+	}
+}
+
+func (a *enumValue) String() string {
+	return *a.value + " [" + strings.Join(a.options, "|") + "]"
+}
+
+func (a *enumValue) Set(value string) error {
+	for _, v := range a.options {
+		if v == value {
+			*a.value = value
+			return nil
+		}
+	}
+	return fmt.Errorf("must be one of %s, got '%s'", strings.Join(a.options, ","), value)
+}
