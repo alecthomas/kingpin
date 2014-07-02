@@ -176,9 +176,9 @@ func (f *FlagClause) formatPlaceHolder() string {
 	}
 	if f.defaultValue != "" {
 		if _, ok := f.value.(*stringValue); ok {
-			return fmt.Sprintf("%q", f.value)
+			return fmt.Sprintf("%q", f.defaultValue)
 		}
-		return f.value.String()
+		return f.defaultValue
 	}
 	return strings.ToUpper(f.name)
 }
