@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+
+	"github.com/alecthomas/units"
 )
 
 type Settings interface {
@@ -81,6 +83,13 @@ func (p *parserMixin) Float() (target *float64) {
 func (p *parserMixin) Duration() (target *time.Duration) {
 	target = new(time.Duration)
 	p.DurationVar(target)
+	return
+}
+
+// Bytes parses numeric byte units. eg. 1.5KB
+func (p *parserMixin) Bytes() (target *units.Base2Bytes) {
+	target = new(units.Base2Bytes)
+	p.BytesVar(target)
 	return
 }
 
@@ -193,6 +202,11 @@ func (p *parserMixin) FloatVar(target *float64) {
 // Duration sets the parser to a time.Duration parser.
 func (p *parserMixin) DurationVar(target *time.Duration) {
 	p.SetValue(newDurationValue(time.Duration(0), target))
+}
+
+// BytesVar parses numeric byte units. eg. 1.5KB
+func (p *parserMixin) BytesVar(target *units.Base2Bytes) {
+	p.SetValue(newBytesValue(units.Base2Bytes(0), target))
 }
 
 // IP sets the parser to a net.IP parser.

@@ -22,10 +22,7 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 	for i < len(a.args) {
 		arg := a.args[i]
 		token := tokens.Peek()
-		if token.IsFlag() {
-			return nil, fmt.Errorf("unknown flag '%s'", token)
-		}
-		if token.Type != TokenArg {
+		if token.Type == TokenEOF {
 			if consumed == 0 && arg.required {
 				return nil, fmt.Errorf("'%s' is required", arg.name)
 			}

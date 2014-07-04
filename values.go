@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/alecthomas/units"
 )
 
 // NOTE: Most of the base type values were lifted from:
@@ -224,9 +226,9 @@ func newStringMapValue(p *map[string]string) *stringMapValue {
 }
 
 func (s *stringMapValue) Set(value string) error {
-	parts := strings.SplitN(value, "=", 2)
+	parts := strings.SplitN(value, ":", 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("expected KEY=VALUE got '%s'", value)
+		return fmt.Errorf("expected KEY:VALUE got '%s'", value)
 	}
 	(*s)[parts[0]] = parts[1]
 	return nil
@@ -439,3 +441,21 @@ func (a *enumValue) Set(value string) error {
 	}
 	return fmt.Errorf("must be one of %s, got '%s'", strings.Join(a.options, ","), value)
 }
+
+// -- units.Base2Bytes Value
+type bytesValue units.Base2Bytes
+
+func newBytesValue(val units.Base2Bytes, p *units.Base2Bytes) *bytesValue {
+	*p = val
+	return (*bytesValue)(p)
+}
+
+func (d *bytesValue) Set(s string) error {
+	v, err := units.ParseBase2Bytes(s)
+	*d = bytesValue(v)
+	return err
+}
+
+func (d *bytesValue) Get() interface{} { return units.Base2Bytes(*d) }
+
+func (d *bytesValue) String() string { return (*units.Base2Bytes)(d).String() }
