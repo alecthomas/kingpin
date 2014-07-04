@@ -20,8 +20,8 @@ func TestParseStrings(t *testing.T) {
 func TestParseStringMap(t *testing.T) {
 	p := parserMixin{}
 	v := p.StringMap()
-	p.value.Set("a=b")
-	p.value.Set("b=c")
+	p.value.Set("a:b")
+	p.value.Set("b:c")
 	assert.Equal(t, map[string]string{"a": "b", "b": "c"}, *v)
 }
 
