@@ -1,6 +1,9 @@
 package kingpin
 
+import "os"
+
 type CmdClause struct {
+	app *Application
 	*flagGroup
 	*argGroup
 	name     string
@@ -8,13 +11,22 @@ type CmdClause struct {
 	dispatch Dispatch
 }
 
-func newCommand(name, help string) *CmdClause {
-	return &CmdClause{
+func newCommand(app *Application, name, help string) *CmdClause {
+	c := &CmdClause{
+		app:       app,
 		flagGroup: newFlagGroup(),
 		argGroup:  newArgGroup(),
 		name:      name,
 		help:      help,
 	}
+	c.Flag("help", "Show help.").Dispatch(c.onFlagHelp).Hidden().Bool()
+	return c
+}
+
+func (c *CmdClause) onFlagHelp() error {
+	c.app.CommandUsage(os.Stderr, c.name)
+	os.Exit(0)
+	return nil
 }
 
 func (c *CmdClause) Dispatch(dispatch Dispatch) *CmdClause {

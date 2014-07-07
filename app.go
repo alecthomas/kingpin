@@ -67,7 +67,7 @@ func (a *Application) onFlagHelp() error {
 
 // Command adds a new top-level command to the application.
 func (a *Application) Command(name, help string) *CmdClause {
-	cmd := newCommand(name, help)
+	cmd := newCommand(a, name, help)
 	a.commands[name] = cmd
 	a.commandOrder = append(a.commandOrder, cmd)
 	return cmd

@@ -97,7 +97,7 @@ func (c *Application) helpCommands(width int, w io.Writer) {
 }
 
 func (f *flagGroup) writeHelp(width int, w io.Writer) {
-	if len(f.long) == 0 {
+	if f.visibleFlags() == 0 {
 		return
 	}
 

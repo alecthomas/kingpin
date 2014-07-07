@@ -146,6 +146,16 @@ loop:
 	return tokens, nil
 }
 
+func (f *flagGroup) visibleFlags() int {
+	count := 0
+	for _, flag := range f.long {
+		if !flag.hidden {
+			count++
+		}
+	}
+	return count
+}
+
 // FlagClause is a fluid interface used to build flags.
 type FlagClause struct {
 	parserMixin
@@ -156,6 +166,7 @@ type FlagClause struct {
 	defaultValue string
 	placeholder  string
 	dispatch     Dispatch
+	hidden       bool
 }
 
 func newFlag(name, help string) *FlagClause {
@@ -222,6 +233,12 @@ func (f *FlagClause) OverrideDefaultFromEnvar(envar string) *FlagClause {
 // then fall back on the capitalized flag name.
 func (f *FlagClause) PlaceHolder(placeholder string) *FlagClause {
 	f.placeholder = placeholder
+	return f
+}
+
+// Hidden hides a flag from usage but still allows it to be used.
+func (f *FlagClause) Hidden() *FlagClause {
+	f.hidden = true
 	return f
 }
 
