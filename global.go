@@ -29,10 +29,7 @@ func Arg(name, help string) *ArgClause {
 // Parse and return the selected command. Will exit with a non-zero status if
 // an error was encountered.
 func Parse() string {
-	selected, err := CommandLine.Parse(os.Args[1:])
-	if err != nil {
-		Fatalf("%s", err)
-	}
+	selected := MustParse(CommandLine.Parse(os.Args[1:]))
 	if selected == "" && len(CommandLine.commands) > 0 {
 		Usage()
 		os.Exit(0)
@@ -73,7 +70,7 @@ func Usage() {
 // MustParse can be used with app.Parse(args) to exit with an error if parsing fails.
 func MustParse(command string, err error) string {
 	if err != nil {
-		Fatalf("%s", err)
+		Fatalf("%s, try --help", err)
 	}
 	return command
 }
