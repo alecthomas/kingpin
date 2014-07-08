@@ -21,6 +21,22 @@ import "gopkg.in/alecthomas/kingpin.v1"
 
 ## Changes
 
+- *2014-07-08* -- Stable v1.2.0 release.
+    - Pass any value through to `Strings()` when final argument.
+      Allows for values that look like flags to be processed.
+    - Allow `--help` to be used with commands.
+    - Support `Hidden()` flags.
+    - Parser for [units.Base2Bytes](https://github.com/alecthomas/units)
+      type. Allows for flags like `--ram=512MB` or `--ram=1GB`.
+    - Add an `Enum()` value, allowing only one of a set of values
+      to be selected. eg. `Flag(...).Enum("debug", "info", "warning")`.
+
+- *2014-06-27* -- Stable v1.1.0 release.
+    - Bug fixes.
+    - Always return an error (rather than panicing) when misconfigured.
+    - `OpenFile(flag, perm)` value type added, for finer control over opening files.
+    - Significantly improved usage formatting.
+
 - *2014-06-19* -- Stable v1.0.0 release.
     - Support [cumulative positional](#consuming-all-remaining-arguments) arguments.
     - Return error rather than panic when there are fatal errors not caught by
