@@ -420,16 +420,15 @@ type enumValue struct {
 	options []string
 }
 
-func newEnumFlag(target *string, options ...string) *enumValue {
-	value := new(string)
+func newEnumFlag(target **string, options ...string) *enumValue {
 	return &enumValue{
-		value:   value,
+		value:   *target,
 		options: options,
 	}
 }
 
 func (a *enumValue) String() string {
-	return *a.value + " [" + strings.Join(a.options, "|") + "]"
+	return *a.value
 }
 
 func (a *enumValue) Set(value string) error {

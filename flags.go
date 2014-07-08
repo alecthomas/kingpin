@@ -41,13 +41,13 @@ func (f *flagGroup) init() error {
 
 func (f *flagGroup) parse(tokens tokens, ignoreRequired bool) (tokens, error) {
 	// Track how many required flags we've seen.
-	required := make(map[string]struct{})
+	required := make(map[string]bool)
 	// Keep track of any flags that we need to initialise with defaults.
-	defaults := make(map[string]struct{})
+	defaults := make(map[string]bool)
 	for k, flag := range f.long {
-		defaults[k] = struct{}{}
+		defaults[k] = true
 		if !ignoreRequired && flag.needsValue() {
-			required[k] = struct{}{}
+			required[k] = true
 		}
 	}
 
