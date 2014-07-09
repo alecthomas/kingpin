@@ -51,7 +51,7 @@ func (t tokens) String() string {
 	for _, tok := range t {
 		out = append(out, tok.String())
 	}
-	return "Tokens{" + strings.Join(out, ", ") + "}"
+	return strings.Join(out, " ")
 }
 
 func (t tokens) Next() (*token, tokens) {

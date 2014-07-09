@@ -79,7 +79,15 @@ func (a *Application) Parse(args []string) (command string, err error) {
 		return "", err
 	}
 	tokens := Tokenize(args)
-	return a.parse(tokens)
+	tokens, command, err = a.parse(tokens)
+
+	if len(tokens) == 1 {
+		return "", fmt.Errorf("unexpected argument '%s'", tokens)
+	} else if len(tokens) > 0 {
+		return "", fmt.Errorf("unexpected arguments '%s'", tokens)
+	}
+
+	return command, err
 }
 
 // Version adds a --version flag for displaying the application version.
@@ -122,38 +130,38 @@ func (c *Application) onCommandHelp() error {
 	return nil
 }
 
-func (c *Application) parse(tokens tokens) (command string, err error) {
+func (c *Application) parse(tokens tokens) (tokens, string, error) {
 	// Special-case "help" to avoid issues with required flags.
 	runHelp := (tokens.Peek().Value == "help")
 
+	var err error
+	var token *token
 	tokens, err = c.flagGroup.parse(tokens, runHelp)
 	if err != nil {
-		return "", err
+		return tokens, "", err
 	}
 
+	selected := ""
+
+	// Parse arguments or commands.
 	if len(c.args) > 0 {
 		tokens, err = c.argGroup.parse(tokens)
-		if err != nil {
-			return "", err
-		}
 	} else {
-		token, tokens := tokens.Next()
+		token, tokens = tokens.Next()
 		switch token.Type {
 		case TokenArg:
 			cmd, ok := c.commands[token.Value]
 			if !ok {
-				return "", fmt.Errorf("unknown command '%s'", token)
+				return tokens, "", fmt.Errorf("unknown command '%s'", token)
 			}
 			tokens, err = cmd.parse(tokens)
 			if err != nil {
-				return "", err
+				return tokens, "", err
 			}
-			return cmd.name, nil
+			selected = cmd.name
 
-		case TokenEOF:
 		default:
-			return "", fmt.Errorf("unexpected '%s'", token)
 		}
 	}
-	return "", nil
+	return tokens, selected, nil
 }

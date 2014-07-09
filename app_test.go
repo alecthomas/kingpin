@@ -96,3 +96,27 @@ func TestTopLevelArgCantBeUsedWithCommands(t *testing.T) {
 	_, err := c.Parse([]string{})
 	assert.Error(t, err)
 }
+
+func TestTooManyArgs(t *testing.T) {
+	a := New("test", "test")
+	a.Arg("a", "").String()
+	assert.NoError(t, a.init())
+	toks := Tokenize([]string{"a", "b"})
+	toks, _, err := a.parse(toks)
+	assert.NoError(t, err)
+	assert.Equal(t, tokens{&token{TokenArg, "b"}}, toks)
+	_, err = a.Parse([]string{"a", "b"})
+	assert.Error(t, err)
+}
+
+func TestTooManyArgsAfterCommand(t *testing.T) {
+	a := New("test", "test")
+	a.Command("a", "")
+	assert.NoError(t, a.init())
+	toks := Tokenize([]string{"a", "b"})
+	toks, _, err := a.parse(toks)
+	assert.NoError(t, err)
+	assert.Equal(t, tokens{&token{TokenArg, "b"}}, toks)
+	_, err = a.Parse([]string{"a", "b"})
+	assert.Error(t, err)
+}
