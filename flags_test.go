@@ -12,7 +12,7 @@ func TestBool(t *testing.T) {
 	b := f.Bool()
 	fg.init()
 	tokens := Tokenize([]string{"--b"})
-	fg.parse(tokens, true)
+	fg.parse(tokens, false)
 	assert.True(t, *b)
 }
 
@@ -44,5 +44,17 @@ func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
 	assert.NoError(t, fg.init())
 	tokens := Tokenize([]string{})
 	_, err := fg.parse(tokens, false)
+	assert.Error(t, err)
+}
+
+func TestRequiredFlag(t *testing.T) {
+	fg := newFlagGroup()
+	fg.Flag("a", "").Required().Bool()
+	assert.NoError(t, fg.init())
+	tokens := Tokenize([]string{"--a"})
+	tokens, err := fg.parse(tokens, false)
+	assert.NoError(t, err)
+	tokens = Tokenize([]string{})
+	tokens, err = fg.parse(tokens, false)
 	assert.Error(t, err)
 }

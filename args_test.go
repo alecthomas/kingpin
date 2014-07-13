@@ -16,7 +16,7 @@ func TestArgRemainder(t *testing.T) {
 	assert.Equal(t, args, *v)
 }
 
-func TestArgRemainderPanicsWhenNotLast(t *testing.T) {
+func TestArgRemainderErrorsWhenNotLast(t *testing.T) {
 	a := newArgGroup()
 	a.Arg("test", "").Strings()
 	a.Arg("test2", "").String()
