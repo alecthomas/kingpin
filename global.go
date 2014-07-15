@@ -1,7 +1,6 @@
 package kingpin
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 )
@@ -39,27 +38,20 @@ func Parse() string {
 
 // Fatalf prints an error message to stderr and exits.
 func Fatalf(format string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "error: "+format+"\n", args...)
+	CommandLine.Errorf(os.Stderr, format, args...)
 	os.Exit(1)
 }
 
 // FatalIfError prints an error and exits if err is not nil. The error is printed
 // with the given prefix.
 func FatalIfError(err error, prefix string) {
-	if err != nil {
-		if prefix != "" {
-			prefix += ": "
-		}
-		Fatalf(prefix+"%s", err)
-	}
+	CommandLine.FatalIfError(os.Stderr, err, prefix)
 }
 
 // UsageErrorf prints an error message followed by usage information, then
 // exits with a non-zero status.
 func UsageErrorf(format string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "error: "+format+"\n", args...)
-	Usage()
-	os.Exit(1)
+	CommandLine.UsageErrorf(os.Stderr, format, args...)
 }
 
 // Usage prints usage to stderr.
