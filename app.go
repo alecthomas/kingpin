@@ -81,6 +81,9 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	}
 	tokens := Tokenize(args)
 	tokens, command, err = a.parse(tokens)
+	if err != nil {
+		return "", err
+	}
 
 	if len(tokens) == 1 {
 		return "", fmt.Errorf("unexpected argument '%s'", tokens)
@@ -164,7 +167,7 @@ func (a *Application) parse(tokens tokens) (tokens, string, error) {
 		default:
 		}
 	}
-	return tokens, selected, nil
+	return tokens, selected, err
 }
 
 // Errorf prints an error message to w.
