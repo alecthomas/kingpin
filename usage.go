@@ -8,6 +8,10 @@ import (
 	"strings"
 )
 
+var (
+	preIndent = "  "
+)
+
 func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string) {
 	// Find size of first column.
 	s := 0
@@ -22,7 +26,7 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 
 	for _, row := range rows {
 		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, row[1], "", "", width-s-padding-indent)
+		doc.ToText(buf, row[1], "", preIndent, width-s-padding-indent)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 		fmt.Fprintf(w, "%s%-*s%*s", indentStr, s, row[0], padding, "")
 		if len(row[0]) > 20 {
@@ -62,7 +66,7 @@ func (c *Application) writeHelp(width int, w io.Writer) {
 	prefix := "usage: "
 	usage := strings.Join(s, " ")
 	buf := bytes.NewBuffer(nil)
-	doc.ToText(buf, usage, "", "", width-len(prefix))
+	doc.ToText(buf, usage, "", preIndent, width-len(prefix))
 	lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 
 	fmt.Fprintf(w, "%s%s\n", prefix, lines[0])
@@ -71,7 +75,7 @@ func (c *Application) writeHelp(width int, w io.Writer) {
 	}
 	if c.Help != "" {
 		fmt.Fprintf(w, "\n")
-		doc.ToText(w, c.Help, "", "", width)
+		doc.ToText(w, c.Help, "", preIndent, width)
 	}
 
 	c.flagGroup.writeHelp(width, w)
@@ -87,7 +91,7 @@ func (c *Application) helpCommands(width int, w io.Writer) {
 	for _, cmd := range c.commandOrder {
 		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup))
 		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, cmd.help, "", "", width-4)
+		doc.ToText(buf, cmd.help, "", preIndent, width-4)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 		for _, line := range lines {
 			fmt.Fprintf(w, "    %s\n", line)
