@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -225,10 +226,12 @@ func newStringMapValue(p *map[string]string) *stringMapValue {
 	return (*stringMapValue)(p)
 }
 
+var stringMapRegex = regexp.MustCompile("[:=]")
+
 func (s *stringMapValue) Set(value string) error {
-	parts := strings.SplitN(value, ":", 2)
+	parts := stringMapRegex.Split(value, 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("expected KEY:VALUE got '%s'", value)
+		return fmt.Errorf("expected KEY=VALUE got '%s'", value)
 	}
 	(*s)[parts[0]] = parts[1]
 	return nil
