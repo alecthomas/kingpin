@@ -117,7 +117,11 @@ func (f *flagGroup) writeHelp(width int, w io.Writer) {
 }
 
 func (f *flagGroup) gatherFlagSummary() (out []string) {
+	count := 0
 	for _, flag := range f.flagOrder {
+		if flag.name != "help" {
+			count++
+		}
 		if flag.required {
 			fb, ok := flag.value.(boolFlag)
 			if ok && fb.IsBoolFlag() {
@@ -127,7 +131,7 @@ func (f *flagGroup) gatherFlagSummary() (out []string) {
 			}
 		}
 	}
-	if len(f.long) != len(out) {
+	if count != len(out) {
 		out = append(out, "[<flags>]")
 	}
 	return
