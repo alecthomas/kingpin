@@ -176,6 +176,31 @@ func main() {
 
 ## Reference Documentation
 
+## Sub-commands
+
+Kingpin supports nested sub-commands, with separate flag and positional
+arguments per sub-command. Note that positional arguments may only occur after
+sub-commands.
+
+For example:
+
+```go
+var (
+  deleteCommand     = kingpin.Command("delete", "Delete an object.")
+  deleteUserCommand = deleteCommand.Command("user", "Delete a user.")
+  deleteUserUIDFlag = deleteUserCommand.Flag("uid", "Delete user by UID rather than username.")
+  deleteUserUsername = deleteUserCommand.Arg("username", "Username to delete.")
+  deletePostCommand = deleteCommand.Command("post", "Delete a post.")
+)
+
+func main() {
+  switch kingpin.Parse() {
+  case "delete user":
+  case "delete post":
+  }
+}
+```
+
 ### Custom Parsers
 
 Kingpin supports both flag and positional argument parsers for converting to

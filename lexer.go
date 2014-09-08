@@ -9,11 +9,11 @@ const (
 	TokenShort tokenType = iota
 	TokenLong
 	TokenArg
-	TokenEOF
+	TokenEOL
 )
 
 var (
-	TokenEOFMarker = token{TokenEOF, ""}
+	TokenEOLMarker = token{TokenEOL, ""}
 )
 
 type token struct {
@@ -26,7 +26,7 @@ func (t *token) IsFlag() bool {
 }
 
 func (t *token) IsEOF() bool {
-	return t.Type == TokenEOF
+	return t.Type == TokenEOL
 }
 
 func (t *token) String() string {
@@ -37,8 +37,8 @@ func (t *token) String() string {
 		return "--" + t.Value
 	case TokenArg:
 		return t.Value
-	case TokenEOF:
-		return "<EOF>"
+	case TokenEOL:
+		return "<EOL>"
 	default:
 		panic("unhandled type")
 	}
@@ -56,13 +56,13 @@ func (t tokens) String() string {
 
 func (t tokens) Next() (*token, tokens) {
 	if len(t) == 0 {
-		return &TokenEOFMarker, nil
+		return &TokenEOLMarker, nil
 	}
 	return t[0], t[1:]
 }
 
 func (t tokens) Return(token *token) tokens {
-	if token.Type == TokenEOF {
+	if token.Type == TokenEOL {
 		return t
 	}
 	return append(tokens{token}, t...)
@@ -70,7 +70,7 @@ func (t tokens) Return(token *token) tokens {
 
 func (t tokens) Peek() *token {
 	if len(t) == 0 {
-		return &TokenEOFMarker
+		return &TokenEOLMarker
 	}
 	return t[0]
 }

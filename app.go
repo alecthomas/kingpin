@@ -31,6 +31,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 )
 
 type Dispatch func() error
@@ -40,11 +41,9 @@ type Dispatch func() error
 type Application struct {
 	*flagGroup
 	*argGroup
-	Name         string
-	Help         string
-	commands     map[string]*CmdClause
-	commandOrder []*CmdClause
-	commandHelp  *string
+	*cmdGroup
+	Name string
+	Help string
 }
 
 // New creates a new Kingpin application instance.
@@ -52,9 +51,9 @@ func New(name, help string) *Application {
 	a := &Application{
 		flagGroup: newFlagGroup(),
 		argGroup:  newArgGroup(),
+		cmdGroup:  newCmdGroup(),
 		Name:      name,
 		Help:      help,
-		commands:  make(map[string]*CmdClause),
 	}
 	a.Flag("help", "Show help.").Dispatch(a.onFlagHelp).Bool()
 	return a
@@ -66,15 +65,9 @@ func (a *Application) onFlagHelp() error {
 	return nil
 }
 
-// Command adds a new top-level command to the application.
-func (a *Application) Command(name, help string) *CmdClause {
-	cmd := newCommand(a, name, help)
-	a.commands[name] = cmd
-	a.commandOrder = append(a.commandOrder, cmd)
-	return cmd
-}
-
-// Parse parses command-line arguments.
+// Parse parses command-line arguments. It returns the selected command and an
+// error. The selected command will be a space separated subcommand, if
+// subcommands have been configured.
 func (a *Application) Parse(args []string) (command string, err error) {
 	if err := a.init(); err != nil {
 		return "", err
@@ -105,16 +98,13 @@ func (a *Application) Version(version string) *Application {
 }
 
 func (a *Application) init() error {
-	if len(a.commands) > 0 && len(a.args) > 0 {
+	if a.cmdGroup.have() && a.argGroup.have() {
 		return fmt.Errorf("can't mix top-level Arg()s with Command()s")
 	}
-	if len(a.commands) > 0 {
-		cmd := a.Command("help", "Show help for a command.")
-		a.commandHelp = cmd.Arg("command", "Command name.").Required().Dispatch(a.onCommandHelp).String()
-		// Make "help" command first in order. Also, Go's slice operations are woeful.
-		a.commandOrder = append(a.commandOrder[len(a.commandOrder)-1:], a.commandOrder[:len(a.commandOrder)-1]...)
-	}
 	if err := a.flagGroup.init(); err != nil {
+		return err
+	}
+	if err := a.cmdGroup.init(); err != nil {
 		return err
 	}
 	if err := a.argGroup.init(); err != nil {
@@ -128,46 +118,25 @@ func (a *Application) init() error {
 	return nil
 }
 
-func (a *Application) onCommandHelp() error {
-	a.CommandUsage(os.Stderr, *a.commandHelp)
-	os.Exit(0)
-	return nil
-}
-
 func (a *Application) parse(tokens tokens) (tokens, string, error) {
 	// Special-case "help" to avoid issues with required flags.
 	runHelp := (tokens.Peek().Value == "help")
 
 	var err error
-	var token *token
 	tokens, err = a.flagGroup.parse(tokens, runHelp)
 	if err != nil {
 		return tokens, "", err
 	}
 
-	selected := ""
+	selected := []string{}
 
 	// Parse arguments or commands.
-	if len(a.args) > 0 {
+	if a.argGroup.have() {
 		tokens, err = a.argGroup.parse(tokens)
-	} else {
-		token, tokens = tokens.Next()
-		switch token.Type {
-		case TokenArg:
-			cmd, ok := a.commands[token.Value]
-			if !ok {
-				return tokens, "", fmt.Errorf("unknown command '%s'", token)
-			}
-			tokens, err = cmd.parse(tokens)
-			if err != nil {
-				return tokens, "", err
-			}
-			selected = cmd.name
-
-		default:
-		}
+	} else if a.cmdGroup.have() {
+		selected, tokens, err = a.cmdGroup.parse(tokens)
 	}
-	return tokens, selected, err
+	return tokens, strings.Join(selected, " "), err
 }
 
 // Errorf prints an error message to w.

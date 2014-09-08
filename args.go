@@ -10,6 +10,10 @@ func newArgGroup() *argGroup {
 	return &argGroup{}
 }
 
+func (a *argGroup) have() bool {
+	return len(a.args) > 0
+}
+
 func (a *argGroup) Arg(name, help string) *ArgClause {
 	arg := newArg(name, help)
 	a.args = append(a.args, arg)
@@ -22,7 +26,7 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 	for i < len(a.args) {
 		arg := a.args[i]
 		token := tokens.Peek()
-		if token.Type == TokenEOF {
+		if token.Type == TokenEOL {
 			if consumed == 0 && arg.required {
 				return nil, fmt.Errorf("'%s' is required", arg.name)
 			}

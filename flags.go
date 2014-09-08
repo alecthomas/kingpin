@@ -57,7 +57,7 @@ loop:
 	for {
 		token, tokens = tokens.Next()
 		switch token.Type {
-		case TokenEOF:
+		case TokenEOL:
 			break loop
 
 		case TokenLong, TokenShort:
