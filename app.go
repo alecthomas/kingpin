@@ -42,8 +42,9 @@ type Application struct {
 	*flagGroup
 	*argGroup
 	*cmdGroup
-	Name string
-	Help string
+	commandHelp *string
+	Name        string
+	Help        string
 }
 
 // New creates a new Kingpin application instance.
@@ -101,6 +102,15 @@ func (a *Application) init() error {
 	if a.cmdGroup.have() && a.argGroup.have() {
 		return fmt.Errorf("can't mix top-level Arg()s with Command()s")
 	}
+
+	if len(a.commands) > 0 {
+		cmd := a.Command("help", "Show help for a command.")
+		a.commandHelp = cmd.Arg("command", "Command name.").Required().Dispatch(a.onCommandHelp).String()
+		// Make "help" command first in order. Also, Go's slice operations are woeful.
+		l := len(a.commandOrder) - 1
+		a.commandOrder = append(a.commandOrder[l:], a.commandOrder[:l]...)
+	}
+
 	if err := a.flagGroup.init(); err != nil {
 		return err
 	}
@@ -115,6 +125,12 @@ func (a *Application) init() error {
 			return err
 		}
 	}
+	return nil
+}
+
+func (a *Application) onCommandHelp() error {
+	a.CommandUsage(os.Stderr, *a.commandHelp)
+	os.Exit(0)
 	return nil
 }
 
