@@ -120,3 +120,10 @@ func TestTooManyArgsAfterCommand(t *testing.T) {
 	_, err = a.Parse([]string{"a", "b"})
 	assert.Error(t, err)
 }
+
+func TestArgsLooksLikeFlagsWithConsumeRemainder(t *testing.T) {
+	a := New("test", "")
+	a.Arg("opts", "").Required().Strings()
+	_, err := a.Parse([]string{"hello", "-world"})
+	assert.Error(t, err)
+}

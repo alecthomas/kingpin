@@ -22,6 +22,7 @@ func (a *argGroup) Arg(name, help string) *ArgClause {
 
 func (a *argGroup) parse(tokens tokens) (tokens, error) {
 	i := 0
+	var last *token
 	consumed := 0
 	for i < len(a.args) {
 		arg := a.args[i]
@@ -39,11 +40,15 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 			return nil, err
 		}
 
-		if !arg.consumesRemainder() {
-			i++
-		} else {
+		if arg.consumesRemainder() {
+			if last == tokens.Peek() {
+				return nil, fmt.Errorf("expected positional arguments <%s> but got '%s'", arg.name, last)
+			}
 			consumed++
+		} else {
+			i++
 		}
+		last = token
 	}
 
 	// Set defaults for all remaining args.
