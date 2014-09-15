@@ -39,7 +39,7 @@ func (f *flagGroup) init() error {
 	return nil
 }
 
-func (f *flagGroup) parse(tokens tokens, ignoreRequired bool) (tokens, error) {
+func (f *flagGroup) parse(context *ParseContext, ignoreRequired bool) error {
 	// Track how many required flags we've seen.
 	required := make(map[string]bool)
 	// Keep track of any flags that we need to initialise with defaults.
@@ -51,11 +51,11 @@ func (f *flagGroup) parse(tokens tokens, ignoreRequired bool) (tokens, error) {
 		}
 	}
 
-	var token *token
+	var token *Token
 
 loop:
 	for {
-		token, tokens = tokens.Next()
+		token = context.Next()
 		switch token.Type {
 		case TokenEOL:
 			break loop
@@ -75,12 +75,12 @@ loop:
 				}
 				flag, ok = f.long[name]
 				if !ok {
-					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+					return fmt.Errorf("unknown long flag '%s'", flagToken)
 				}
 			} else {
 				flag, ok = f.short[name]
 				if !ok {
-					return nil, fmt.Errorf("unknown short flag '%s", flagToken)
+					return fmt.Errorf("unknown short flag '%s", flagToken)
 				}
 			}
 
@@ -96,27 +96,27 @@ loop:
 				}
 			} else {
 				if invert {
-					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+					return fmt.Errorf("unknown long flag '%s'", flagToken)
 				}
-				token, tokens = tokens.Next()
+				token = context.Next()
 				if token.Type != TokenArg {
-					return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
+					return fmt.Errorf("expected argument for flag '%s'", flagToken)
 				}
 				defaultValue = token.Value
 			}
 
 			if err := flag.value.Set(defaultValue); err != nil {
-				return nil, err
+				return err
 			}
 
 			if flag.dispatch != nil {
 				if err := flag.dispatch(); err != nil {
-					return nil, err
+					return err
 				}
 			}
 
 		default:
-			tokens = tokens.Return(token)
+			context.Return(token)
 			break loop
 		}
 	}
@@ -124,14 +124,14 @@ loop:
 	// Check that required flags were provided.
 	if len(required) == 1 {
 		for k := range required {
-			return nil, fmt.Errorf("required flag --%s not provided", k)
+			return fmt.Errorf("required flag --%s not provided", k)
 		}
 	} else if len(required) > 1 {
 		flags := make([]string, 0, len(required))
 		for k := range required {
 			flags = append(flags, "--"+k)
 		}
-		return nil, fmt.Errorf("required flags %s not provided", strings.Join(flags, ", "))
+		return fmt.Errorf("required flags %s not provided", strings.Join(flags, ", "))
 	}
 
 	// Apply defaults to all unprocessed flags.
@@ -139,11 +139,11 @@ loop:
 		flag := f.long[k]
 		if flag.defaultValue != "" {
 			if err := flag.value.Set(flag.defaultValue); err != nil {
-				return nil, fmt.Errorf("default value for --%s is invalid: %s", flag.name, err)
+				return fmt.Errorf("default value for --%s is invalid: %s", flag.name, err)
 			}
 		}
 	}
-	return tokens, nil
+	return nil
 }
 
 func (f *flagGroup) visibleFlags() int {

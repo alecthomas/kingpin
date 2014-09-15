@@ -20,29 +20,29 @@ func (a *argGroup) Arg(name, help string) *ArgClause {
 	return arg
 }
 
-func (a *argGroup) parse(tokens tokens) (tokens, error) {
+func (a *argGroup) parse(context *ParseContext) error {
 	i := 0
-	var last *token
+	var last *Token
 	consumed := 0
 	for i < len(a.args) {
 		arg := a.args[i]
-		token := tokens.Peek()
+		token := context.Peek()
 		if token.Type == TokenEOL {
 			if consumed == 0 && arg.required {
-				return nil, fmt.Errorf("'%s' is required", arg.name)
+				return fmt.Errorf("'%s' is required", arg.name)
 			}
 			break
 		}
 
 		var err error
-		tokens, err = arg.parse(tokens)
+		err = arg.parse(context)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		if arg.consumesRemainder() {
-			if last == tokens.Peek() {
-				return nil, fmt.Errorf("expected positional arguments <%s> but got '%s'", arg.name, last)
+			if last == context.Peek() {
+				return fmt.Errorf("expected positional arguments <%s> but got '%s'", arg.name, last)
 			}
 			consumed++
 		} else {
@@ -56,12 +56,12 @@ func (a *argGroup) parse(tokens tokens) (tokens, error) {
 		arg := a.args[i]
 		if arg.defaultValue != "" {
 			if err := arg.value.Set(arg.defaultValue); err != nil {
-				return nil, fmt.Errorf("invalid default value '%s' for argument '%s'", arg.defaultValue, arg.name)
+				return fmt.Errorf("invalid default value '%s' for argument '%s'", arg.defaultValue, arg.name)
 			}
 		}
 		i++
 	}
-	return tokens, nil
+	return nil
 }
 
 func (a *argGroup) init() error {
@@ -143,18 +143,19 @@ func (a *ArgClause) init() error {
 	return nil
 }
 
-func (a *ArgClause) parse(tokens tokens) (tokens, error) {
-	if token, tokens := tokens.Next(); token.Type == TokenArg {
+func (a *ArgClause) parse(context *ParseContext) error {
+	if token := context.Next(); token.Type == TokenArg {
 		if err := a.value.Set(token.Value); err != nil {
-			return nil, err
+			return err
 		}
 		if a.dispatch != nil {
 			if err := a.dispatch(); err != nil {
-				return nil, err
+				return err
 			}
 		}
-		return tokens, nil
+		return nil
 	} else {
-		return tokens.Return(token), nil
+		context.Return(token)
+		return nil
 	}
 }

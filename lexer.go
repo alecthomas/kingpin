@@ -2,34 +2,34 @@ package kingpin
 
 import "strings"
 
-type tokenType int
+type TokenType int
 
 // Token types.
 const (
-	TokenShort tokenType = iota
+	TokenShort TokenType = iota
 	TokenLong
 	TokenArg
 	TokenEOL
 )
 
 var (
-	TokenEOLMarker = token{TokenEOL, ""}
+	TokenEOLMarker = Token{TokenEOL, ""}
 )
 
-type token struct {
-	Type  tokenType
+type Token struct {
+	Type  TokenType
 	Value string
 }
 
-func (t *token) IsFlag() bool {
+func (t *Token) IsFlag() bool {
 	return t.Type == TokenShort || t.Type == TokenLong
 }
 
-func (t *token) IsEOF() bool {
+func (t *Token) IsEOF() bool {
 	return t.Type == TokenEOL
 }
 
-func (t *token) String() string {
+func (t *Token) String() string {
 	switch t.Type {
 	case TokenShort:
 		return "-" + t.Value
@@ -44,9 +44,9 @@ func (t *token) String() string {
 	}
 }
 
-type tokens []*token
+type Tokens []*Token
 
-func (t tokens) String() string {
+func (t Tokens) String() string {
 	out := []string{}
 	for _, tok := range t {
 		out = append(out, tok.String())
@@ -54,42 +54,43 @@ func (t tokens) String() string {
 	return strings.Join(out, " ")
 }
 
-func (t tokens) Next() (*token, tokens) {
+func (t Tokens) Next() (*Token, Tokens) {
 	if len(t) == 0 {
 		return &TokenEOLMarker, nil
 	}
 	return t[0], t[1:]
 }
 
-func (t tokens) Return(token *token) tokens {
+func (t Tokens) Return(token *Token) Tokens {
 	if token.Type == TokenEOL {
 		return t
 	}
-	return append(tokens{token}, t...)
+	return append(Tokens{token}, t...)
 }
 
-func (t tokens) Peek() *token {
+func (t Tokens) Peek() *Token {
 	if len(t) == 0 {
 		return &TokenEOLMarker
 	}
 	return t[0]
 }
 
-func Tokenize(args []string) (tokens tokens) {
+func Tokenize(args []string) *ParseContext {
+	tokens := make(Tokens, 0, len(args))
 	for _, arg := range args {
 		if strings.HasPrefix(arg, "--") {
 			parts := strings.SplitN(arg[2:], "=", 2)
-			tokens = append(tokens, &token{TokenLong, parts[0]})
+			tokens = append(tokens, &Token{TokenLong, parts[0]})
 			if len(parts) == 2 {
-				tokens = append(tokens, &token{TokenArg, parts[1]})
+				tokens = append(tokens, &Token{TokenArg, parts[1]})
 			}
 		} else if strings.HasPrefix(arg, "-") {
 			for _, a := range arg[1:] {
-				tokens = append(tokens, &token{TokenShort, string(a)})
+				tokens = append(tokens, &Token{TokenShort, string(a)})
 			}
 		} else {
-			tokens = append(tokens, &token{TokenArg, arg})
+			tokens = append(tokens, &Token{TokenArg, arg})
 		}
 	}
-	return
+	return &ParseContext{Tokens: tokens}
 }

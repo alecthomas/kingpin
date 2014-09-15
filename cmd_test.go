@@ -17,10 +17,10 @@ func TestNestedCommands(t *testing.T) {
 	sub2.Flag("sub2", "")
 	sub2.Command("sub2sub1", "")
 
-	tokens := Tokenize([]string{"sub1", "sub1sub1", "sub1sub1end"})
-	tokens, selected, err := app.parse(tokens)
+	context := Tokenize([]string{"sub1", "sub1sub1", "sub1sub1end"})
+	selected, err := app.parse(context)
 	assert.NoError(t, err)
-	assert.Equal(t, 0, len(tokens))
+	assert.Equal(t, 0, len(context.Tokens))
 	assert.Equal(t, "sub1 sub1sub1 sub1sub1end", selected)
 }
 
@@ -29,10 +29,10 @@ func TestNestedCommandsWithArgs(t *testing.T) {
 	cmd := app.Command("a", "").Command("b", "")
 	a := cmd.Arg("a", "").String()
 	b := cmd.Arg("b", "").String()
-	tokens := Tokenize([]string{"a", "b", "c", "d"})
-	tokens, selected, err := app.parse(tokens)
+	context := Tokenize([]string{"a", "b", "c", "d"})
+	selected, err := app.parse(context)
 	assert.NoError(t, err)
-	assert.Equal(t, 0, len(tokens))
+	assert.Equal(t, 0, len(context.Tokens))
 	assert.Equal(t, "a b", selected)
 	assert.Equal(t, "c", *a)
 	assert.Equal(t, "d", *b)

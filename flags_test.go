@@ -22,7 +22,7 @@ func TestNoBool(t *testing.T) {
 	b := f.Bool()
 	fg.init()
 	tokens := Tokenize([]string{"--no-b"})
-	_, err := fg.parse(tokens, false)
+	err := fg.parse(tokens, false)
 	assert.NoError(t, err)
 	assert.False(t, *b)
 }
@@ -33,7 +33,7 @@ func TestNegateNonBool(t *testing.T) {
 	f.Int()
 	fg.init()
 	tokens := Tokenize([]string{"--no-b"})
-	_, err := fg.parse(tokens, false)
+	err := fg.parse(tokens, false)
 	assert.Error(t, err)
 }
 
@@ -43,7 +43,7 @@ func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
 	f.Bool()
 	assert.NoError(t, fg.init())
 	tokens := Tokenize([]string{})
-	_, err := fg.parse(tokens, false)
+	err := fg.parse(tokens, false)
 	assert.Error(t, err)
 }
 
@@ -52,9 +52,9 @@ func TestRequiredFlag(t *testing.T) {
 	fg.Flag("a", "").Required().Bool()
 	assert.NoError(t, fg.init())
 	tokens := Tokenize([]string{"--a"})
-	tokens, err := fg.parse(tokens, false)
+	err := fg.parse(tokens, false)
 	assert.NoError(t, err)
 	tokens = Tokenize([]string{})
-	tokens, err = fg.parse(tokens, false)
+	err = fg.parse(tokens, false)
 	assert.Error(t, err)
 }

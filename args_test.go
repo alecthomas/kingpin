@@ -29,11 +29,11 @@ func TestArgMultipleRequired(t *testing.T) {
 	a.Arg("b", "").Required().String()
 	a.init()
 
-	_, err := a.parse(Tokenize([]string{}))
+	err := a.parse(Tokenize([]string{}))
 	assert.Error(t, err)
-	_, err = a.parse(Tokenize([]string{"A"}))
+	err = a.parse(Tokenize([]string{"A"}))
 	assert.Error(t, err)
-	_, err = a.parse(Tokenize([]string{"A", "B"}))
+	err = a.parse(Tokenize([]string{"A", "B"}))
 	assert.NoError(t, err)
 }
 
@@ -42,6 +42,6 @@ func TestInvalidArgsDefaultCanBeOverridden(t *testing.T) {
 	a.Arg("a", "").Default("invalid").Bool()
 	assert.NoError(t, a.init())
 	tokens := Tokenize([]string{})
-	_, err := a.parse(tokens)
+	err := a.parse(tokens)
 	assert.Error(t, err)
 }

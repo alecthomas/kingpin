@@ -32,20 +32,21 @@ func (c *cmdGroup) init() error {
 	return nil
 }
 
-func (c *cmdGroup) parse(tokens tokens) (selected []string, _ tokens, _ error) {
-	token, tokens := tokens.Next()
+func (c *cmdGroup) parse(context *ParseContext) (selected []string, _ error) {
+	token := context.Next()
 	if token.Type != TokenArg {
-		return nil, nil, fmt.Errorf("expected command but got '%s'", token)
+		return nil, fmt.Errorf("expected command but got '%s'", token)
 	}
 	cmd, ok := c.commands[token.String()]
 	if !ok {
-		return nil, nil, fmt.Errorf("no such command '%s'", token)
+		return nil, fmt.Errorf("no such command '%s'", token)
 	}
-	selected, tokens, err := cmd.parse(tokens)
+	context.SelectedCommand = cmd.name
+	selected, err := cmd.parse(context)
 	if err == nil {
 		selected = append([]string{token.String()}, selected...)
 	}
-	return selected, tokens, err
+	return selected, err
 }
 
 func (c *cmdGroup) have() bool {
@@ -95,18 +96,18 @@ func (c *CmdClause) init() error {
 	return nil
 }
 
-func (c *CmdClause) parse(tokens tokens) (selected []string, _ tokens, _ error) {
-	tokens, err := c.flagGroup.parse(tokens, false)
+func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
+	err := c.flagGroup.parse(context, false)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	if c.cmdGroup.have() {
-		selected, tokens, err = c.cmdGroup.parse(tokens)
+		selected, err = c.cmdGroup.parse(context)
 	} else if c.argGroup.have() {
-		tokens, err = c.argGroup.parse(tokens)
+		err = c.argGroup.parse(context)
 	}
 	if err == nil && c.dispatch != nil {
 		err = c.dispatch()
 	}
-	return selected, tokens, err
+	return selected, err
 }

@@ -74,16 +74,16 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	if err := a.init(); err != nil {
 		return "", err
 	}
-	tokens := Tokenize(args)
-	tokens, command, err = a.parse(tokens)
+	context := Tokenize(args)
+	command, err = a.parse(context)
 	if err != nil {
 		return "", err
 	}
 
-	if len(tokens) == 1 {
-		return "", fmt.Errorf("unexpected argument '%s'", tokens)
-	} else if len(tokens) > 0 {
-		return "", fmt.Errorf("unexpected arguments '%s'", tokens)
+	if len(context.Tokens) == 1 {
+		return "", fmt.Errorf("unexpected argument '%s'", context.Tokens)
+	} else if len(context.Tokens) > 0 {
+		return "", fmt.Errorf("unexpected arguments '%s'", context.Tokens)
 	}
 
 	return command, err
@@ -139,25 +139,25 @@ func (a *Application) onCommandHelp() error {
 	return nil
 }
 
-func (a *Application) parse(tokens tokens) (tokens, string, error) {
+func (a *Application) parse(context *ParseContext) (string, error) {
 	// Special-case "help" to avoid issues with required flags.
-	runHelp := (tokens.Peek().Value == "help")
+	runHelp := (context.Peek().Value == "help")
 
 	var err error
-	tokens, err = a.flagGroup.parse(tokens, runHelp)
+	err = a.flagGroup.parse(context, runHelp)
 	if err != nil {
-		return tokens, "", err
+		return "", err
 	}
 
 	selected := []string{}
 
 	// Parse arguments or commands.
 	if a.argGroup.have() {
-		tokens, err = a.argGroup.parse(tokens)
+		err = a.argGroup.parse(context)
 	} else if a.cmdGroup.have() {
-		selected, tokens, err = a.cmdGroup.parse(tokens)
+		selected, err = a.cmdGroup.parse(context)
 	}
-	return tokens, strings.Join(selected, " "), err
+	return strings.Join(selected, " "), err
 }
 
 // Errorf prints an error message to w.
