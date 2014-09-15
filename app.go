@@ -42,6 +42,7 @@ type Application struct {
 	*flagGroup
 	*argGroup
 	*cmdGroup
+	initialized bool
 	commandHelp *string
 	Name        string
 	Help        string
@@ -99,6 +100,9 @@ func (a *Application) Version(version string) *Application {
 }
 
 func (a *Application) init() error {
+	if a.initialized {
+		return nil
+	}
 	if a.cmdGroup.have() && a.argGroup.have() {
 		return fmt.Errorf("can't mix top-level Arg()s with Command()s")
 	}
@@ -125,6 +129,7 @@ func (a *Application) init() error {
 			return err
 		}
 	}
+	a.initialized = true
 	return nil
 }
 
