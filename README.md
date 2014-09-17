@@ -176,7 +176,15 @@ func main() {
 
 ## Reference Documentation
 
-## Sub-commands
+### Help
+
+Second to parsing, providing the user with useful help is probably the most
+important thing a command-line parser does.
+
+Since 1.3.x, Kingpin uses a bunch of heuristics to display help. For example,
+`--help` should generally "just work" without much thought from users.
+
+### Sub-commands
 
 Kingpin supports nested sub-commands, with separate flag and positional
 arguments per sub-command. Note that positional arguments may only occur after

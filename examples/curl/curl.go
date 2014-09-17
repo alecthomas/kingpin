@@ -14,10 +14,14 @@ import (
 
 var (
 	timeout = kingpin.Flag("timeout", "Set connection timeout.").Short('t').Default("5s").Duration()
-	headers = HTTPHeader(kingpin.Flag("headers", "Add HTTP headers to the request.").Short('H').PlaceHolder("HEADER:VALUE"))
+	headers = HTTPHeader(kingpin.Flag("headers", "Add HTTP headers to the request.").Short('H').PlaceHolder("HEADER=VALUE"))
 
-	get    = kingpin.Command("get", "GET a resource.")
-	getURL = get.Arg("url", "URL to GET.").Required().URL()
+	get         = kingpin.Command("get", "GET a resource.")
+	getFlag     = get.Flag("test", "Test flag").Bool()
+	getURL      = get.Command("url", "Retrieve a URL.")
+	getURLURL   = getURL.Arg("url", "URL to GET.").Required().URL()
+	getFile     = get.Command("file", "Retrieve a file.")
+	getFileFile = getFile.Arg("file", "File to retrieve.").Required().ExistingFile()
 
 	post           = kingpin.Command("post", "POST a resource.")
 	postData       = post.Flag("data", "Key-value data to POST").Short('d').PlaceHolder("KEY:VALUE").StringMap()
@@ -27,21 +31,21 @@ var (
 
 type HTTPHeaderValue http.Header
 
-func (h *HTTPHeaderValue) Set(value string) error {
-	parts := strings.SplitN(value, ":", 2)
+func (h HTTPHeaderValue) Set(value string) error {
+	parts := strings.SplitN(value, "=", 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("expected HEADER:VALUE got '%s'", value)
+		return fmt.Errorf("expected HEADER=VALUE got '%s'", value)
 	}
-	(*http.Header)(h).Add(parts[0], parts[1])
+	(http.Header)(h).Add(parts[0], parts[1])
 	return nil
 }
 
-func (h *HTTPHeaderValue) String() string {
+func (h HTTPHeaderValue) String() string {
 	return ""
 }
 
 func HTTPHeader(s kingpin.Settings) (target *http.Header) {
-	target = new(http.Header)
+	target = &http.Header{}
 	s.SetValue((*HTTPHeaderValue)(target))
 	return
 }
@@ -91,8 +95,8 @@ func applyPOST() error {
 func main() {
 	kingpin.CommandLine.Help = "An example implementation of curl."
 	switch kingpin.Parse() {
-	case "get":
-		kingpin.FatalIfError(apply("GET", (*getURL).String()), "GET failed")
+	case "get url":
+		kingpin.FatalIfError(apply("GET", (*getURLURL).String()), "GET failed")
 
 	case "post":
 		kingpin.FatalIfError(applyPOST(), "POST failed")

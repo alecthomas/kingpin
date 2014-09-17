@@ -39,17 +39,17 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 	}
 }
 
-func (c *Application) Usage(w io.Writer) {
-	c.writeHelp(guessWidth(w), w)
+func (a *Application) Usage(w io.Writer) {
+	a.writeHelp(guessWidth(w), w)
 }
 
-func (c *Application) CommandUsage(w io.Writer, command string) {
-	cmd, ok := c.commands[command]
-	if !ok {
-		Fatalf("unknown command '%s'", command)
+func (a *Application) CommandUsage(w io.Writer, command string) {
+	cmd := a.findCommand(command)
+	if cmd == nil {
+		a.Fatalf(w, "unknown command '%s'", command)
 	}
-	s := []string{formatArgsAndFlags(c.Name, c.argGroup, c.flagGroup)}
-	s = append(s, formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup))
+	s := []string{formatArgsAndFlags(a.Name, a.argGroup, a.flagGroup, cmd.cmdGroup)}
+	s = append(s, formatArgsAndFlags(cmd.fullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
 	fmt.Fprintf(w, "usage: %s\n", strings.Join(s, " "))
 	if cmd.help != "" {
 		fmt.Fprintf(w, "\n%s\n", cmd.help)
@@ -57,9 +57,24 @@ func (c *Application) CommandUsage(w io.Writer, command string) {
 	cmd.writeHelp(guessWidth(w), w)
 }
 
-func (c *Application) writeHelp(width int, w io.Writer) {
-	s := []string{formatArgsAndFlags(c.Name, c.argGroup, c.flagGroup)}
-	if len(c.commands) > 0 {
+func (a *Application) findCommand(command string) *CmdClause {
+	parts := strings.Split(command, " ")
+	var cmd *CmdClause
+	group := a.cmdGroup
+	for _, part := range parts {
+		next, ok := group.commands[part]
+		if !ok {
+			return nil
+		}
+		cmd = next
+		group = next.cmdGroup
+	}
+	return cmd
+}
+
+func (a *Application) writeHelp(width int, w io.Writer) {
+	s := []string{formatArgsAndFlags(a.Name, a.argGroup, a.flagGroup, a.cmdGroup)}
+	if len(a.commands) > 0 {
 		s = append(s, "<command>", "[<flags>]", "[<args> ...]")
 	}
 
@@ -73,31 +88,14 @@ func (c *Application) writeHelp(width int, w io.Writer) {
 	for _, l := range lines[1:] {
 		fmt.Fprintf(w, "%*s%s\n", len(prefix), "", l)
 	}
-	if c.Help != "" {
+	if a.Help != "" {
 		fmt.Fprintf(w, "\n")
-		doc.ToText(w, c.Help, "", preIndent, width)
+		doc.ToText(w, a.Help, "", preIndent, width)
 	}
 
-	c.flagGroup.writeHelp(width, w)
-	c.argGroup.writeHelp(width, w)
-
-	if len(c.commands) > 0 {
-		fmt.Fprintf(w, "\nCommands:\n")
-		c.helpCommands(width, w)
-	}
-}
-
-func (c *Application) helpCommands(width int, w io.Writer) {
-	for _, cmd := range c.commandOrder {
-		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.name, cmd.argGroup, cmd.flagGroup))
-		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, cmd.help, "", preIndent, width-4)
-		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
-		for _, line := range lines {
-			fmt.Fprintf(w, "    %s\n", line)
-		}
-		fmt.Fprintf(w, "\n")
-	}
+	a.flagGroup.writeHelp(width, w)
+	a.argGroup.writeHelp(width, w)
+	a.cmdGroup.writeHelp(width, w)
 }
 
 func (f *flagGroup) writeHelp(width int, w io.Writer) {
@@ -156,12 +154,31 @@ func (a *argGroup) writeHelp(width int, w io.Writer) {
 	formatTwoColumns(w, 2, 2, width, rows)
 }
 
-func (c *CmdClause) writeHelp(width int, w io.Writer) {
-	c.flagGroup.writeHelp(width, w)
-	c.argGroup.writeHelp(width, w)
+func (a *CmdClause) writeHelp(width int, w io.Writer) {
+	a.flagGroup.writeHelp(width, w)
+	a.argGroup.writeHelp(width, w)
+	a.cmdGroup.writeHelp(width, w)
 }
 
-func formatArgsAndFlags(name string, args *argGroup, flags *flagGroup) string {
+func (c *cmdGroup) writeHelp(width int, w io.Writer) {
+	if len(c.commands) == 0 {
+		return
+	}
+	fmt.Fprintf(w, "\nCommands:\n")
+	flattened := c.flattenedCommands()
+	for _, cmd := range flattened {
+		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.fullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
+		buf := bytes.NewBuffer(nil)
+		doc.ToText(buf, cmd.help, "", preIndent, width-4)
+		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
+		for _, line := range lines {
+			fmt.Fprintf(w, "    %s\n", line)
+		}
+		fmt.Fprintf(w, "\n")
+	}
+}
+
+func formatArgsAndFlags(name string, args *argGroup, flags *flagGroup, commands *cmdGroup) string {
 	s := []string{name}
 	s = append(s, flags.gatherFlagSummary()...)
 	depth := 0

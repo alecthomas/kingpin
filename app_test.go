@@ -71,7 +71,7 @@ func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
 func TestDispatchCallbackIsCalled(t *testing.T) {
 	dispatched := false
 	c := New("test", "")
-	c.Command("cmd", "").Dispatch(func() error {
+	c.Command("cmd", "").Dispatch(func(*ParseContext) error {
 		dispatched = true
 		return nil
 	})

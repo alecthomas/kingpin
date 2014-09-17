@@ -5,10 +5,8 @@ type ParseContext struct {
 	SelectedCommand string
 }
 
-func (p *ParseContext) Next() *Token {
-	var token *Token
-	token, p.Tokens = p.Tokens.Next()
-	return token
+func (p *ParseContext) Next() {
+	p.Tokens = p.Tokens.Next()
 }
 
 func (p *ParseContext) Peek() *Token {

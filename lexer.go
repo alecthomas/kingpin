@@ -54,11 +54,11 @@ func (t Tokens) String() string {
 	return strings.Join(out, " ")
 }
 
-func (t Tokens) Next() (*Token, Tokens) {
+func (t Tokens) Next() Tokens {
 	if len(t) == 0 {
-		return &TokenEOLMarker, nil
+		return nil
 	}
-	return t[0], t[1:]
+	return t[1:]
 }
 
 func (t Tokens) Return(token *Token) Tokens {

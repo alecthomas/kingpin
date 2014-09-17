@@ -38,8 +38,7 @@ func Parse() string {
 
 // Fatalf prints an error message to stderr and exits.
 func Fatalf(format string, args ...interface{}) {
-	CommandLine.Errorf(os.Stderr, format, args...)
-	os.Exit(1)
+	CommandLine.Fatalf(os.Stderr, format, args...)
 }
 
 // FatalIfError prints an error and exits if err is not nil. The error is printed

@@ -34,7 +34,7 @@ import (
 	"strings"
 )
 
-type Dispatch func() error
+type Dispatch func(*ParseContext) error
 
 // An Application contains the definitions of flags, arguments and commands
 // for an application.
@@ -43,7 +43,6 @@ type Application struct {
 	*argGroup
 	*cmdGroup
 	initialized bool
-	commandHelp *string
 	Name        string
 	Help        string
 }
@@ -53,18 +52,12 @@ func New(name, help string) *Application {
 	a := &Application{
 		flagGroup: newFlagGroup(),
 		argGroup:  newArgGroup(),
-		cmdGroup:  newCmdGroup(),
 		Name:      name,
 		Help:      help,
 	}
-	a.Flag("help", "Show help.").Dispatch(a.onFlagHelp).Bool()
+	a.cmdGroup = newCmdGroup(a)
+	a.Flag("help", "Show help.").Dispatch(a.onHelp).Bool()
 	return a
-}
-
-func (a *Application) onFlagHelp() error {
-	a.Usage(os.Stderr)
-	os.Exit(0)
-	return nil
 }
 
 // Parse parses command-line arguments. It returns the selected command and an
@@ -91,12 +84,17 @@ func (a *Application) Parse(args []string) (command string, err error) {
 
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
-	a.Flag("version", "Show application version.").Dispatch(func() error {
+	a.Flag("version", "Show application version.").Dispatch(func(*ParseContext) error {
 		fmt.Println(version)
 		os.Exit(0)
 		return nil
 	}).Bool()
 	return a
+}
+
+// Command adds a new top-level command.
+func (a *Application) Command(name, help string) *CmdClause {
+	return a.addCommand(name, help)
 }
 
 func (a *Application) init() error {
@@ -108,8 +106,8 @@ func (a *Application) init() error {
 	}
 
 	if len(a.commands) > 0 {
-		cmd := a.Command("help", "Show help for a command.")
-		a.commandHelp = cmd.Arg("command", "Command name.").Required().Dispatch(a.onCommandHelp).String()
+		cmd := a.Command("help", "Show help for a command.").Dispatch(a.onHelp)
+		cmd.Arg("command", "Command name.").String()
 		// Make "help" command first in order. Also, Go's slice operations are woeful.
 		l := len(a.commandOrder) - 1
 		a.commandOrder = append(a.commandOrder[l:], a.commandOrder[:l]...)
@@ -133,8 +131,30 @@ func (a *Application) init() error {
 	return nil
 }
 
-func (a *Application) onCommandHelp() error {
-	a.CommandUsage(os.Stderr, *a.commandHelp)
+func (a *Application) onHelp(context *ParseContext) error {
+	candidates := []string{}
+	for {
+		token := context.Peek()
+		if token.Type == TokenArg {
+			candidates = append(candidates, token.String())
+			context.Next()
+		} else {
+			break
+		}
+	}
+
+	var cmd *CmdClause
+	for i := len(candidates); i > 0; i-- {
+		command := strings.Join(candidates[:i], " ")
+		cmd = a.findCommand(command)
+		if cmd != nil {
+			a.CommandUsage(os.Stderr, command)
+			break
+		}
+	}
+	if cmd == nil {
+		a.Usage(os.Stderr)
+	}
 	os.Exit(0)
 	return nil
 }
@@ -163,6 +183,11 @@ func (a *Application) parse(context *ParseContext) (string, error) {
 // Errorf prints an error message to w.
 func (a *Application) Errorf(w io.Writer, format string, args ...interface{}) {
 	fmt.Fprintf(w, a.Name+": error: "+format+"\n", args...)
+}
+
+func (a *Application) Fatalf(w io.Writer, format string, args ...interface{}) {
+	a.Errorf(w, format, args...)
+	os.Exit(1)
 }
 
 // UsageErrorf prints an error message followed by usage information, then

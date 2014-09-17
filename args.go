@@ -144,18 +144,17 @@ func (a *ArgClause) init() error {
 }
 
 func (a *ArgClause) parse(context *ParseContext) error {
-	if token := context.Next(); token.Type == TokenArg {
+	token := context.Peek()
+	if token.Type == TokenArg {
 		if err := a.value.Set(token.Value); err != nil {
 			return err
 		}
 		if a.dispatch != nil {
-			if err := a.dispatch(); err != nil {
+			if err := a.dispatch(context); err != nil {
 				return err
 			}
 		}
-		return nil
-	} else {
-		context.Return(token)
-		return nil
+		context.Next()
 	}
+	return nil
 }

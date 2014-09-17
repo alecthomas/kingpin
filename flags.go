@@ -55,7 +55,7 @@ func (f *flagGroup) parse(context *ParseContext, ignoreRequired bool) error {
 
 loop:
 	for {
-		token = context.Next()
+		token = context.Peek()
 		switch token.Type {
 		case TokenEOL:
 			break loop
@@ -87,6 +87,8 @@ loop:
 			delete(required, flag.name)
 			delete(defaults, flag.name)
 
+			context.Next()
+
 			fb, ok := flag.value.(boolFlag)
 			if ok && fb.IsBoolFlag() {
 				if invert {
@@ -98,10 +100,11 @@ loop:
 				if invert {
 					return fmt.Errorf("unknown long flag '%s'", flagToken)
 				}
-				token = context.Next()
+				token = context.Peek()
 				if token.Type != TokenArg {
 					return fmt.Errorf("expected argument for flag '%s'", flagToken)
 				}
+				context.Next()
 				defaultValue = token.Value
 			}
 
@@ -110,13 +113,12 @@ loop:
 			}
 
 			if flag.dispatch != nil {
-				if err := flag.dispatch(); err != nil {
+				if err := flag.dispatch(context); err != nil {
 					return err
 				}
 			}
 
 		default:
-			context.Return(token)
 			break loop
 		}
 	}
@@ -199,7 +201,7 @@ func (f *FlagClause) init() error {
 		return fmt.Errorf("required flag '--%s' with default value that will never be used", f.name)
 	}
 	if f.value == nil {
-		return fmt.Errorf("no value defined for --%s", f.name)
+		return fmt.Errorf("no type defined for --%s (eg. .String())", f.name)
 	}
 	if f.envar != "" {
 		if v := os.Getenv(f.envar); v != "" {
