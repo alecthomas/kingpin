@@ -152,3 +152,7 @@ func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
 	}
 	return selected, err
 }
+
+func (c *CmdClause) Name() string {
+	return c.name
+}
