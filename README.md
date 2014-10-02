@@ -162,11 +162,11 @@ var (
 func main() {
   switch kingpin.MustParse(app.Parse(os.Args[1:])) {
   // Register user
-  case register.Name():
+  case register.FullCommand():
     println(*registerNick)
 
   // Post message
-  case post.Name():
+  case post.FullCommand():
     if *postImage != nil {
     }
     text := strings.Join(*postText, " ")

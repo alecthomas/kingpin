@@ -49,7 +49,7 @@ func (a *Application) CommandUsage(w io.Writer, command string) {
 		a.Fatalf(w, "unknown command '%s'", command)
 	}
 	s := []string{formatArgsAndFlags(a.Name, a.argGroup, a.flagGroup, cmd.cmdGroup)}
-	s = append(s, formatArgsAndFlags(cmd.fullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
+	s = append(s, formatArgsAndFlags(cmd.FullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
 	fmt.Fprintf(w, "usage: %s\n", strings.Join(s, " "))
 	if cmd.help != "" {
 		fmt.Fprintf(w, "\n%s\n", cmd.help)
@@ -167,7 +167,7 @@ func (c *cmdGroup) writeHelp(width int, w io.Writer) {
 	fmt.Fprintf(w, "\nCommands:\n")
 	flattened := c.flattenedCommands()
 	for _, cmd := range flattened {
-		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.fullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
+		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.FullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
 		buf := bytes.NewBuffer(nil)
 		doc.ToText(buf, cmd.help, "", preIndent, width-4)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
