@@ -95,7 +95,7 @@ func newCommand(app *Application, name, help string) *CmdClause {
 	return c
 }
 
-func (c *CmdClause) fullCommand() string {
+func (c *CmdClause) FullCommand() string {
 	out := []string{c.name}
 	for p := c.parent; p != nil; p = p.parent {
 		out = append([]string{p.name}, out...)
@@ -104,7 +104,7 @@ func (c *CmdClause) fullCommand() string {
 }
 
 func (c *CmdClause) onHelp(context *ParseContext) error {
-	c.app.CommandUsage(os.Stderr, c.fullCommand())
+	c.app.CommandUsage(os.Stderr, c.FullCommand())
 	os.Exit(0)
 	return nil
 }
