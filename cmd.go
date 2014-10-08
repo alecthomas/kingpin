@@ -50,6 +50,9 @@ func (c *cmdGroup) init() error {
 
 func (c *cmdGroup) parse(context *ParseContext) (selected []string, _ error) {
 	token := context.Peek()
+	if token.IsEOF() {
+		return nil, fmt.Errorf("expected command but none was specified")
+	}
 	if token.Type != TokenArg {
 		return nil, fmt.Errorf("expected command but got '%s'", token)
 	}

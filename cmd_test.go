@@ -6,6 +6,14 @@ import (
 	"testing"
 )
 
+func TestCommandMissing(t *testing.T) {
+	app := New("app", "")
+	app.Command("a", "")
+	context := Tokenize([]string{})
+	_, err := app.parse(context)
+	assert.EqualError(t, err, "expected command but none was specified")
+}
+
 func TestNestedCommands(t *testing.T) {
 	app := New("app", "")
 	sub1 := app.Command("sub1", "")
