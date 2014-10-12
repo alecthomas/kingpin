@@ -142,10 +142,12 @@ func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
 	if err != nil {
 		return nil, err
 	}
-	if c.cmdGroup.have() {
-		selected, err = c.cmdGroup.parse(context)
-	} else if c.argGroup.have() {
-		err = c.argGroup.parse(context)
+	if context.SelectedCommand != "help" {
+		if c.cmdGroup.have() {
+			selected, err = c.cmdGroup.parse(context)
+		} else if c.argGroup.have() {
+			err = c.argGroup.parse(context)
+		}
 	}
 	if err == nil && c.dispatch != nil {
 		err = c.dispatch(context)
