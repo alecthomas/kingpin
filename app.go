@@ -163,11 +163,6 @@ func (a *Application) parse(context *ParseContext) (string, error) {
 	// Special-case "help" to avoid issues with required flags.
 	runHelp := (context.Peek().Value == "help")
 
-	if context.Peek().IsEOF() {
-		err := a.onHelp(context)
-		return "", err
-	}
-
 	var err error
 	err = a.flagGroup.parse(context, runHelp)
 	if err != nil {

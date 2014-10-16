@@ -29,7 +29,7 @@ func Arg(name, help string) *ArgClause {
 // an error was encountered.
 func Parse() string {
 	selected := MustParse(CommandLine.Parse(os.Args[1:]))
-	if selected == "" && len(CommandLine.commands) > 0 {
+	if selected == "" && CommandLine.cmdGroup.have() {
 		Usage()
 		os.Exit(0)
 	}
