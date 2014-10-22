@@ -54,7 +54,7 @@ func (a *Application) CommandUsage(w io.Writer, command string) {
 	if cmd.help != "" {
 		fmt.Fprintf(w, "\n%s\n", cmd.help)
 	}
-	cmd.writeHelp(guessWidth(w), w)
+	cmd.writeHelp(guessWidth(w), w, a.compactCmds)
 }
 
 func (a *Application) findCommand(command string) *CmdClause {
@@ -74,6 +74,7 @@ func (a *Application) findCommand(command string) *CmdClause {
 
 func (a *Application) writeHelp(width int, w io.Writer) {
 	s := []string{formatArgsAndFlags(a.Name, a.argGroup, a.flagGroup, a.cmdGroup)}
+
 	if len(a.commands) > 0 {
 		s = append(s, "<command>", "[<flags>]", "[<args> ...]")
 	}
@@ -95,7 +96,10 @@ func (a *Application) writeHelp(width int, w io.Writer) {
 
 	a.flagGroup.writeHelp(width, w)
 	a.argGroup.writeHelp(width, w)
-	a.cmdGroup.writeHelp(width, w)
+	a.cmdGroup.writeHelp(width, w, a.compactCmds)
+	if a.compactCmds {
+		fmt.Println()
+	}
 }
 
 func (f *flagGroup) writeHelp(width int, w io.Writer) {
@@ -154,27 +158,36 @@ func (a *argGroup) writeHelp(width int, w io.Writer) {
 	formatTwoColumns(w, 2, 2, width, rows)
 }
 
-func (a *CmdClause) writeHelp(width int, w io.Writer) {
+func (a *CmdClause) writeHelp(width int, w io.Writer, compact bool) {
 	a.flagGroup.writeHelp(width, w)
 	a.argGroup.writeHelp(width, w)
-	a.cmdGroup.writeHelp(width, w)
+	a.cmdGroup.writeHelp(width, w, compact)
+	if compact {
+		fmt.Println()
+	}
 }
 
-func (c *cmdGroup) writeHelp(width int, w io.Writer) {
+func (c *cmdGroup) writeHelp(width int, w io.Writer, compact bool) {
 	if len(c.commands) == 0 {
 		return
 	}
 	fmt.Fprintf(w, "\nCommands:\n")
 	flattened := c.flattenedCommands()
 	for _, cmd := range flattened {
-		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.FullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
+		if compact {
+			fmt.Fprintf(w, "  %s\t", cmd.FullCommand())
+		} else {
+			fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.FullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
+		}
 		buf := bytes.NewBuffer(nil)
 		doc.ToText(buf, cmd.help, "", preIndent, width-4)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 		for _, line := range lines {
 			fmt.Fprintf(w, "    %s\n", line)
 		}
-		fmt.Fprintf(w, "\n")
+		if !compact {
+			fmt.Fprintf(w, "\n")
+		}
 	}
 }
 

@@ -42,9 +42,11 @@ type Application struct {
 	*flagGroup
 	*argGroup
 	*cmdGroup
-	initialized bool
-	Name        string
-	Help        string
+	initialized    bool
+	compactCmds    bool
+	helpCmdEnabled bool
+	Name           string
+	Help           string
 }
 
 // New creates a new Kingpin application instance.
@@ -56,8 +58,19 @@ func New(name, help string) *Application {
 		Help:      help,
 	}
 	a.cmdGroup = newCmdGroup(a)
+	a.helpCmdEnabled = true
+	a.compactCmds = false
 	a.Flag("help", "Show help.").Dispatch(a.onHelp).Bool()
 	return a
+}
+
+// allows for compact usage summaries
+func (a *Application) SetCompactUsage(compact bool) {
+	a.compactCmds = compact
+}
+
+func (a *Application) SetHelpCmd(enabled bool) {
+	a.helpCmdEnabled = enabled
 }
 
 // Parse parses command-line arguments. It returns the selected command and an
@@ -105,7 +118,7 @@ func (a *Application) init() error {
 		return fmt.Errorf("can't mix top-level Arg()s with Command()s")
 	}
 
-	if len(a.commands) > 0 {
+	if len(a.commands) > 0 && a.helpCmdEnabled {
 		cmd := a.Command("help", "Show help for a command.").Dispatch(a.onHelp)
 		cmd.Arg("command", "Command name.").String()
 		// Make "help" command first in order. Also, Go's slice operations are woeful.
@@ -162,6 +175,11 @@ func (a *Application) onHelp(context *ParseContext) error {
 func (a *Application) parse(context *ParseContext) (string, error) {
 	// Special-case "help" to avoid issues with required flags.
 	runHelp := (context.Peek().Value == "help")
+
+	if context.Peek().IsEOF() {
+		err := a.onHelp(context)
+		return "", err
+	}
 
 	var err error
 	err = a.flagGroup.parse(context, runHelp)
