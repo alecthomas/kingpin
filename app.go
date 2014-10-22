@@ -45,6 +45,7 @@ type Application struct {
 	initialized    bool
 	compactCmds    bool
 	helpCmdEnabled bool
+	helpOnError    bool
 	Name           string
 	Help           string
 }
@@ -73,6 +74,10 @@ func (a *Application) SetHelpCmd(enabled bool) {
 	a.helpCmdEnabled = enabled
 }
 
+func (a *Application) SetHelpUsageOnError(enabled bool) {
+	a.helpOnError = enabled
+}
+
 // Parse parses command-line arguments. It returns the selected command and an
 // error. The selected command will be a space separated subcommand, if
 // subcommands have been configured.
@@ -83,6 +88,9 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	context := Tokenize(args)
 	command, err = a.parse(context)
 	if err != nil {
+		if command != "" && a.helpOnError {
+			a.CommandUsage(os.Stderr, command)
+		}
 		return "", err
 	}
 
