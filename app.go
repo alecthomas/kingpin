@@ -90,6 +90,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	if err != nil {
 		if command != "" && a.helpOnError {
 			a.CommandUsage(os.Stderr, command)
+			return "", nil
 		}
 		return "", err
 	}
