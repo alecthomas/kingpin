@@ -99,25 +99,25 @@ Kingpin can also produce complex command-line applications with global flags,
 subcommands, and per-subcommand flags, like this:
 
 ```
-$ chat
+$ chat --help
 usage: chat [<flags>] <command> [<flags>] [<args> ...]
 
 A command-line chat application.
 
 Flags:
-  --debug              enable debug mode
-  --help               Show help.
-  --server=127.0.0.1   server address
+  --help              Show help.
+  --debug             Enable debug mode.
+  --server=127.0.0.1  Server address.
 
 Commands:
-  help <command>
+  help [<command>]
     Show help for a command.
-
-  post [<flags>] <channel>
-    Post a message to a channel.
 
   register <nick> <name>
     Register a new user.
+
+  post [<flags>] <channel> [<text>]
+    Post a message to a channel.
 
 $ chat help post
 usage: chat [<flags>] post [<flags>] <channel> [<text>]
@@ -125,11 +125,12 @@ usage: chat [<flags>] post [<flags>] <channel> [<text>]
 Post a message to a channel.
 
 Flags:
-  --image=IMAGE   image to post
+  --image=IMAGE  Image to post.
 
 Args:
-  <channel>   channel to post to
-  [<text>]    text to post
+  <channel>  Channel to post to.
+  [<text>]   Text to post.
+
 $ chat post --image=~/Downloads/owls.jpg pics
 ...
 ```
@@ -141,6 +142,7 @@ package main
 
 import (
   "os"
+  "strings"
   "gopkg.in/alecthomas/kingpin.v1"
 )
 
@@ -170,6 +172,7 @@ func main() {
     if *postImage != nil {
     }
     text := strings.Join(*postText, " ")
+    println("Post:", text)
   }
 }
 ```
