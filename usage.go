@@ -26,7 +26,7 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 
 	for _, row := range rows {
 		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, row[1], "", preIndent, width-s-padding-indent)
+		doc.ToText(buf, row[1], "\t", preIndent, width-s-padding-indent)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 		fmt.Fprintf(w, "%s%-*s%*s", indentStr, s, row[0], padding, "")
 		if len(row[0]) > 20 {
@@ -82,7 +82,7 @@ func (a *Application) writeHelp(width int, w io.Writer) {
 	prefix := "usage: "
 	usage := strings.Join(s, " ")
 	buf := bytes.NewBuffer(nil)
-	doc.ToText(buf, usage, "", preIndent, width-len(prefix))
+	doc.ToText(buf, usage, "\t", preIndent, width-len(prefix))
 	lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 
 	fmt.Fprintf(w, "%s%s\n", prefix, lines[0])
@@ -91,7 +91,7 @@ func (a *Application) writeHelp(width int, w io.Writer) {
 	}
 	if a.Help != "" {
 		fmt.Fprintf(w, "\n")
-		doc.ToText(w, a.Help, "", preIndent, width)
+		doc.ToText(w, a.Help, "\t", preIndent, width)
 	}
 
 	a.flagGroup.writeHelp(width, w)
@@ -175,12 +175,12 @@ func (c *cmdGroup) writeHelp(width int, w io.Writer, compact bool) {
 	flattened := c.flattenedCommands()
 	for _, cmd := range flattened {
 		if compact {
-			fmt.Fprintf(w, "  %s\t", cmd.FullCommand())
+			fmt.Fprintf(w, "  %s", cmd.FullCommand())
 		} else {
 			fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.FullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
 		}
 		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, cmd.help, "", preIndent, width-4)
+		doc.ToText(buf, cmd.help, "\t", preIndent, width-4)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 		for _, line := range lines {
 			fmt.Fprintf(w, "    %s\n", line)
