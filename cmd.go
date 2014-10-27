@@ -63,9 +63,7 @@ func (c *cmdGroup) parse(context *ParseContext) (selected []string, _ error) {
 	context.Next()
 	context.SelectedCommand = cmd.name
 	selected, err := cmd.parse(context)
-	if err == nil {
-		selected = append([]string{token.String()}, selected...)
-	}
+	selected = append([]string{token.String()}, selected...)
 	return selected, err
 }
 
