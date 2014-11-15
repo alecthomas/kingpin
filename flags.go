@@ -80,7 +80,7 @@ loop:
 			} else {
 				flag, ok = f.short[name]
 				if !ok {
-					return fmt.Errorf("unknown short flag '%s", flagToken)
+					return fmt.Errorf("unknown short flag '%s'", flagToken)
 				}
 			}
 
