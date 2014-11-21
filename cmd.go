@@ -44,6 +44,9 @@ func (c *cmdGroup) init() error {
 			return fmt.Errorf("duplicate command '%s'", cmd.name)
 		}
 		seen[cmd.name] = true
+		if err := cmd.init(); err != nil {
+			return err
+		}
 	}
 	return nil
 }

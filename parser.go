@@ -16,3 +16,7 @@ func (p *ParseContext) Peek() *Token {
 func (p *ParseContext) Return(token *Token) {
 	p.Tokens = p.Tokens.Return(token)
 }
+
+func (p *ParseContext) String() string {
+	return p.SelectedCommand + ": " + p.Tokens.String()
+}
