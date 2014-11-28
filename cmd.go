@@ -76,16 +76,19 @@ func (c *cmdGroup) have() bool {
 	return len(c.commands) > 0
 }
 
+type CmdClauseValidator func(*CmdClause) error
+
 // A CmdClause is a single top-level command. It encapsulates a set of flags
 // and either subcommands or positional arguments.
 type CmdClause struct {
 	*flagGroup
 	*argGroup
 	*cmdGroup
-	app      *Application
-	name     string
-	help     string
-	dispatch Dispatch
+	app       *Application
+	name      string
+	help      string
+	dispatch  Dispatch
+	validator CmdClauseValidator
 }
 
 func newCommand(app *Application, name, help string) *CmdClause {
@@ -98,6 +101,12 @@ func newCommand(app *Application, name, help string) *CmdClause {
 		help:      help,
 	}
 	c.Flag("help", "Show help on this command.").Hidden().Dispatch(c.onHelp).Bool()
+	return c
+}
+
+// Validate sets a validation function to run when parsing.
+func (c *CmdClause) Validate(validator CmdClauseValidator) *CmdClause {
+	c.validator = validator
 	return c
 }
 
@@ -157,6 +166,9 @@ func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
 	}
 	if err == nil && c.dispatch != nil {
 		err = c.dispatch(context)
+	}
+	if c.validator != nil {
+		err = c.validator(c)
 	}
 	return selected, err
 }

@@ -36,6 +36,8 @@ import (
 
 type Dispatch func(*ParseContext) error
 
+type ApplicationValidator func(*Application) error
+
 // An Application contains the definitions of flags, arguments and commands
 // for an application.
 type Application struct {
@@ -45,6 +47,7 @@ type Application struct {
 	initialized bool
 	Name        string
 	Help        string
+	validator   ApplicationValidator
 }
 
 // New creates a new Kingpin application instance.
@@ -57,6 +60,12 @@ func New(name, help string) *Application {
 	}
 	a.cmdGroup = newCmdGroup(a)
 	a.Flag("help", "Show help.").Dispatch(a.onHelp).Bool()
+	return a
+}
+
+// Validate sets a validation function to run when parsing.
+func (a *Application) Validate(validator ApplicationValidator) *Application {
+	a.validator = validator
 	return a
 }
 
@@ -176,6 +185,9 @@ func (a *Application) parse(context *ParseContext) (string, error) {
 		err = a.argGroup.parse(context)
 	} else if a.cmdGroup.have() {
 		selected, err = a.cmdGroup.parse(context)
+	}
+	if a.validator != nil {
+		err = a.validator(a)
 	}
 	return strings.Join(selected, " "), err
 }
