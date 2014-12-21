@@ -77,20 +77,29 @@ func (t Tokens) Peek() *Token {
 
 func Tokenize(args []string) *ParseContext {
 	tokens := make(Tokens, 0, len(args))
+	allowFlags := true
 	for _, arg := range args {
-		if strings.HasPrefix(arg, "--") {
-			parts := strings.SplitN(arg[2:], "=", 2)
-			tokens = append(tokens, &Token{TokenLong, parts[0]})
-			if len(parts) == 2 {
-				tokens = append(tokens, &Token{TokenArg, parts[1]})
+		if allowFlags {
+			if arg == "--" {
+				allowFlags = false
+				continue
 			}
-		} else if strings.HasPrefix(arg, "-") {
-			for _, a := range arg[1:] {
-				tokens = append(tokens, &Token{TokenShort, string(a)})
+			if strings.HasPrefix(arg, "--") {
+				parts := strings.SplitN(arg[2:], "=", 2)
+				tokens = append(tokens, &Token{TokenLong, parts[0]})
+				if len(parts) == 2 {
+					tokens = append(tokens, &Token{TokenArg, parts[1]})
+				}
+				continue
 			}
-		} else {
-			tokens = append(tokens, &Token{TokenArg, arg})
+			if strings.HasPrefix(arg, "-") {
+				for _, a := range arg[1:] {
+					tokens = append(tokens, &Token{TokenShort, string(a)})
+				}
+				continue
+			}
 		}
+		tokens = append(tokens, &Token{TokenArg, arg})
 	}
 	return &ParseContext{Tokens: tokens}
 }
