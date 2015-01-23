@@ -36,6 +36,22 @@ func Parse() string {
 	return selected
 }
 
+// ParseWithFileExpansion is the same as Parse() but will expand flags from
+// arguments in the form @FILE.
+func ParseWithFileExpansion() string {
+	args, err := ExpandArgsFromFiles(os.Args[1:])
+	if err != nil {
+		Fatalf("failed to expand flags: %s", err)
+	}
+	selected := MustParse(CommandLine.ParseWithFileExpansion(args))
+	if selected == "" && CommandLine.cmdGroup.have() {
+		Usage()
+		os.Exit(0)
+	}
+	return selected
+
+}
+
 // Fatalf prints an error message to stderr and exits.
 func Fatalf(format string, args ...interface{}) {
 	CommandLine.Fatalf(os.Stderr, format, args...)

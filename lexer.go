@@ -1,6 +1,11 @@
 package kingpin
 
-import "strings"
+import (
+	"bufio"
+	"os"
+
+	"strings"
+)
 
 type TokenType int
 
@@ -102,4 +107,29 @@ func Tokenize(args []string) *ParseContext {
 		tokens = append(tokens, &Token{TokenArg, arg})
 	}
 	return &ParseContext{Tokens: tokens}
+}
+
+// ExpandArgsFromFiles expands arguments in the form @<file> into one-arg-per-
+// line read from that file.
+func ExpandArgsFromFiles(args []string) ([]string, error) {
+	out := []string{}
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "@") {
+			r, err := os.Open(arg[1:])
+			if err != nil {
+				return nil, err
+			}
+			scanner := bufio.NewScanner(r)
+			for scanner.Scan() {
+				out = append(out, scanner.Text())
+			}
+			r.Close()
+			if scanner.Err() != nil {
+				return nil, scanner.Err()
+			}
+		} else {
+			out = append(out, arg)
+		}
+	}
+	return out, nil
 }
