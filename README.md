@@ -21,6 +21,13 @@ import "gopkg.in/alecthomas/kingpin.v1"
 
 ## Changes
 
+- *2015-01-23* -- Stable v1.3.4 release.
+    - Support "--" for separating flags from positional arguments.
+    - Support loading flags from files (ParseWithFileExpansion()). Use @FILE as an argument.
+    - Add post-app and post-cmd validation hooks. This allows arbitrary validation to be added.
+    - A bunch of improvements to help usage and formatting.
+    - Support arbitrarily nested sub-commands.
+
 - *2014-07-08* -- Stable v1.2.0 release.
     - Pass any value through to `Strings()` when final argument.
       Allows for values that look like flags to be processed.
