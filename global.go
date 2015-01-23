@@ -43,7 +43,7 @@ func ParseWithFileExpansion() string {
 	if err != nil {
 		Fatalf("failed to expand flags: %s", err)
 	}
-	selected := MustParse(CommandLine.ParseWithFileExpansion(args))
+	selected := MustParse(CommandLine.Parse(args))
 	if selected == "" && CommandLine.cmdGroup.have() {
 		Usage()
 		os.Exit(0)
