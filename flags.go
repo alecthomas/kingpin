@@ -3,19 +3,22 @@ package kingpin
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 )
 
 type flagGroup struct {
 	short     map[string]*FlagClause
 	long      map[string]*FlagClause
+	pattern   map[string]*FlagClause
 	flagOrder []*FlagClause
 }
 
 func newFlagGroup() *flagGroup {
 	return &flagGroup{
-		short: make(map[string]*FlagClause),
-		long:  make(map[string]*FlagClause),
+		short:   make(map[string]*FlagClause),
+		long:    make(map[string]*FlagClause),
+		pattern: make(map[string]*FlagClause),
 	}
 }
 
@@ -27,6 +30,14 @@ func (f *flagGroup) Flag(name, help string) *FlagClause {
 	return flag
 }
 
+// FlagPattern defines a new flag pattern with the given regular expression and help.
+func (f *flagGroup) FlagPattern(regex, help string) *FlagClause {
+	flag := newFlagPattern(regex, help)
+	f.pattern[regex] = flag
+	f.flagOrder = append(f.flagOrder, flag)
+	return flag
+}
+
 func (f *flagGroup) init() error {
 	for _, flag := range f.long {
 		if err := flag.init(); err != nil {
@@ -34,6 +45,11 @@ func (f *flagGroup) init() error {
 		}
 		if flag.shorthand != 0 {
 			f.short[string(flag.shorthand)] = flag
+		}
+	}
+	for _, flag := range f.pattern {
+		if err := flag.init(); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -75,7 +91,19 @@ loop:
 				}
 				flag, ok = f.long[name]
 				if !ok {
-					return fmt.Errorf("unknown long flag '%s'", flagToken)
+					for _, p := range f.pattern {
+						if m := p.regex.FindStringSubmatch(name); m != nil {
+							flag = p
+							if flag.submatches != nil {
+								*flag.submatches = append(*flag.submatches, m[1:]...)
+							}
+							ok = true
+							break
+						}
+					}
+					if !ok {
+						return fmt.Errorf("unknown long flag '%s'", flagToken)
+					}
 				}
 			} else {
 				flag, ok = f.short[name]
@@ -162,6 +190,9 @@ func (f *flagGroup) visibleFlags() int {
 type FlagClause struct {
 	parserMixin
 	name         string
+	pattern      string
+	regex        *regexp.Regexp
+	submatches   *[]string
 	shorthand    byte
 	help         string
 	envar        string
@@ -175,6 +206,15 @@ func newFlag(name, help string) *FlagClause {
 	f := &FlagClause{
 		name: name,
 		help: help,
+	}
+	return f
+}
+
+func newFlagPattern(pattern, help string) *FlagClause {
+	f := &FlagClause{
+		name:    fmt.Sprintf("/%s/", pattern),
+		pattern: pattern,
+		help:    help,
 	}
 	return f
 }
@@ -206,6 +246,13 @@ func (f *FlagClause) init() error {
 	if f.envar != "" {
 		if v := os.Getenv(f.envar); v != "" {
 			f.defaultValue = v
+		}
+	}
+	if f.pattern != "" {
+		if regex, err := regexp.Compile(f.pattern); err == nil {
+			f.regex = regex
+		} else {
+			return fmt.Errorf("invalid pattern definition - %s", err.Error())
 		}
 	}
 	return nil
@@ -261,4 +308,10 @@ func (f *FlagClause) Bool() (target *bool) {
 	target = new(bool)
 	f.SetValue(newBoolValue(false, target))
 	return
+}
+
+// Capture specifies the variable that holds all flag pattern regexp submatches`.
+func (f *FlagClause) Capture(submatches *[]string) *FlagClause {
+	f.submatches = submatches
+	return f
 }
