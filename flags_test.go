@@ -58,3 +58,32 @@ func TestRequiredFlag(t *testing.T) {
 	err = fg.parse(tokens, false)
 	assert.Error(t, err)
 }
+
+func TestPatternFlag(t *testing.T) {
+	fg := newFlagGroup()
+	fg.FlagPattern(`a\.\d+\.b`, "").String()
+	assert.NoError(t, fg.init())
+	tokens := Tokenize([]string{"--a.42.b", "answer"})
+	err := fg.parse(tokens, false)
+	assert.NoError(t, err)
+	tokens = Tokenize([]string{"--a.nan.b", "nan"})
+	err = fg.parse(tokens, false)
+	assert.Error(t, err)
+}
+
+func TestPatternCapture(t *testing.T) {
+	fg := newFlagGroup()
+	var submatches []string
+	fg.FlagPattern(`a\.(\d+)\.b`, "").Capture(&submatches).Strings()
+	assert.NoError(t, fg.init())
+	tokens := Tokenize([]string{"--a.42.b", "answer", "--a.66.b", "route"})
+	err := fg.parse(tokens, false)
+	assert.NoError(t, err)
+	assert.Equal(t, submatches, []string{"42", "66"}, "Capture should initialize submatches")
+}
+
+func TestInvalidPatternFlag(t *testing.T) {
+	fg := newFlagGroup()
+	fg.FlagPattern(`a[invalid regex`, "").String()
+	assert.Error(t, fg.init())
+}

@@ -8,6 +8,7 @@
 - Support for required flags and required positional arguments
 - Callbacks per command, flag and argument.
 - Help output that isn't as ugly as sin.
+- Support for flags defined with a pattern (regexp)
 
 ## Versions
 

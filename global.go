@@ -20,6 +20,11 @@ func Flag(name, help string) *FlagClause {
 	return CommandLine.Flag(name, help)
 }
 
+// FlagPattern adds a new flag pattern to the default parser.
+func FlagPattern(regex, help string) *FlagClause {
+	return CommandLine.FlagPattern(regex, help)
+}
+
 // Arg adds a new argument to the top-level of the default parser.
 func Arg(name, help string) *ArgClause {
 	return CommandLine.Arg(name, help)
