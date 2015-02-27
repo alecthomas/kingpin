@@ -153,7 +153,10 @@ func (c *CmdClause) init() error {
 }
 
 func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
-	err := c.flagGroup.parse(context, false)
+	if err := context.mergeFlags(c.flagGroup); err != nil {
+		return nil, err
+	}
+	err := context.flags.parse(context, false)
 	if err != nil {
 		return nil, err
 	}

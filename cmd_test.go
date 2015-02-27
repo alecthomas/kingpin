@@ -1,6 +1,8 @@
 package kingpin
 
 import (
+	"strings"
+
 	"github.com/stretchr/testify/assert"
 
 	"testing"
@@ -45,11 +47,37 @@ func TestNestedCommandsWithFlags(t *testing.T) {
 	b := cmd.Flag("bbb", "").Short('b').String()
 	err := app.init()
 	assert.NoError(t, err)
-	context := Tokenize([]string{"a", "b", "--aaa", "x", "-b", "x"})
+	context := Tokenize(strings.Split("a b --aaa x -b x", " "))
 	selected, err := app.parse(context)
 	assert.NoError(t, err)
 	assert.Equal(t, 0, len(context.Tokens))
 	assert.Equal(t, "a b", selected)
 	assert.Equal(t, "x", *a)
 	assert.Equal(t, "x", *b)
+}
+
+func TestNestedCommandWithMergedFlags(t *testing.T) {
+	app := New("app", "")
+	cmd0 := app.Command("a", "")
+	cmd0f0 := cmd0.Flag("aflag", "").Bool()
+	// cmd1 := app.Command("b", "")
+	// cmd1f0 := cmd0.Flag("bflag", "").Bool()
+	cmd00 := cmd0.Command("aa", "")
+	cmd00f0 := cmd00.Flag("aaflag", "").Bool()
+	err := app.init()
+	assert.NoError(t, err)
+	context := Tokenize(strings.Split("a aa --aflag --aaflag", " "))
+	selected, err := app.parse(context)
+	assert.NoError(t, err)
+	assert.True(t, *cmd0f0)
+	assert.True(t, *cmd00f0)
+	assert.Equal(t, "a aa", selected)
+}
+
+func TestNestedCommandWithDuplicateFlagErrors(t *testing.T) {
+	app := New("app", "")
+	app.Flag("test", "").Bool()
+	app.Command("cmd0", "").Flag("test", "").Bool()
+	err := app.init()
+	assert.Error(t, err)
 }

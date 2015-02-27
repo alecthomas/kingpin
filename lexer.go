@@ -106,7 +106,7 @@ func Tokenize(args []string) *ParseContext {
 		}
 		tokens = append(tokens, &Token{TokenArg, arg})
 	}
-	return &ParseContext{Tokens: tokens}
+	return newParseContext(tokens)
 }
 
 // ExpandArgsFromFiles expands arguments in the form @<file> into one-arg-per-

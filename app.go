@@ -136,7 +136,40 @@ func (a *Application) init() error {
 			return err
 		}
 	}
+	flagGroups := []*flagGroup{a.flagGroup}
+	for _, cmd := range a.commandOrder {
+		if err := checkDuplicateFlags(cmd, flagGroups); err != nil {
+			return err
+		}
+	}
 	a.initialized = true
+	return nil
+}
+
+// Recursively check commands for duplicate flags.
+func checkDuplicateFlags(current *CmdClause, flagGroups []*flagGroup) error {
+	// Check for duplicates.
+	for _, flags := range flagGroups {
+		for _, flag := range current.flagOrder {
+			if flag.shorthand != 0 {
+				if _, ok := flags.short[string(flag.shorthand)]; ok {
+					return fmt.Errorf("duplicate short flag -%c", flag.shorthand)
+				}
+			}
+			if flag.name != "help" {
+				if _, ok := flags.long[flag.name]; ok {
+					return fmt.Errorf("duplicate long flag --%s", flag.name)
+				}
+			}
+		}
+	}
+	flagGroups = append(flagGroups, current.flagGroup)
+	// Check subcommands.
+	for _, subcmd := range current.commandOrder {
+		if err := checkDuplicateFlags(subcmd, flagGroups); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

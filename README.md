@@ -15,13 +15,37 @@
 
 Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin.v1) for versioning.
 
-Usage:
+### V1 is the current stable version
 
-```go
-import "gopkg.in/alecthomas/kingpin.v1"
+Installation:
+
+```
+$ go get gopkg.in/alecthomas/kingpin.v1
 ```
 
-## Changes
+### V2 is currently in Alpha
+
+The goal for V2 is to streamline the end user experience, and include some useful features for developers, without significantly breaking API compatibility:
+
+- Make flags "just work" wherever a user thinks they should:
+  - Support interspersed arguments (see #24).
+  - <s>Don't require flags to immediately follow the command they are defined under.</s>
+  - Short-flag combining.
+  - Short-flag + argument should not require a space.
+- Use "go generate" to automate generation of repeated flags/args (eg. Strings())?
+
+Installation:
+
+```
+$ go get gopkg.in/alecthomas/kingpin.v2
+```
+
+#### Changes between V1 and V2
+
+- *2015-02-27* -- Unstable v2.0.0alpha1 release (somewhat backwards incompatible)
+    - Support for parsing flags at any point after their definition in the command tree.
+
+## Change History
 
 - *2015-01-23* -- Stable v1.3.4 release.
     - Support "--" for separating flags from positional arguments.
