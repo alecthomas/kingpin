@@ -15,34 +15,45 @@
 
 Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin.v1) for versioning.
 
-### V1 is the current stable version
+### [V1](https://gopkg.in/alecthomas/kingpin.v1) is the current stable version
 
 Installation:
 
-```
+```sh
 $ go get gopkg.in/alecthomas/kingpin.v1
 ```
 
-### V2 is currently in Alpha
+### [V2](https://gopkg.in/alecthomas/kingpin.v2-unstable) is the current *unstable* version
 
-The goal for V2 is to streamline the end user experience, and include some useful features for developers, without significantly breaking API compatibility:
+The goals for V2 are:
+
+- Streamline the end user experience.
+- Include some more useful features for developers.
+- Don't unnecessarily break backwards compatibility.
+
+Current task list:
 
 - Make flags "just work" wherever a user thinks they should:
-  - Support interspersed arguments (see #24).
   - <s>Don't require flags to immediately follow the command they are defined under.</s>
+  - Support interspersed arguments (see #24).
   - Short-flag combining.
   - Short-flag + argument should not require a space.
 - Use "go generate" to automate generation of repeated flags/args (eg. Strings())?
+- Streamline help:
+  - Default to a more compact help?
+  - Provide a `--help-full` flag to fully expand all subcommands and all flags.
+  - Expose internal structure so templates can be used to generate the help?
+    This would allow developers to display help in any way they prefer.
 
 Installation:
 
 ```
-$ go get gopkg.in/alecthomas/kingpin.v2
+$ go get gopkg.in/alecthomas/kingpin.v2-unstable
 ```
 
 #### Changes between V1 and V2
 
-- *2015-02-27* -- Unstable v2.0.0alpha1 release (somewhat backwards incompatible)
+- *2015-02-27*
     - Support for parsing flags at any point after their definition in the command tree.
 
 ## Change History
