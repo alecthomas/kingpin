@@ -1,5 +1,7 @@
 # Kingpin - A Go (golang) command line and flag parser [![Build Status](https://travis-ci.org/alecthomas/kingpin.png)](https://travis-ci.org/alecthomas/kingpin)
 
+(check out [v2-unstable](https://github.com/alecthomas/kingpin/tree/v2-unstable) for bleeding edge features)
+
 ## Features
 
 - POSIX-style short flag combining.
