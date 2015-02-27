@@ -17,6 +17,14 @@ func TestParseStrings(t *testing.T) {
 	assert.Equal(t, []string{"a", "b"}, *v)
 }
 
+func TestStringsStringer(t *testing.T) {
+	target := []string{}
+	v := newAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
+	v.Set("hello")
+	v.Set("world")
+	assert.Equal(t, "hello,world", v.String())
+}
+
 func TestParseStringMap(t *testing.T) {
 	p := parserMixin{}
 	v := p.StringMap()

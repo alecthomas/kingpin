@@ -2,7 +2,6 @@ package kingpin
 
 import (
 	"net"
-	"strings"
 	"time"
 )
 
@@ -16,34 +15,7 @@ func (p *parserMixin) Strings() (target *[]string) {
 }
 
 func (p *parserMixin) StringsVar(target *[]string) {
-	p.SetValue(newStringsValue(target))
-}
-
-type stringsValue []string
-
-func newStringsValue(p *[]string) *stringsValue {
-	return (*stringsValue)(p)
-}
-
-func (s *stringsValue) Set(value string) error {
-	var v string
-	if err := newStringValue(&v).Set(value); err != nil {
-		return err
-	}
-	*s = append(*s, v)
-	return nil
-}
-
-func (s *stringsValue) String() string {
-	out := []string{}
-	for _, v := range *s {
-		out = append(out, newStringValue(&v).String())
-	}
-	return strings.Join(out, ",")
-}
-
-func (s *stringsValue) IsCumulative() bool {
-	return true
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newStringValue(v.(*string)) }))
 }
 
 // Uint64List accumulates uint64 values into a slice.
@@ -54,34 +26,7 @@ func (p *parserMixin) Uint64List() (target *[]uint64) {
 }
 
 func (p *parserMixin) Uint64ListVar(target *[]uint64) {
-	p.SetValue(newUint64ListValue(target))
-}
-
-type uint64sValue []uint64
-
-func newUint64ListValue(p *[]uint64) *uint64sValue {
-	return (*uint64sValue)(p)
-}
-
-func (s *uint64sValue) Set(value string) error {
-	var v uint64
-	if err := newUint64Value(&v).Set(value); err != nil {
-		return err
-	}
-	*s = append(*s, v)
-	return nil
-}
-
-func (s *uint64sValue) String() string {
-	out := []string{}
-	for _, v := range *s {
-		out = append(out, newUint64Value(&v).String())
-	}
-	return strings.Join(out, ",")
-}
-
-func (s *uint64sValue) IsCumulative() bool {
-	return true
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newUint64Value(v.(*uint64)) }))
 }
 
 // Int64List accumulates int64 values into a slice.
@@ -92,34 +37,7 @@ func (p *parserMixin) Int64List() (target *[]int64) {
 }
 
 func (p *parserMixin) Int64ListVar(target *[]int64) {
-	p.SetValue(newInt64ListValue(target))
-}
-
-type int64sValue []int64
-
-func newInt64ListValue(p *[]int64) *int64sValue {
-	return (*int64sValue)(p)
-}
-
-func (s *int64sValue) Set(value string) error {
-	var v int64
-	if err := newInt64Value(&v).Set(value); err != nil {
-		return err
-	}
-	*s = append(*s, v)
-	return nil
-}
-
-func (s *int64sValue) String() string {
-	out := []string{}
-	for _, v := range *s {
-		out = append(out, newInt64Value(&v).String())
-	}
-	return strings.Join(out, ",")
-}
-
-func (s *int64sValue) IsCumulative() bool {
-	return true
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newInt64Value(v.(*int64)) }))
 }
 
 // DurationList accumulates time.Duration values into a slice.
@@ -130,34 +48,7 @@ func (p *parserMixin) DurationList() (target *[]time.Duration) {
 }
 
 func (p *parserMixin) DurationListVar(target *[]time.Duration) {
-	p.SetValue(newDurationListValue(target))
-}
-
-type durationsValue []time.Duration
-
-func newDurationListValue(p *[]time.Duration) *durationsValue {
-	return (*durationsValue)(p)
-}
-
-func (s *durationsValue) Set(value string) error {
-	var v time.Duration
-	if err := newDurationValue(&v).Set(value); err != nil {
-		return err
-	}
-	*s = append(*s, v)
-	return nil
-}
-
-func (s *durationsValue) String() string {
-	out := []string{}
-	for _, v := range *s {
-		out = append(out, newDurationValue(&v).String())
-	}
-	return strings.Join(out, ",")
-}
-
-func (s *durationsValue) IsCumulative() bool {
-	return true
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newDurationValue(v.(*time.Duration)) }))
 }
 
 // IPList accumulates net.IP values into a slice.
@@ -168,32 +59,5 @@ func (p *parserMixin) IPList() (target *[]net.IP) {
 }
 
 func (p *parserMixin) IPListVar(target *[]net.IP) {
-	p.SetValue(newIPListValue(target))
-}
-
-type ipsValue []net.IP
-
-func newIPListValue(p *[]net.IP) *ipsValue {
-	return (*ipsValue)(p)
-}
-
-func (s *ipsValue) Set(value string) error {
-	var v net.IP
-	if err := newIPValue(&v).Set(value); err != nil {
-		return err
-	}
-	*s = append(*s, v)
-	return nil
-}
-
-func (s *ipsValue) String() string {
-	out := []string{}
-	for _, v := range *s {
-		out = append(out, newIPValue(&v).String())
-	}
-	return strings.Join(out, ",")
-}
-
-func (s *ipsValue) IsCumulative() bool {
-	return true
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newIPValue(v.(*net.IP)) }))
 }

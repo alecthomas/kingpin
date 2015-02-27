@@ -23,36 +23,8 @@ func (p *parserMixin) {{.|Name}}() (target *[]{{.Type}}) {
 }
 
 func (p *parserMixin) {{.|Name}}Var(target *[]{{.Type}}) {
-	p.SetValue(new{{.|Name}}Value(target))
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return new{{.Name}}Value(v.(*{{.Type}})) }))
 }
-
-type {{.Name|Lower}}sValue []{{.Type}}
-
-func new{{.|Name}}Value(p *[]{{.Type}}) *{{.Name|Lower}}sValue {
-	return (*{{.Name|Lower}}sValue)(p)
-}
-
-func (s *{{.Name|Lower}}sValue) Set(value string) error {
-	var v {{.Type}}
-	if err := new{{.Name}}Value(&v).Set(value); err != nil {
-		return err
-	}
-	*s = append(*s, v)
-	return nil
-}
-
-func (s *{{.Name|Lower}}sValue) String() string {
-	out := []string{}
-	for _, v := range *s {
-		out = append(out, new{{.Name}}Value(&v).String())
-	}
-	return strings.Join(out, ",")
-}
-
-func (s *{{.Name|Lower}}sValue) IsCumulative() bool {
-	return true
-}
-
 
 {{end}}
 `

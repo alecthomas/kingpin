@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -49,6 +50,53 @@ type boolFlag interface {
 type remainderArg interface {
 	Value
 	IsCumulative() bool
+}
+
+type accumulator struct {
+	element func(value interface{}) Value
+	typ     reflect.Type
+	slice   reflect.Value
+}
+
+// Use reflection to accumulate values into a slice.
+//
+// target := []string{}
+// newAccumulator(&target, func (value interface{}) Value {
+//   return newStringValue(value.(*string))
+// })
+func newAccumulator(slice interface{}, element func(value interface{}) Value) *accumulator {
+	typ := reflect.TypeOf(slice)
+	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Slice {
+		panic("expected a pointer to a slice")
+	}
+	return &accumulator{
+		element: element,
+		typ:     typ.Elem().Elem(),
+		slice:   reflect.ValueOf(slice),
+	}
+}
+
+func (a *accumulator) String() string {
+	out := []string{}
+	s := a.slice.Elem()
+	for i := 0; i < s.Len(); i++ {
+		out = append(out, a.element(s.Index(i).Addr().Interface()).String())
+	}
+	return strings.Join(out, ",")
+}
+
+func (a *accumulator) Set(value string) error {
+	e := reflect.New(a.typ)
+	if err := a.element(e.Interface()).Set(value); err != nil {
+		return err
+	}
+	slice := reflect.Append(a.slice.Elem(), e.Elem())
+	a.slice.Elem().Set(slice)
+	return nil
+}
+
+func (a *accumulator) IsCumulative() bool {
+	return true
 }
 
 // -- bool Value
