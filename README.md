@@ -36,7 +36,7 @@ Current task list:
 - Make flags "just work" wherever a user thinks they should:
   - <s>Don't require flags to immediately follow the command they are defined under.</s>
   - Support interspersed arguments (see #24).
-  - Short-flag + argument should not require a space (see #26).
+  - <s>Short-flag + argument should not require a space (see #26)</s>.
 - Use "go generate" to automate generation of repeated flags/args (eg. Strings())?
 - Streamline help:
   - Default to a more compact help?
