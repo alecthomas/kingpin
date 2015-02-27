@@ -165,11 +165,11 @@ func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
 			err = c.argGroup.parse(context)
 		}
 	}
-	if err == nil && c.dispatch != nil {
-		err = c.dispatch(context)
-	}
 	if c.validator != nil {
 		err = c.validator(c)
+	}
+	if err == nil && c.dispatch != nil {
+		err = c.dispatch(context)
 	}
 	return selected, err
 }
