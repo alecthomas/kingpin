@@ -76,16 +76,14 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	if err := a.init(); err != nil {
 		return "", err
 	}
-	context := Tokenize(args)
+	context := tokenize(args)
 	command, err = a.parse(context)
 	if err != nil {
 		return "", err
 	}
 
-	if len(context.Tokens) == 1 {
-		return "", fmt.Errorf("unexpected argument '%s'", context.Tokens)
-	} else if len(context.Tokens) > 0 {
-		return "", fmt.Errorf("unexpected arguments '%s'", context.Tokens)
+	if !context.EOL() {
+		return "", fmt.Errorf("unexpected argument '%s'", context.Peek())
 	}
 
 	return command, err
@@ -202,8 +200,10 @@ func (a *Application) onHelp(context *ParseContext) error {
 }
 
 func (a *Application) parse(context *ParseContext) (string, error) {
+	context.mergeFlags(a.flagGroup)
+
 	// Special-case "help" to avoid issues with required flags.
-	runHelp := (context.Peek().Value == "help")
+	runHelp := (context.Peek().IsFlag() && context.Peek().Value == "help")
 
 	var err error
 	err = a.flagGroup.parse(context, runHelp)

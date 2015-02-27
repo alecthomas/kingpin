@@ -101,10 +101,10 @@ func TestTooManyArgs(t *testing.T) {
 	a := New("test", "test")
 	a.Arg("a", "").String()
 	assert.NoError(t, a.init())
-	context := Tokenize([]string{"a", "b"})
+	context := tokenize([]string{"a", "b"})
 	_, err := a.parse(context)
 	assert.NoError(t, err)
-	assert.Equal(t, Tokens{&Token{TokenArg, "b"}}, context.Tokens)
+	assert.Equal(t, &Token{TokenArg, "b"}, context.Peek())
 	_, err = a.Parse([]string{"a", "b"})
 	assert.Error(t, err)
 }
@@ -113,10 +113,10 @@ func TestTooManyArgsAfterCommand(t *testing.T) {
 	a := New("test", "test")
 	a.Command("a", "")
 	assert.NoError(t, a.init())
-	context := Tokenize([]string{"a", "b"})
+	context := tokenize([]string{"a", "b"})
 	_, err := a.parse(context)
 	assert.NoError(t, err)
-	assert.Equal(t, Tokens{&Token{TokenArg, "b"}}, context.Tokens)
+	assert.Equal(t, &Token{TokenArg, "b"}, context.Peek())
 	_, err = a.Parse([]string{"a", "b"})
 	assert.Error(t, err)
 }
@@ -125,5 +125,18 @@ func TestArgsLooksLikeFlagsWithConsumeRemainder(t *testing.T) {
 	a := New("test", "")
 	a.Arg("opts", "").Required().Strings()
 	_, err := a.Parse([]string{"hello", "-world"})
+	assert.Error(t, err)
+}
+
+func TestCombinedShortFlagArg(t *testing.T) {
+	a := New("test", "")
+	n := a.Flag("short", "").Short('s').Int()
+	_, err := a.Parse([]string{"-s10"})
+	assert.NoError(t, err)
+	assert.Equal(t, 10, *n)
+}
+
+func TestEmptyShortFlagIsAnError(t *testing.T) {
+	_, err := New("test", "").Parse([]string{"-"})
 	assert.Error(t, err)
 }

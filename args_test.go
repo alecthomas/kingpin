@@ -11,7 +11,7 @@ func TestArgRemainder(t *testing.T) {
 	v := a.Arg("test", "").Strings()
 	a.init()
 	args := []string{"hello", "world"}
-	tokens := Tokenize(args)
+	tokens := tokenize(args)
 	a.parse(tokens)
 	assert.Equal(t, args, *v)
 }
@@ -29,11 +29,11 @@ func TestArgMultipleRequired(t *testing.T) {
 	a.Arg("b", "").Required().String()
 	a.init()
 
-	err := a.parse(Tokenize([]string{}))
+	err := a.parse(tokenize([]string{}))
 	assert.Error(t, err)
-	err = a.parse(Tokenize([]string{"A"}))
+	err = a.parse(tokenize([]string{"A"}))
 	assert.Error(t, err)
-	err = a.parse(Tokenize([]string{"A", "B"}))
+	err = a.parse(tokenize([]string{"A", "B"}))
 	assert.NoError(t, err)
 }
 
@@ -41,7 +41,7 @@ func TestInvalidArgsDefaultCanBeOverridden(t *testing.T) {
 	a := newArgGroup()
 	a.Arg("a", "").Default("invalid").Bool()
 	assert.NoError(t, a.init())
-	tokens := Tokenize([]string{})
+	tokens := tokenize([]string{})
 	err := a.parse(tokens)
 	assert.Error(t, err)
 }
