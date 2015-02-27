@@ -53,6 +53,8 @@ $ go get gopkg.in/alecthomas/kingpin.v2-unstable
 
 - *2015-02-27*
     - Support for parsing flags at any point after their definition in the command tree.
+    - Support combined short-flag+argument: -fARG.
+    - Use `go generate` to generate repeated flags.
 
 ## Change History
 
