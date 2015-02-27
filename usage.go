@@ -123,7 +123,7 @@ func (f *flagGroup) gatherFlagSummary() (out []string) {
 		if flag.required {
 			fb, ok := flag.value.(boolFlag)
 			if ok && fb.IsBoolFlag() {
-				out = append(out, fmt.Sprintf("--%s", flag.name))
+				out = append(out, fmt.Sprintf("--[no-]%s", flag.name))
 			} else {
 				out = append(out, fmt.Sprintf("--%s=%s", flag.name, flag.formatPlaceHolder()))
 			}
@@ -199,10 +199,15 @@ func formatFlag(flag *FlagClause) string {
 	if flag.shorthand != 0 {
 		flagString += fmt.Sprintf("-%c, ", flag.shorthand)
 	}
-	flagString += fmt.Sprintf("--%s", flag.name)
 	fb, ok := flag.value.(boolFlag)
-	if !ok || !fb.IsBoolFlag() {
-		flagString += fmt.Sprintf("=%s", flag.formatPlaceHolder())
+	if ok && fb.IsBoolFlag() {
+		if flag.name == "help" || flag.name == "version" {
+			flagString += fmt.Sprintf("--%s", flag.name)
+		} else {
+			flagString += fmt.Sprintf("--[no-]%s", flag.name)
+		}
+	} else {
+		flagString += fmt.Sprintf("--%s=%s", flag.name, flag.formatPlaceHolder())
 	}
 	return flagString
 }
