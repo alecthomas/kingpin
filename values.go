@@ -54,8 +54,7 @@ type remainderArg interface {
 // -- bool Value
 type boolValue bool
 
-func newBoolValue(val bool, p *bool) *boolValue {
-	*p = val
+func newBoolValue(p *bool) *boolValue {
 	return (*boolValue)(p)
 }
 
@@ -77,8 +76,7 @@ func (b *boolValue) IsBoolFlag() bool { return true }
 // -- int Value
 type intValue int
 
-func newIntValue(val int, p *int) *intValue {
-	*p = val
+func newIntValue(p *int) *intValue {
 	return (*intValue)(p)
 }
 
@@ -95,8 +93,7 @@ func (i *intValue) String() string { return fmt.Sprintf("%v", *i) }
 // -- int64 Value
 type int64Value int64
 
-func newInt64Value(val int64, p *int64) *int64Value {
-	*p = val
+func newInt64Value(p *int64) *int64Value {
 	return (*int64Value)(p)
 }
 
@@ -113,8 +110,7 @@ func (i *int64Value) String() string { return fmt.Sprintf("%v", *i) }
 // -- uint Value
 type uintValue uint
 
-func newUintValue(val uint, p *uint) *uintValue {
-	*p = val
+func newUintValue(p *uint) *uintValue {
 	return (*uintValue)(p)
 }
 
@@ -131,8 +127,7 @@ func (i *uintValue) String() string { return fmt.Sprintf("%v", *i) }
 // -- uint64 Value
 type uint64Value uint64
 
-func newUint64Value(val uint64, p *uint64) *uint64Value {
-	*p = val
+func newUint64Value(p *uint64) *uint64Value {
 	return (*uint64Value)(p)
 }
 
@@ -149,8 +144,7 @@ func (i *uint64Value) String() string { return fmt.Sprintf("%v", *i) }
 // -- string Value
 type stringValue string
 
-func newStringValue(val string, p *string) *stringValue {
-	*p = val
+func newStringValue(p *string) *stringValue {
 	return (*stringValue)(p)
 }
 
@@ -166,8 +160,7 @@ func (s *stringValue) String() string { return fmt.Sprintf("%s", *s) }
 // -- float64 Value
 type float64Value float64
 
-func newFloat64Value(val float64, p *float64) *float64Value {
-	*p = val
+func newFloat64Value(p *float64) *float64Value {
 	return (*float64Value)(p)
 }
 
@@ -184,8 +177,7 @@ func (f *float64Value) String() string { return fmt.Sprintf("%v", *f) }
 // -- time.Duration Value
 type durationValue time.Duration
 
-func newDurationValue(val time.Duration, p *time.Duration) *durationValue {
-	*p = val
+func newDurationValue(p *time.Duration) *durationValue {
 	return (*durationValue)(p)
 }
 
@@ -198,26 +190,6 @@ func (d *durationValue) Set(s string) error {
 func (d *durationValue) Get() interface{} { return time.Duration(*d) }
 
 func (d *durationValue) String() string { return (*time.Duration)(d).String() }
-
-// -- []string Value
-type stringsValue []string
-
-func newStringsValue(p *[]string) *stringsValue {
-	return (*stringsValue)(p)
-}
-
-func (s *stringsValue) Set(value string) error {
-	*s = append(*s, value)
-	return nil
-}
-
-func (s *stringsValue) String() string {
-	return strings.Join(*s, ",")
-}
-
-func (s *stringsValue) IsCumulative() bool {
-	return true
-}
 
 // -- map[string]string Value
 type stringMapValue map[string]string
@@ -478,8 +450,7 @@ func (s *enumsValue) IsCumulative() bool {
 // -- units.Base2Bytes Value
 type bytesValue units.Base2Bytes
 
-func newBytesValue(val units.Base2Bytes, p *units.Base2Bytes) *bytesValue {
-	*p = val
+func newBytesValue(p *units.Base2Bytes) *bytesValue {
 	return (*bytesValue)(p)
 }
 

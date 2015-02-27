@@ -1,5 +1,7 @@
 package kingpin
 
+//go:generate go run ./genrepeated/main.go
+
 import (
 	"fmt"
 	"net"
@@ -27,13 +29,6 @@ func (p *parserMixin) SetValue(value Value) {
 func (p *parserMixin) String() (target *string) {
 	target = new(string)
 	p.StringVar(target)
-	return
-}
-
-// Strings appends multiple occurrences to a string slice.
-func (p *parserMixin) Strings() (target *[]string) {
-	target = new([]string)
-	p.StringsVar(target)
 	return
 }
 
@@ -161,12 +156,7 @@ func (p *parserMixin) URL() (target **url.URL) {
 
 // String sets the parser to a string parser.
 func (p *parserMixin) StringVar(target *string) {
-	p.SetValue(newStringValue("", target))
-}
-
-// Strings appends multiple occurrences to a string slice.
-func (p *parserMixin) StringsVar(target *[]string) {
-	p.SetValue(newStringsValue(target))
+	p.SetValue(newStringValue(target))
 }
 
 // StringMap provides key=value parsing into a map.
@@ -176,37 +166,37 @@ func (p *parserMixin) StringMapVar(target *map[string]string) {
 
 // Bool sets the parser to a boolean parser. Supports --no-<X> to disable the flag.
 func (p *parserMixin) BoolVar(target *bool) {
-	p.SetValue(newBoolValue(false, target))
+	p.SetValue(newBoolValue(target))
 }
 
 // Int sets the parser to an int parser.
 func (p *parserMixin) IntVar(target *int) {
-	p.SetValue(newIntValue(0, target))
+	p.SetValue(newIntValue(target))
 }
 
 // Int64 parses an int64
 func (p *parserMixin) Int64Var(target *int64) {
-	p.SetValue(newInt64Value(0, target))
+	p.SetValue(newInt64Value(target))
 }
 
 // Uint64 parses a uint64
 func (p *parserMixin) Uint64Var(target *uint64) {
-	p.SetValue(newUint64Value(0, target))
+	p.SetValue(newUint64Value(target))
 }
 
 // Float sets the parser to a float64 parser.
 func (p *parserMixin) FloatVar(target *float64) {
-	p.SetValue(newFloat64Value(0, target))
+	p.SetValue(newFloat64Value(target))
 }
 
 // Duration sets the parser to a time.Duration parser.
 func (p *parserMixin) DurationVar(target *time.Duration) {
-	p.SetValue(newDurationValue(time.Duration(0), target))
+	p.SetValue(newDurationValue(target))
 }
 
 // BytesVar parses numeric byte units. eg. 1.5KB
 func (p *parserMixin) BytesVar(target *units.Base2Bytes) {
-	p.SetValue(newBytesValue(units.Base2Bytes(0), target))
+	p.SetValue(newBytesValue(target))
 }
 
 // IP sets the parser to a net.IP parser.

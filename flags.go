@@ -259,6 +259,6 @@ func (f *FlagClause) Short(name byte) *FlagClause {
 // Bool makes this flag a boolean flag.
 func (f *FlagClause) Bool() (target *bool) {
 	target = new(bool)
-	f.SetValue(newBoolValue(false, target))
+	f.SetValue(newBoolValue(target))
 	return
 }
