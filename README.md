@@ -11,6 +11,22 @@
 - Callbacks per command, flag and argument.
 - Help output that isn't as ugly as sin.
 
+### Usability changes between v1 and v2
+
+#### Flags can be used at any point after their definition.
+
+Flags can be specified at any point after their definition, not just *immediately after their associated command*. From the chat example below, the following used to be required:
+
+```
+$ chat --server=chat.server.com:8080 post --image=~/Downloads/owls.jpg pics
+```
+
+But the following will now work:
+
+```
+$ chat post --server=chat.server.com:8080 --image=~/Downloads/owls.jpg pics
+```
+
 ## Versions
 
 Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin.v1) for versioning.

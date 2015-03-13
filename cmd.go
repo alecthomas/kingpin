@@ -100,7 +100,7 @@ func newCommand(app *Application, name, help string) *CmdClause {
 		name:      name,
 		help:      help,
 	}
-	c.Flag("help", "Show help on this command.").Hidden().Dispatch(c.onHelp).Bool()
+	c.Flag("help", "Show help on this command.").Hidden().Action(c.onHelp).Bool()
 	return c
 }
 
@@ -131,7 +131,7 @@ func (c *CmdClause) Command(name, help string) *CmdClause {
 	return cmd
 }
 
-func (c *CmdClause) Dispatch(dispatch Dispatch) *CmdClause {
+func (c *CmdClause) Action(dispatch Dispatch) *CmdClause {
 	c.dispatch = dispatch
 	return c
 }

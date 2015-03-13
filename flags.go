@@ -212,7 +212,7 @@ func (f *FlagClause) init() error {
 }
 
 // Dispatch to the given function when the flag is parsed.
-func (f *FlagClause) Dispatch(dispatch Dispatch) *FlagClause {
+func (f *FlagClause) Action(dispatch Dispatch) *FlagClause {
 	f.dispatch = dispatch
 	return f
 }

@@ -59,7 +59,7 @@ func New(name, help string) *Application {
 		Help:      help,
 	}
 	a.cmdGroup = newCmdGroup(a)
-	a.Flag("help", "Show help.").Dispatch(a.onHelp).Bool()
+	a.Flag("help", "Show help.").Action(a.onHelp).Bool()
 	return a
 }
 
@@ -91,7 +91,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
-	a.Flag("version", "Show application version.").Dispatch(func(*ParseContext) error {
+	a.Flag("version", "Show application version.").Action(func(*ParseContext) error {
 		fmt.Println(version)
 		os.Exit(0)
 		return nil
@@ -113,7 +113,7 @@ func (a *Application) init() error {
 	}
 
 	if len(a.commands) > 0 {
-		cmd := a.Command("help", "Show help for a command.").Dispatch(a.onHelp)
+		cmd := a.Command("help", "Show help for a command.").Action(a.onHelp)
 		cmd.Arg("command", "Command name.").String()
 		// Make "help" command first in order. Also, Go's slice operations are woeful.
 		l := len(a.commandOrder) - 1

@@ -128,7 +128,7 @@ func (a *ArgClause) Default(value string) *ArgClause {
 	return a
 }
 
-func (a *ArgClause) Dispatch(dispatch Dispatch) *ArgClause {
+func (a *ArgClause) Action(dispatch Dispatch) *ArgClause {
 	a.dispatch = dispatch
 	return a
 }
