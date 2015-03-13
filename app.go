@@ -202,23 +202,117 @@ func (a *Application) onHelp(context *ParseContext) error {
 func (a *Application) parse(context *ParseContext) (string, error) {
 	context.mergeFlags(a.flagGroup)
 
-	// Special-case "help" to avoid issues with required flags.
-	runHelp := (context.Peek().IsFlag() && context.Peek().Value == "help")
-
 	var err error
-	err = a.flagGroup.parse(context, runHelp)
+	err = a.flagGroup.parse(context)
 	if err != nil {
 		return "", err
 	}
-
-	selected := []string{}
 
 	// Parse arguments or commands.
 	if a.argGroup.have() {
 		err = a.argGroup.parse(context)
 	} else if a.cmdGroup.have() {
-		selected, err = a.cmdGroup.parse(context)
+		_, err = a.cmdGroup.parse(context)
 	}
+
+	return a.execute(context)
+}
+
+func (a *Application) execute(context *ParseContext) (string, error) {
+	var err error
+	selected := []string{}
+
+	flagElements := map[string]*parseElement{}
+	for _, element := range context.elements {
+		if element.isFlag() {
+			flagElements[element.flag.name] = element
+		}
+	}
+
+	argElements := map[string]*parseElement{}
+	for _, element := range context.elements {
+		if element.isArg() {
+			flagElements[element.arg.name] = element
+		}
+	}
+
+	// Check required flags and set defaults.
+	for _, flag := range context.flags.long {
+		if flagElements[flag.name] == nil {
+			// Check required flags were provided.
+			if flag.needsValue() {
+				return "", fmt.Errorf("required flag --%s not provided", flag.name)
+			}
+			// Set defaults, if any.
+			if flag.defaultValue != "" {
+				if err = flag.value.Set(flag.defaultValue); err != nil {
+					return "", err
+				}
+			}
+		}
+	}
+
+	for _, arg := range context.arguments.args {
+		if argElements[arg.name] == nil {
+			if arg.required {
+				return "", fmt.Errorf("required argument '%s' not provided", arg.name)
+			}
+			// Set defaults, if any.
+			if arg.defaultValue != "" {
+				if err = arg.value.Set(arg.defaultValue); err != nil {
+					return "", err
+				}
+			}
+		}
+	}
+
+	// Finally, apply everything.
+	// - Set values for flags and dispatch actions.
+	// - Set values for args and dispatch actions.
+	// - Run command validators and dispatch actions.
+	var lastCmd *CmdClause
+	for _, element := range context.elements {
+		switch {
+		case element.isFlag():
+			if err := element.flag.value.Set(*element.value); err != nil {
+				return "", err
+			}
+			if element.flag.dispatch != nil {
+				if err := element.flag.dispatch(context); err != nil {
+					return "", err
+				}
+			}
+
+		case element.isArg():
+			if err := element.arg.value.Set(*element.value); err != nil {
+				return "", err
+			}
+			if element.arg.dispatch != nil {
+				if err := element.arg.dispatch(context); err != nil {
+					return "", err
+				}
+			}
+
+		case element.isCmd():
+			if element.cmd.validator != nil {
+				if err = element.cmd.validator(element.cmd); err != nil {
+					return "", err
+				}
+			}
+			if element.cmd.dispatch != nil {
+				if err := element.cmd.dispatch(context); err != nil {
+					return "", err
+				}
+			}
+			selected = append(selected, element.cmd.name)
+			lastCmd = element.cmd
+		}
+	}
+
+	if lastCmd != nil && len(lastCmd.commands) > 0 {
+		return "", fmt.Errorf("must select a subcommand of '%s'", lastCmd.FullCommand())
+	}
+
 	if a.validator != nil {
 		err = a.validator(a)
 	}

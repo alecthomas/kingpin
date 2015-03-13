@@ -7,12 +7,11 @@ import (
 )
 
 func TestArgRemainder(t *testing.T) {
-	a := newArgGroup()
-	v := a.Arg("test", "").Strings()
-	a.init()
+	app := New("test", "")
+	v := app.Arg("test", "").Strings()
 	args := []string{"hello", "world"}
-	tokens := tokenize(args)
-	a.parse(tokens)
+	_, err := app.Parse(args)
+	assert.NoError(t, err)
 	assert.Equal(t, args, *v)
 }
 

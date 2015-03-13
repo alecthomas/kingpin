@@ -51,6 +51,7 @@ func (c *cmdGroup) init() error {
 	return nil
 }
 
+// TODO: Remove selected. It is now collected during execute()
 func (c *cmdGroup) parse(context *ParseContext) (selected []string, _ error) {
 	token := context.Peek()
 	if token.Type == TokenEOL {
@@ -152,9 +153,11 @@ func (c *CmdClause) init() error {
 	return nil
 }
 
+// Called when this command has already been selected.
 func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
 	context.mergeFlags(c.flagGroup)
-	err := context.flags.parse(context, false)
+	context.matchedCmd(c)
+	err := context.flags.parse(context)
 	if err != nil {
 		return nil, err
 	}
@@ -162,14 +165,13 @@ func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
 		if c.cmdGroup.have() {
 			selected, err = c.cmdGroup.parse(context)
 		} else if c.argGroup.have() {
+			context.mergeArgs(c.argGroup)
 			err = c.argGroup.parse(context)
 		}
 	}
-	if c.validator != nil {
-		err = c.validator(c)
-	}
-	if err == nil && c.dispatch != nil {
-		err = c.dispatch(context)
+	err = context.flags.parse(context)
+	if err != nil {
+		return nil, err
 	}
 	return selected, err
 }

@@ -48,18 +48,36 @@ func (t *Token) String() string {
 	}
 }
 
+// A union of possible elements in a parse stack.
+type parseElement struct {
+	flag *FlagClause
+	cmd  *CmdClause
+	arg  *ArgClause
+
+	value *string
+}
+
+func (p *parseElement) isFlag() bool   { return p.flag != nil }
+func (p *parseElement) isCmd() bool    { return p.cmd != nil }
+func (p *parseElement) isArg() bool    { return p.arg != nil }
+func (p *parseElement) hasValue() bool { return p.value != nil }
+
 type ParseContext struct {
 	SelectedCommand string
 	argsOnly        bool
 	peek            []*Token
 	args            []string
 	flags           *flagGroup
+	arguments       *argGroup
+	// Flags, arguments and commands encountered and collected during parse.
+	elements []*parseElement
 }
 
 func tokenize(args []string) *ParseContext {
 	return &ParseContext{
-		args:  args,
-		flags: newFlagGroup(),
+		args:      args,
+		flags:     newFlagGroup(),
+		arguments: newArgGroup(),
 	}
 }
 
@@ -70,6 +88,12 @@ func (p *ParseContext) mergeFlags(flags *flagGroup) {
 		}
 		p.flags.long[flag.name] = flag
 		p.flags.flagOrder = append(p.flags.flagOrder, flag)
+	}
+}
+
+func (p *ParseContext) mergeArgs(args *argGroup) {
+	for _, arg := range args.args {
+		p.arguments.args = append(p.arguments.args, arg)
 	}
 }
 
@@ -157,6 +181,18 @@ func (p *ParseContext) pop() *Token {
 
 func (p *ParseContext) String() string {
 	return p.SelectedCommand
+}
+
+func (p *ParseContext) matchedFlag(flag *FlagClause, value string) {
+	p.elements = append(p.elements, &parseElement{flag: flag, value: &value})
+}
+
+func (p *ParseContext) matchedArg(arg *ArgClause, value string) {
+	p.elements = append(p.elements, &parseElement{arg: arg, value: &value})
+}
+
+func (p *ParseContext) matchedCmd(cmd *CmdClause) {
+	p.elements = append(p.elements, &parseElement{cmd: cmd})
 }
 
 // ExpandArgsFromFiles expands arguments in the form @<file> into one-arg-per-

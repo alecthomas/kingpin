@@ -145,16 +145,10 @@ func (a *ArgClause) init() error {
 
 func (a *ArgClause) parse(context *ParseContext) error {
 	token := context.Peek()
-	if token.Type == TokenArg {
-		if err := a.value.Set(token.Value); err != nil {
-			return err
-		}
-		if a.dispatch != nil {
-			if err := a.dispatch(context); err != nil {
-				return err
-			}
-		}
-		context.Next()
+	if token.Type != TokenArg {
+		return fmt.Errorf("expected positional arguments <%s> but got '%s'", a.name, token)
 	}
+	context.matchedArg(a, token.Value)
+	context.Next()
 	return nil
 }

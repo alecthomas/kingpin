@@ -140,3 +140,40 @@ func TestEmptyShortFlagIsAnError(t *testing.T) {
 	_, err := New("test", "").Parse([]string{"-"})
 	assert.Error(t, err)
 }
+
+func TestCommandParseDoesNotResetFlagsToDefault(t *testing.T) {
+	app := New("test", "")
+	flag := app.Flag("flag", "").Default("default").String()
+	app.Command("cmd", "")
+
+	_, err := app.Parse([]string{"--flag=123", "cmd"})
+	assert.NoError(t, err)
+	assert.Equal(t, "123", *flag)
+}
+
+func TestCommandParseDoesNotFailRequired(t *testing.T) {
+	app := New("test", "")
+	flag := app.Flag("flag", "").Required().String()
+	app.Command("cmd", "")
+
+	_, err := app.Parse([]string{"cmd", "--flag=123"})
+	assert.NoError(t, err)
+	assert.Equal(t, "123", *flag)
+}
+
+func TestSelectedCommand(t *testing.T) {
+	app := New("test", "help")
+	c0 := app.Command("c0", "")
+	c0.Command("c1", "")
+	s, err := app.Parse([]string{"c0", "c1"})
+	assert.NoError(t, err)
+	assert.Equal(t, "c0 c1", s)
+}
+
+func TestSubCommandRequired(t *testing.T) {
+	app := New("test", "help")
+	c0 := app.Command("c0", "")
+	c0.Command("c1", "")
+	_, err := app.Parse([]string{"c0"})
+	assert.Error(t, err)
+}
