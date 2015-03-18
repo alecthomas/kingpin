@@ -222,6 +222,27 @@ func (a *Application) execute(context *ParseContext) (string, error) {
 	var err error
 	selected := []string{}
 
+	if err = a.setDefaults(context); err != nil {
+		return "", err
+	}
+
+	selected, err = a.setValues(context)
+	if err != nil {
+		return "", err
+	}
+
+	if err = a.applyValidators(context); err != nil {
+		return "", err
+	}
+
+	if err = a.applyActions(context); err != nil {
+		return "", err
+	}
+
+	return strings.Join(selected, " "), err
+}
+
+func (a *Application) setDefaults(context *ParseContext) error {
 	flagElements := map[string]*parseElement{}
 	for _, element := range context.elements {
 		if element.isFlag() {
@@ -241,12 +262,12 @@ func (a *Application) execute(context *ParseContext) (string, error) {
 		if flagElements[flag.name] == nil {
 			// Check required flags were provided.
 			if flag.needsValue() {
-				return "", fmt.Errorf("required flag --%s not provided", flag.name)
+				return fmt.Errorf("required flag --%s not provided", flag.name)
 			}
 			// Set defaults, if any.
 			if flag.defaultValue != "" {
-				if err = flag.value.Set(flag.defaultValue); err != nil {
-					return "", err
+				if err := flag.value.Set(flag.defaultValue); err != nil {
+					return err
 				}
 			}
 		}
@@ -255,53 +276,39 @@ func (a *Application) execute(context *ParseContext) (string, error) {
 	for _, arg := range context.arguments.args {
 		if argElements[arg.name] == nil {
 			if arg.required {
-				return "", fmt.Errorf("required argument '%s' not provided", arg.name)
+				return fmt.Errorf("required argument '%s' not provided", arg.name)
 			}
 			// Set defaults, if any.
 			if arg.defaultValue != "" {
-				if err = arg.value.Set(arg.defaultValue); err != nil {
-					return "", err
+				if err := arg.value.Set(arg.defaultValue); err != nil {
+					return err
 				}
 			}
 		}
 	}
 
-	// Finally, apply everything.
-	// - Set values for flags and dispatch actions.
-	// - Set values for args and dispatch actions.
-	// - Run command validators and dispatch actions.
+	return nil
+}
+
+func (a *Application) setValues(context *ParseContext) (selected []string, err error) {
+	// Set all arg and flag values.
 	var lastCmd *CmdClause
 	for _, element := range context.elements {
 		switch {
 		case element.isFlag():
-			if err := element.flag.value.Set(*element.value); err != nil {
-				return "", err
-			}
-			if element.flag.dispatch != nil {
-				if err := element.flag.dispatch(context); err != nil {
-					return "", err
-				}
+			if err = element.flag.value.Set(*element.value); err != nil {
+				return
 			}
 
 		case element.isArg():
-			if err := element.arg.value.Set(*element.value); err != nil {
-				return "", err
-			}
-			if element.arg.dispatch != nil {
-				if err := element.arg.dispatch(context); err != nil {
-					return "", err
-				}
+			if err = element.arg.value.Set(*element.value); err != nil {
+				return
 			}
 
 		case element.isCmd():
 			if element.cmd.validator != nil {
 				if err = element.cmd.validator(element.cmd); err != nil {
-					return "", err
-				}
-			}
-			if element.cmd.dispatch != nil {
-				if err := element.cmd.dispatch(context); err != nil {
-					return "", err
+					return
 				}
 			}
 			selected = append(selected, element.cmd.name)
@@ -310,13 +317,58 @@ func (a *Application) execute(context *ParseContext) (string, error) {
 	}
 
 	if lastCmd != nil && len(lastCmd.commands) > 0 {
-		return "", fmt.Errorf("must select a subcommand of '%s'", lastCmd.FullCommand())
+		return nil, fmt.Errorf("must select a subcommand of '%s'", lastCmd.FullCommand())
+	}
+
+	return
+}
+
+func (a *Application) applyValidators(context *ParseContext) (err error) {
+	// Call command validation functions.
+	for _, element := range context.elements {
+		switch {
+		case element.isCmd():
+			if element.cmd.validator != nil {
+				if err = element.cmd.validator(element.cmd); err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	if a.validator != nil {
 		err = a.validator(a)
 	}
-	return strings.Join(selected, " "), err
+	return err
+}
+
+func (a *Application) applyActions(context *ParseContext) error {
+	// Action to actions.
+	for _, element := range context.elements {
+		switch {
+		case element.isFlag():
+			if element.flag.dispatch != nil {
+				if err := element.flag.dispatch(context); err != nil {
+					return err
+				}
+			}
+
+		case element.isArg():
+			if element.arg.dispatch != nil {
+				if err := element.arg.dispatch(context); err != nil {
+					return err
+				}
+			}
+
+		case element.isCmd():
+			if element.cmd.dispatch != nil {
+				if err := element.cmd.dispatch(context); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // Errorf prints an error message to w.
