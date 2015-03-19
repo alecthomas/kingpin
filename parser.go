@@ -50,16 +50,10 @@ func (t *Token) String() string {
 
 // A union of possible elements in a parse stack.
 type parseElement struct {
-	flag *FlagClause
-	cmd  *CmdClause
-	arg  *ArgClause
-
-	value *string
+	clause interface{}
+	value  *string
 }
 
-func (p *parseElement) isFlag() bool   { return p.flag != nil }
-func (p *parseElement) isCmd() bool    { return p.cmd != nil }
-func (p *parseElement) isArg() bool    { return p.arg != nil }
 func (p *parseElement) hasValue() bool { return p.value != nil }
 
 type ParseContext struct {
@@ -184,15 +178,15 @@ func (p *ParseContext) String() string {
 }
 
 func (p *ParseContext) matchedFlag(flag *FlagClause, value string) {
-	p.elements = append(p.elements, &parseElement{flag: flag, value: &value})
+	p.elements = append(p.elements, &parseElement{clause: flag, value: &value})
 }
 
 func (p *ParseContext) matchedArg(arg *ArgClause, value string) {
-	p.elements = append(p.elements, &parseElement{arg: arg, value: &value})
+	p.elements = append(p.elements, &parseElement{clause: arg, value: &value})
 }
 
 func (p *ParseContext) matchedCmd(cmd *CmdClause) {
-	p.elements = append(p.elements, &parseElement{cmd: cmd})
+	p.elements = append(p.elements, &parseElement{clause: cmd})
 }
 
 // ExpandArgsFromFiles expands arguments in the form @<file> into one-arg-per-

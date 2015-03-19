@@ -245,15 +245,15 @@ func (a *Application) execute(context *ParseContext) (string, error) {
 func (a *Application) setDefaults(context *ParseContext) error {
 	flagElements := map[string]*parseElement{}
 	for _, element := range context.elements {
-		if element.isFlag() {
-			flagElements[element.flag.name] = element
+		if flag, ok := element.clause.(*FlagClause); ok {
+			flagElements[flag.name] = element
 		}
 	}
 
 	argElements := map[string]*parseElement{}
 	for _, element := range context.elements {
-		if element.isArg() {
-			flagElements[element.arg.name] = element
+		if arg, ok := element.clause.(*ArgClause); ok {
+			argElements[arg.name] = element
 		}
 	}
 
@@ -294,25 +294,25 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 	// Set all arg and flag values.
 	var lastCmd *CmdClause
 	for _, element := range context.elements {
-		switch {
-		case element.isFlag():
-			if err = element.flag.value.Set(*element.value); err != nil {
+		switch clause := element.clause.(type) {
+		case *FlagClause:
+			if err = clause.value.Set(*element.value); err != nil {
 				return
 			}
 
-		case element.isArg():
-			if err = element.arg.value.Set(*element.value); err != nil {
+		case *ArgClause:
+			if err = clause.value.Set(*element.value); err != nil {
 				return
 			}
 
-		case element.isCmd():
-			if element.cmd.validator != nil {
-				if err = element.cmd.validator(element.cmd); err != nil {
+		case *CmdClause:
+			if clause.validator != nil {
+				if err = clause.validator(clause); err != nil {
 					return
 				}
 			}
-			selected = append(selected, element.cmd.name)
-			lastCmd = element.cmd
+			selected = append(selected, clause.name)
+			lastCmd = clause
 		}
 	}
 
@@ -326,12 +326,9 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 func (a *Application) applyValidators(context *ParseContext) (err error) {
 	// Call command validation functions.
 	for _, element := range context.elements {
-		switch {
-		case element.isCmd():
-			if element.cmd.validator != nil {
-				if err = element.cmd.validator(element.cmd); err != nil {
-					return err
-				}
+		if cmd, ok := element.clause.(*CmdClause); ok && cmd.validator != nil {
+			if err = cmd.validator(cmd); err != nil {
+				return err
 			}
 		}
 	}
@@ -345,24 +342,22 @@ func (a *Application) applyValidators(context *ParseContext) (err error) {
 func (a *Application) applyActions(context *ParseContext) error {
 	// Action to actions.
 	for _, element := range context.elements {
-		switch {
-		case element.isFlag():
-			if element.flag.dispatch != nil {
-				if err := element.flag.dispatch(context); err != nil {
+		switch clause := element.clause.(type) {
+		case *ArgClause:
+			if clause.dispatch != nil {
+				if err := clause.dispatch(context); err != nil {
 					return err
 				}
 			}
-
-		case element.isArg():
-			if element.arg.dispatch != nil {
-				if err := element.arg.dispatch(context); err != nil {
+		case *CmdClause:
+			if clause.dispatch != nil {
+				if err := clause.dispatch(context); err != nil {
 					return err
 				}
 			}
-
-		case element.isCmd():
-			if element.cmd.dispatch != nil {
-				if err := element.cmd.dispatch(context); err != nil {
+		case *FlagClause:
+			if clause.dispatch != nil {
+				if err := clause.dispatch(context); err != nil {
 					return err
 				}
 			}
