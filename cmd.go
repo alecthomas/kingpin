@@ -2,7 +2,6 @@ package kingpin
 
 import (
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -101,7 +100,6 @@ func newCommand(app *Application, name, help string) *CmdClause {
 		name:      name,
 		help:      help,
 	}
-	c.Flag("help", "Show help on this command.").Hidden().Action(c.onHelp).Bool()
 	return c
 }
 
@@ -117,12 +115,6 @@ func (c *CmdClause) FullCommand() string {
 		out = append([]string{p.name}, out...)
 	}
 	return strings.Join(out, " ")
-}
-
-func (c *CmdClause) onHelp(context *ParseContext) error {
-	c.app.CommandUsage(os.Stderr, c.FullCommand())
-	os.Exit(0)
-	return nil
 }
 
 // Command adds a new sub-command.
@@ -161,13 +153,11 @@ func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
 	if err != nil {
 		return nil, err
 	}
-	if context.SelectedCommand != "help" {
-		if c.cmdGroup.have() {
-			selected, err = c.cmdGroup.parse(context)
-		} else if c.argGroup.have() {
-			context.mergeArgs(c.argGroup)
-			err = c.argGroup.parse(context)
-		}
+	if c.cmdGroup.have() {
+		selected, err = c.cmdGroup.parse(context)
+	} else if c.argGroup.have() {
+		context.mergeArgs(c.argGroup)
+		err = c.argGroup.parse(context)
 	}
 	err = context.flags.parse(context)
 	if err != nil {

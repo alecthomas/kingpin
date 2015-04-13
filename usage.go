@@ -39,10 +39,19 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 	}
 }
 
-func (a *Application) Usage(w io.Writer) {
-	a.writeHelp(guessWidth(w), w)
+// Usage writes application usage to w. It parses args to determine
+// appropriate help context, such as which command to show help for.
+func (a *Application) Usage(w io.Writer, args []string) {
+	command, _ := a.findCommandFromArgs(args)
+	if command == "" {
+		a.writeHelp(guessWidth(w), w)
+	} else {
+		a.CommandUsage(w, command)
+	}
 }
 
+/// CommandUsage writes usage for a specific command to w. It will fail with
+/// an error if the command does not exist.
 func (a *Application) CommandUsage(w io.Writer, command string) {
 	cmd := a.findCommand(command)
 	if cmd == nil {
@@ -55,6 +64,15 @@ func (a *Application) CommandUsage(w io.Writer, command string) {
 		fmt.Fprintf(w, "\n%s\n", cmd.help)
 	}
 	cmd.writeHelp(guessWidth(w), w)
+}
+
+func (a *Application) usageForContext(w io.Writer, context *ParseContext) {
+	command := a.findCommandFromContext(context)
+	if command == "" {
+		a.writeHelp(guessWidth(w), w)
+	} else {
+		a.CommandUsage(w, command)
+	}
 }
 
 func (a *Application) findCommand(command string) *CmdClause {

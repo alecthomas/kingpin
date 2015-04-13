@@ -8,6 +8,13 @@ import (
 	"testing"
 )
 
+func parseAndExecute(app *Application, context *ParseContext) (string, error) {
+	if err := app.parse(context); err != nil {
+		return "", err
+	}
+	return app.execute(context)
+}
+
 func TestNestedCommands(t *testing.T) {
 	app := New("app", "")
 	sub1 := app.Command("sub1", "")
@@ -20,7 +27,7 @@ func TestNestedCommands(t *testing.T) {
 	sub2.Command("sub2sub1", "")
 
 	context := tokenize([]string{"sub1", "sub1sub1", "sub1sub1end"})
-	selected, err := app.parse(context)
+	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, context.EOL())
 	assert.Equal(t, "sub1 sub1sub1 sub1sub1end", selected)
@@ -32,7 +39,7 @@ func TestNestedCommandsWithArgs(t *testing.T) {
 	a := cmd.Arg("a", "").String()
 	b := cmd.Arg("b", "").String()
 	context := tokenize([]string{"a", "b", "c", "d"})
-	selected, err := app.parse(context)
+	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, context.EOL())
 	assert.Equal(t, "a b", selected)
@@ -48,7 +55,7 @@ func TestNestedCommandsWithFlags(t *testing.T) {
 	err := app.init()
 	assert.NoError(t, err)
 	context := tokenize(strings.Split("a b --aaa x -b x", " "))
-	selected, err := app.parse(context)
+	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, context.EOL())
 	assert.Equal(t, "a b", selected)
@@ -67,7 +74,7 @@ func TestNestedCommandWithMergedFlags(t *testing.T) {
 	err := app.init()
 	assert.NoError(t, err)
 	context := tokenize(strings.Split("a aa --aflag --aaflag", " "))
-	selected, err := app.parse(context)
+	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, *cmd0f0)
 	assert.True(t, *cmd00f0)
@@ -94,7 +101,7 @@ func TestNestedCommandWithArgAndMergedFlags(t *testing.T) {
 	err := app.init()
 	assert.NoError(t, err)
 	context := tokenize(strings.Split("a aa hello --aflag --aaflag", " "))
-	selected, err := app.parse(context)
+	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, *cmd0f0)
 	assert.True(t, *cmd00f0)

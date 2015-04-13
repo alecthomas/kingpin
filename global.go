@@ -69,9 +69,15 @@ func UsageErrorf(format string, args ...interface{}) {
 	CommandLine.UsageErrorf(os.Stderr, format, args...)
 }
 
+// UsageErrorContextf writes a printf formatted error message to stderr, then usage
+// information for the given ParseContext, before exiting.
+func UsageErrorContextf(context *ParseContext, format string, args ...interface{}) {
+	CommandLine.UsageErrorContextf(os.Stderr, context, format, args...)
+}
+
 // Usage prints usage to stderr.
 func Usage() {
-	CommandLine.Usage(os.Stderr)
+	CommandLine.Usage(os.Stderr, os.Args[1:])
 }
 
 // MustParse can be used with app.Parse(args) to exit with an error if parsing fails.

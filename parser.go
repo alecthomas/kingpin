@@ -49,13 +49,17 @@ func (t *Token) String() string {
 }
 
 // A union of possible elements in a parse stack.
-type parseElement struct {
-	clause interface{}
-	value  *string
+type ParseElement struct {
+	// Clause is either *CmdClause, *ArgClause or *FlagClause.
+	Clause interface{}
+	// Value is corresponding value for an ArgClause or FlagClause (if any).
+	Value *string
 }
 
-func (p *parseElement) hasValue() bool { return p.value != nil }
-
+// ParseContext holds the current context of the parser. When passed to
+// Action() callbacks Elements will be fully populated with *FlagClause,
+// *ArgClause and *CmdClause values and their corresponding arguments (if
+// any).
 type ParseContext struct {
 	SelectedCommand string
 	argsOnly        bool
@@ -64,7 +68,13 @@ type ParseContext struct {
 	flags           *flagGroup
 	arguments       *argGroup
 	// Flags, arguments and commands encountered and collected during parse.
-	elements []*parseElement
+	Elements []*ParseElement
+}
+
+// HasTrailingArgs returns true if there are unparsed command-line arguments.
+// This can occur if the parser can not match remaining arguments.
+func (p *ParseContext) HasTrailingArgs() bool {
+	return len(p.args) > 0
 }
 
 func tokenize(args []string) *ParseContext {
@@ -178,15 +188,15 @@ func (p *ParseContext) String() string {
 }
 
 func (p *ParseContext) matchedFlag(flag *FlagClause, value string) {
-	p.elements = append(p.elements, &parseElement{clause: flag, value: &value})
+	p.Elements = append(p.Elements, &ParseElement{Clause: flag, Value: &value})
 }
 
 func (p *ParseContext) matchedArg(arg *ArgClause, value string) {
-	p.elements = append(p.elements, &parseElement{clause: arg, value: &value})
+	p.Elements = append(p.Elements, &ParseElement{Clause: arg, Value: &value})
 }
 
 func (p *ParseContext) matchedCmd(cmd *CmdClause) {
-	p.elements = append(p.elements, &parseElement{clause: cmd})
+	p.Elements = append(p.Elements, &ParseElement{Clause: cmd})
 }
 
 // ExpandArgsFromFiles expands arguments in the form @<file> into one-arg-per-

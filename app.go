@@ -59,7 +59,7 @@ func New(name, help string) *Application {
 		Help:      help,
 	}
 	a.cmdGroup = newCmdGroup(a)
-	a.Flag("help", "Show help.").Action(a.onHelp).Bool()
+	a.Flag("help", "Show help.").Bool()
 	return a
 }
 
@@ -69,24 +69,65 @@ func (a *Application) Validate(validator ApplicationValidator) *Application {
 	return a
 }
 
+// ParseContext parses the given command line and returns the fully populated
+// ParseContext.
+func (a *Application) ParseContext(args []string) (*ParseContext, error) {
+	if err := a.init(); err != nil {
+		return nil, err
+	}
+	context := tokenize(args)
+	err := a.parse(context)
+	return context, err
+}
+
 // Parse parses command-line arguments. It returns the selected command and an
 // error. The selected command will be a space separated subcommand, if
 // subcommands have been configured.
+//
+// This will populate all flag and argument values, call all callbacks, and so
+// on.
 func (a *Application) Parse(args []string) (command string, err error) {
+	context, err := a.ParseContext(args)
+	if err != nil {
+		return "", err
+	}
+	a.maybeHelp(context)
+	if !context.EOL() {
+		return "", fmt.Errorf("unexpected argument '%s'", context.Peek())
+	}
+	return a.execute(context)
+}
+
+func (a *Application) maybeHelp(context *ParseContext) {
+	for _, element := range context.Elements {
+		if flag, ok := element.Clause.(*FlagClause); ok && flag.name == "help" {
+			a.usageForContext(os.Stdout, context)
+			os.Exit(1)
+		}
+	}
+}
+
+// findCommandFromArgs finds a command (if any) from the given command line arguments.
+func (a *Application) findCommandFromArgs(args []string) (command string, err error) {
 	if err := a.init(); err != nil {
 		return "", err
 	}
 	context := tokenize(args)
-	command, err = a.parse(context)
-	if err != nil {
+	if err := a.parse(context); err != nil {
 		return "", err
 	}
+	return a.findCommandFromContext(context), nil
+}
 
-	if !context.EOL() {
-		return "", fmt.Errorf("unexpected argument '%s'", context.Peek())
+// findCommandFromContext finds a command (if any) from a parsed context.
+func (a *Application) findCommandFromContext(context *ParseContext) string {
+	commands := []string{}
+	for _, element := range context.Elements {
+		if c, ok := element.Clause.(*CmdClause); ok {
+			commands = append(commands, c.name)
+		}
 	}
-
-	return command, err
+	return strings.Join(commands, " ")
 }
 
 // Version adds a --version flag for displaying the application version.
@@ -110,14 +151,6 @@ func (a *Application) init() error {
 	}
 	if a.cmdGroup.have() && a.argGroup.have() {
 		return fmt.Errorf("can't mix top-level Arg()s with Command()s")
-	}
-
-	if len(a.commands) > 0 {
-		cmd := a.Command("help", "Show help for a command.").Action(a.onHelp)
-		cmd.Arg("command", "Command name.").String()
-		// Make "help" command first in order. Also, Go's slice operations are woeful.
-		l := len(a.commandOrder) - 1
-		a.commandOrder = append(a.commandOrder[l:], a.commandOrder[:l]...)
 	}
 
 	if err := a.flagGroup.init(); err != nil {
@@ -154,10 +187,8 @@ func checkDuplicateFlags(current *CmdClause, flagGroups []*flagGroup) error {
 					return fmt.Errorf("duplicate short flag -%c", flag.shorthand)
 				}
 			}
-			if flag.name != "help" {
-				if _, ok := flags.long[flag.name]; ok {
-					return fmt.Errorf("duplicate long flag --%s", flag.name)
-				}
+			if _, ok := flags.long[flag.name]; ok {
+				return fmt.Errorf("duplicate long flag --%s", flag.name)
 			}
 		}
 	}
@@ -171,41 +202,12 @@ func checkDuplicateFlags(current *CmdClause, flagGroups []*flagGroup) error {
 	return nil
 }
 
-func (a *Application) onHelp(context *ParseContext) error {
-	candidates := []string{}
-	for {
-		token := context.Peek()
-		if token.Type == TokenArg {
-			candidates = append(candidates, token.String())
-			context.Next()
-		} else {
-			break
-		}
-	}
-
-	var cmd *CmdClause
-	for i := len(candidates); i > 0; i-- {
-		command := strings.Join(candidates[:i], " ")
-		cmd = a.findCommand(command)
-		if cmd != nil {
-			a.CommandUsage(os.Stderr, command)
-			break
-		}
-	}
-	if cmd == nil {
-		a.Usage(os.Stderr)
-	}
-	os.Exit(0)
-	return nil
-}
-
-func (a *Application) parse(context *ParseContext) (string, error) {
+func (a *Application) parse(context *ParseContext) (err error) {
 	context.mergeFlags(a.flagGroup)
 
-	var err error
 	err = a.flagGroup.parse(context)
 	if err != nil {
-		return "", err
+		return
 	}
 
 	// Parse arguments or commands.
@@ -214,8 +216,7 @@ func (a *Application) parse(context *ParseContext) (string, error) {
 	} else if a.cmdGroup.have() {
 		_, err = a.cmdGroup.parse(context)
 	}
-
-	return a.execute(context)
+	return err
 }
 
 func (a *Application) execute(context *ParseContext) (string, error) {
@@ -243,16 +244,16 @@ func (a *Application) execute(context *ParseContext) (string, error) {
 }
 
 func (a *Application) setDefaults(context *ParseContext) error {
-	flagElements := map[string]*parseElement{}
-	for _, element := range context.elements {
-		if flag, ok := element.clause.(*FlagClause); ok {
+	flagElements := map[string]*ParseElement{}
+	for _, element := range context.Elements {
+		if flag, ok := element.Clause.(*FlagClause); ok {
 			flagElements[flag.name] = element
 		}
 	}
 
-	argElements := map[string]*parseElement{}
-	for _, element := range context.elements {
-		if arg, ok := element.clause.(*ArgClause); ok {
+	argElements := map[string]*ParseElement{}
+	for _, element := range context.Elements {
+		if arg, ok := element.Clause.(*ArgClause); ok {
 			argElements[arg.name] = element
 		}
 	}
@@ -293,15 +294,15 @@ func (a *Application) setDefaults(context *ParseContext) error {
 func (a *Application) setValues(context *ParseContext) (selected []string, err error) {
 	// Set all arg and flag values.
 	var lastCmd *CmdClause
-	for _, element := range context.elements {
-		switch clause := element.clause.(type) {
+	for _, element := range context.Elements {
+		switch clause := element.Clause.(type) {
 		case *FlagClause:
-			if err = clause.value.Set(*element.value); err != nil {
+			if err = clause.value.Set(*element.Value); err != nil {
 				return
 			}
 
 		case *ArgClause:
-			if err = clause.value.Set(*element.value); err != nil {
+			if err = clause.value.Set(*element.Value); err != nil {
 				return
 			}
 
@@ -325,8 +326,8 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 
 func (a *Application) applyValidators(context *ParseContext) (err error) {
 	// Call command validation functions.
-	for _, element := range context.elements {
-		if cmd, ok := element.clause.(*CmdClause); ok && cmd.validator != nil {
+	for _, element := range context.Elements {
+		if cmd, ok := element.Clause.(*CmdClause); ok && cmd.validator != nil {
 			if err = cmd.validator(cmd); err != nil {
 				return err
 			}
@@ -341,8 +342,8 @@ func (a *Application) applyValidators(context *ParseContext) (err error) {
 
 func (a *Application) applyActions(context *ParseContext) error {
 	// Action to actions.
-	for _, element := range context.elements {
-		switch clause := element.clause.(type) {
+	for _, element := range context.Elements {
+		switch clause := element.Clause.(type) {
 		case *ArgClause:
 			if clause.dispatch != nil {
 				if err := clause.dispatch(context); err != nil {
@@ -366,11 +367,12 @@ func (a *Application) applyActions(context *ParseContext) error {
 	return nil
 }
 
-// Errorf prints an error message to w.
+// Errorf prints an error message to w in the format "<appname>: error: <message>".
 func (a *Application) Errorf(w io.Writer, format string, args ...interface{}) {
 	fmt.Fprintf(w, a.Name+": error: "+format+"\n", args...)
 }
 
+// Fatalf writes a formatted error to w then terminates with exit status 1.
 func (a *Application) Fatalf(w io.Writer, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
 	os.Exit(1)
@@ -380,12 +382,20 @@ func (a *Application) Fatalf(w io.Writer, format string, args ...interface{}) {
 // exits with a non-zero status.
 func (a *Application) UsageErrorf(w io.Writer, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
-	a.Usage(w)
+	a.Usage(w, []string{})
+	os.Exit(1)
+}
+
+// UsageErrorContextf writes a printf formatted error message to w, then usage
+// information for the given ParseContext, before exiting.
+func (a *Application) UsageErrorContextf(w io.Writer, context *ParseContext, format string, args ...interface{}) {
+	a.Errorf(w, format, args...)
+	a.usageForContext(w, context)
 	os.Exit(1)
 }
 
 // FatalIfError prints an error and exits if err is not nil. The error is printed
-// with the given prefix.
+// with the given prefix if any.
 func (a *Application) FatalIfError(w io.Writer, err error, prefix string) {
 	if err != nil {
 		if prefix != "" {
