@@ -34,7 +34,10 @@ import (
 	"strings"
 )
 
-type Dispatch func(*ParseContext) error
+// Action callback executed at various stages after all values are populated.
+// The application, commands, arguments and flags all have corresponding
+// actions.
+type Action func(*ParseContext) error
 
 type ApplicationValidator func(*Application) error
 
@@ -47,6 +50,7 @@ type Application struct {
 	initialized bool
 	Name        string
 	Help        string
+	action      Action
 	validator   ApplicationValidator
 	terminate   func(status int) // See Terminate()
 }
@@ -145,6 +149,11 @@ func (a *Application) Version(version string) *Application {
 		a.terminate(0)
 		return nil
 	}).Bool()
+	return a
+}
+
+func (a *Application) Action(action Action) *Application {
+	a.action = action
 	return a
 }
 
@@ -349,7 +358,12 @@ func (a *Application) applyValidators(context *ParseContext) (err error) {
 }
 
 func (a *Application) applyActions(context *ParseContext) error {
-	// Action to actions.
+	if a.action != nil {
+		if err := a.action(context); err != nil {
+			return err
+		}
+	}
+	// Dispatch to actions.
 	for _, element := range context.Elements {
 		switch clause := element.Clause.(type) {
 		case *ArgClause:

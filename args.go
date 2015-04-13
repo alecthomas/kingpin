@@ -98,7 +98,7 @@ type ArgClause struct {
 	help         string
 	defaultValue string
 	required     bool
-	dispatch     Dispatch
+	dispatch     Action
 }
 
 func newArg(name, help string) *ArgClause {
@@ -128,7 +128,7 @@ func (a *ArgClause) Default(value string) *ArgClause {
 	return a
 }
 
-func (a *ArgClause) Action(dispatch Dispatch) *ArgClause {
+func (a *ArgClause) Action(dispatch Action) *ArgClause {
 	a.dispatch = dispatch
 	return a
 }
