@@ -48,6 +48,7 @@ type Application struct {
 	Name        string
 	Help        string
 	validator   ApplicationValidator
+	terminate   func(status int) // See Terminate()
 }
 
 // New creates a new Kingpin application instance.
@@ -57,9 +58,16 @@ func New(name, help string) *Application {
 		argGroup:  newArgGroup(),
 		Name:      name,
 		Help:      help,
+		terminate: func(status int) { os.Exit(status) },
 	}
 	a.cmdGroup = newCmdGroup(a)
 	a.Flag("help", "Show help.").Bool()
+	return a
+}
+
+// Terminate specifies the termination function. Defaults to os.Exit(status).
+func (a *Application) Terminate(terminate func(int)) *Application {
+	a.terminate = terminate
 	return a
 }
 
@@ -102,7 +110,7 @@ func (a *Application) maybeHelp(context *ParseContext) {
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok && flag.name == "help" {
 			a.usageForContext(os.Stdout, context)
-			os.Exit(1)
+			a.terminate(1)
 		}
 	}
 }
@@ -134,7 +142,7 @@ func (a *Application) findCommandFromContext(context *ParseContext) string {
 func (a *Application) Version(version string) *Application {
 	a.Flag("version", "Show application version.").Action(func(*ParseContext) error {
 		fmt.Println(version)
-		os.Exit(0)
+		a.terminate(0)
 		return nil
 	}).Bool()
 	return a
@@ -375,7 +383,7 @@ func (a *Application) Errorf(w io.Writer, format string, args ...interface{}) {
 // Fatalf writes a formatted error to w then terminates with exit status 1.
 func (a *Application) Fatalf(w io.Writer, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
-	os.Exit(1)
+	a.terminate(1)
 }
 
 // UsageErrorf prints an error message followed by usage information, then
@@ -383,7 +391,7 @@ func (a *Application) Fatalf(w io.Writer, format string, args ...interface{}) {
 func (a *Application) UsageErrorf(w io.Writer, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
 	a.Usage(w, []string{})
-	os.Exit(1)
+	a.terminate(1)
 }
 
 // UsageErrorContextf writes a printf formatted error message to w, then usage
@@ -391,7 +399,7 @@ func (a *Application) UsageErrorf(w io.Writer, format string, args ...interface{
 func (a *Application) UsageErrorContextf(w io.Writer, context *ParseContext, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
 	a.usageForContext(w, context)
-	os.Exit(1)
+	a.terminate(1)
 }
 
 // FatalIfError prints an error and exits if err is not nil. The error is printed
@@ -402,6 +410,6 @@ func (a *Application) FatalIfError(w io.Writer, err error, prefix string) {
 			prefix += ": "
 		}
 		a.Errorf(w, prefix+"%s", err)
-		os.Exit(1)
+		a.terminate(1)
 	}
 }

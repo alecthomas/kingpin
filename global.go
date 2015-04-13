@@ -31,7 +31,7 @@ func Parse() string {
 	selected := MustParse(CommandLine.Parse(os.Args[1:]))
 	if selected == "" && CommandLine.cmdGroup.have() {
 		Usage()
-		os.Exit(0)
+		CommandLine.terminate(0)
 	}
 	return selected
 }
@@ -46,7 +46,7 @@ func ParseWithFileExpansion() string {
 	selected := MustParse(CommandLine.Parse(args))
 	if selected == "" && CommandLine.cmdGroup.have() {
 		Usage()
-		os.Exit(0)
+		CommandLine.terminate(0)
 	}
 	return selected
 
