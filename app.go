@@ -152,6 +152,11 @@ func (a *Application) Version(version string) *Application {
 	return a
 }
 
+// Action callback to call when all values are populated and parsing is
+// complete, but before any command, flag or argument actions.
+//
+// All Action() callbacks are called in the order they are encountered on the
+// command line.
 func (a *Application) Action(action Action) *Application {
 	a.action = action
 	return a
