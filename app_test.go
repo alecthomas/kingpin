@@ -128,19 +128,6 @@ func TestArgsLooksLikeFlagsWithConsumeRemainder(t *testing.T) {
 	assert.Error(t, err)
 }
 
-func TestCombinedShortFlagArg(t *testing.T) {
-	a := New("test", "")
-	n := a.Flag("short", "").Short('s').Int()
-	_, err := a.Parse([]string{"-s10"})
-	assert.NoError(t, err)
-	assert.Equal(t, 10, *n)
-}
-
-func TestEmptyShortFlagIsAnError(t *testing.T) {
-	_, err := New("test", "").Parse([]string{"-"})
-	assert.Error(t, err)
-}
-
 func TestCommandParseDoesNotResetFlagsToDefault(t *testing.T) {
 	app := New("test", "")
 	flag := app.Flag("flag", "").Default("default").String()

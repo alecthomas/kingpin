@@ -157,7 +157,9 @@ func (p *ParseContext) Next() *Token {
 			return token
 		}
 
-		p.args = append([]string{"-" + arg[2:]}, p.args...)
+		if len(arg) > 2 {
+			p.args = append([]string{"-" + arg[2:]}, p.args...)
+		}
 		return &Token{TokenShort, short}
 	}
 

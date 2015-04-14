@@ -50,3 +50,36 @@ func TestRequiredFlag(t *testing.T) {
 	_, err = app.Parse([]string{})
 	assert.Error(t, err)
 }
+
+func TestShortFlag(t *testing.T) {
+	app := New("test", "")
+	f := app.Flag("long", "").Short('s').Bool()
+	_, err := app.Parse([]string{"-s"})
+	assert.NoError(t, err)
+	assert.True(t, *f)
+}
+
+func TestCombinedShortFlags(t *testing.T) {
+	app := New("test", "")
+	a := app.Flag("short0", "").Short('0').Bool()
+	b := app.Flag("short1", "").Short('1').Bool()
+	c := app.Flag("short2", "").Short('2').Bool()
+	_, err := app.Parse([]string{"-01"})
+	assert.NoError(t, err)
+	assert.True(t, *a)
+	assert.True(t, *b)
+	assert.False(t, *c)
+}
+
+func TestCombinedShortFlagArg(t *testing.T) {
+	a := New("test", "")
+	n := a.Flag("short", "").Short('s').Int()
+	_, err := a.Parse([]string{"-s10"})
+	assert.NoError(t, err)
+	assert.Equal(t, 10, *n)
+}
+
+func TestEmptyShortFlagIsAnError(t *testing.T) {
+	_, err := New("test", "").Parse([]string{"-"})
+	assert.Error(t, err)
+}
