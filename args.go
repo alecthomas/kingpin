@@ -42,7 +42,7 @@ func (a *argGroup) parse(context *ParseContext) error {
 
 		if arg.consumesRemainder() {
 			if last == context.Peek() {
-				return fmt.Errorf("expected positional arguments <%s> but got '%s'", arg.name, last)
+				return fmt.Errorf("expected positional arguments <%s>", arg.name)
 			}
 			consumed++
 		} else {
@@ -146,7 +146,7 @@ func (a *ArgClause) init() error {
 func (a *ArgClause) parse(context *ParseContext) error {
 	token := context.Peek()
 	if token.Type != TokenArg {
-		return fmt.Errorf("expected positional arguments <%s> but got '%s'", a.name, token)
+		return fmt.Errorf("expected positional argument <%s>", a.name)
 	}
 	context.matchedArg(a, token.Value)
 	context.Next()

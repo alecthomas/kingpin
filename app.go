@@ -101,6 +101,11 @@ func (a *Application) ParseContext(args []string) (*ParseContext, error) {
 func (a *Application) Parse(args []string) (command string, err error) {
 	context, err := a.ParseContext(args)
 	if err != nil {
+		if a.hasHelp(args) {
+			a.Errorf(os.Stdout, "%s", err)
+			a.usageForContext(os.Stdout, context)
+			a.terminate(1)
+		}
 		return "", err
 	}
 	a.maybeHelp(context)
@@ -108,6 +113,15 @@ func (a *Application) Parse(args []string) (command string, err error) {
 		return "", fmt.Errorf("unexpected argument '%s'", context.Peek())
 	}
 	return a.execute(context)
+}
+
+func (a *Application) hasHelp(args []string) bool {
+	for _, arg := range args {
+		if arg == "--help" {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *Application) maybeHelp(context *ParseContext) {
