@@ -306,30 +306,6 @@ func (i *tcpAddrValue) String() string {
 	return (*i.addr).String()
 }
 
-// -- []*net.TCPAddr Value
-type tcpAddrsValue []*net.TCPAddr
-
-func newTCPAddrsValue(p *[]*net.TCPAddr) *tcpAddrsValue {
-	return (*tcpAddrsValue)(p)
-}
-
-func (i *tcpAddrsValue) Set(value string) error {
-	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
-		return fmt.Errorf("'%s' is not a valid TCP address: %s", value, err)
-	} else {
-		*i = append(*i, addr)
-		return nil
-	}
-}
-
-func (i *tcpAddrsValue) String() string {
-	s := make([]string, 0, len(*i))
-	for _, a := range *i {
-		s = append(s, a.String())
-	}
-	return strings.Join(s, ",")
-}
-
 // -- existingFile Value
 
 type fileStatValue struct {
@@ -443,9 +419,9 @@ type enumValue struct {
 	options []string
 }
 
-func newEnumFlag(target **string, options ...string) *enumValue {
+func newEnumValue(target *string, options ...string) *enumValue {
 	return &enumValue{
-		value:   *target,
+		value:   target,
 		options: options,
 	}
 }
@@ -462,37 +438,6 @@ func (a *enumValue) Set(value string) error {
 		}
 	}
 	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(a.options, ","), value)
-}
-
-// -- []string Enum Value
-type enumsValue struct {
-	value   *[]string
-	options []string
-}
-
-func newEnumsFlag(target *[]string, options ...string) *enumsValue {
-	return &enumsValue{
-		value:   target,
-		options: options,
-	}
-}
-
-func (s *enumsValue) Set(value string) error {
-	for _, v := range s.options {
-		if v == value {
-			*s.value = append(*s.value, value)
-			return nil
-		}
-	}
-	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(s.options, ","), value)
-}
-
-func (s *enumsValue) String() string {
-	return strings.Join(*s.value, ",")
-}
-
-func (s *enumsValue) IsCumulative() bool {
-	return true
 }
 
 // -- units.Base2Bytes Value

@@ -72,10 +72,10 @@ func TestParseTCPAddr(t *testing.T) {
 
 func TestParseTCPAddrList(t *testing.T) {
 	p := parserMixin{}
-	v := p.TCPList()
+	_ = p.TCPList()
 	err := p.value.Set("127.0.0.1:1234")
 	assert.NoError(t, err)
 	err = p.value.Set("127.0.0.1:1235")
 	assert.NoError(t, err)
-	assert.Equal(t, "127.0.0.1:1234,127.0.0.1:1235", (*tcpAddrsValue)(v).String())
+	assert.Equal(t, "127.0.0.1:1234,127.0.0.1:1235", p.value.String())
 }

@@ -16,6 +16,20 @@ const (
 	TokenEOL
 )
 
+func (t TokenType) String() string {
+	switch t {
+	case TokenShort:
+		return "short flag"
+	case TokenLong:
+		return "long flag"
+	case TokenArg:
+		return "argument"
+	case TokenEOL:
+		return "<EOL>"
+	}
+	return "?"
+}
+
 var (
 	TokenEOLMarker = Token{TokenEOL, ""}
 )
