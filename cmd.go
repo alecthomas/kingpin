@@ -147,21 +147,6 @@ func (c *CmdClause) init() error {
 
 // Called when this command has already been selected.
 func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
-	context.mergeFlags(c.flagGroup)
 	context.matchedCmd(c)
-	err := context.flags.parse(context)
-	if err != nil {
-		return nil, err
-	}
-	if c.cmdGroup.have() {
-		selected, err = c.cmdGroup.parse(context)
-	} else if c.argGroup.have() {
-		context.mergeArgs(c.argGroup)
-		err = c.argGroup.parse(context)
-	}
-	err = context.flags.parse(context)
-	if err != nil {
-		return nil, err
-	}
-	return selected, err
+	return parseNode(context, c.flagGroup, c.argGroup, c.cmdGroup)
 }

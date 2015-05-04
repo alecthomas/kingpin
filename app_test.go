@@ -103,8 +103,7 @@ func TestTooManyArgs(t *testing.T) {
 	assert.NoError(t, a.init())
 	context := tokenize([]string{"a", "b"})
 	err := a.parse(context)
-	assert.NoError(t, err)
-	assert.Equal(t, &Token{TokenArg, "b"}, context.Peek())
+	assert.Error(t, err)
 	_, err = a.Parse([]string{"a", "b"})
 	assert.Error(t, err)
 }
@@ -115,8 +114,7 @@ func TestTooManyArgsAfterCommand(t *testing.T) {
 	assert.NoError(t, a.init())
 	context := tokenize([]string{"a", "b"})
 	err := a.parse(context)
-	assert.NoError(t, err)
-	assert.Equal(t, &Token{TokenArg, "b"}, context.Peek())
+	assert.Error(t, err)
 	_, err = a.Parse([]string{"a", "b"})
 	assert.Error(t, err)
 }

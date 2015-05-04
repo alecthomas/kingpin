@@ -31,12 +31,17 @@ func (t TokenType) String() string {
 }
 
 var (
-	TokenEOLMarker = Token{TokenEOL, ""}
+	TokenEOLMarker = Token{-1, TokenEOL, ""}
 )
 
 type Token struct {
+	Index int
 	Type  TokenType
 	Value string
+}
+
+func (t *Token) Equal(o *Token) bool {
+	return t.Index == o.Index
 }
 
 func (t *Token) IsFlag() bool {
@@ -79,10 +84,16 @@ type ParseContext struct {
 	argsOnly        bool
 	peek            []*Token
 	args            []string
+	argi            int
 	flags           *flagGroup
 	arguments       *argGroup
 	// Flags, arguments and commands encountered and collected during parse.
 	Elements []*ParseElement
+}
+
+func (p *ParseContext) next() {
+	p.argi++
+	p.args = p.args[1:]
 }
 
 // HasTrailingArgs returns true if there are unparsed command-line arguments.
@@ -127,14 +138,14 @@ func (p *ParseContext) Next() *Token {
 
 	// End of tokens.
 	if len(p.args) == 0 {
-		return &Token{Type: TokenEOL}
+		return &Token{Index: p.argi, Type: TokenEOL}
 	}
 
 	arg := p.args[0]
-	p.args = p.args[1:]
+	p.next()
 
 	if p.argsOnly {
-		return &Token{Type: TokenArg, Value: arg}
+		return &Token{p.argi, TokenArg, arg}
 	}
 
 	// All remaining args are passed directly.
@@ -145,16 +156,16 @@ func (p *ParseContext) Next() *Token {
 
 	if strings.HasPrefix(arg, "--") {
 		parts := strings.SplitN(arg[2:], "=", 2)
-		token := &Token{TokenLong, parts[0]}
+		token := &Token{p.argi, TokenLong, parts[0]}
 		if len(parts) == 2 {
-			p.push(&Token{TokenArg, parts[1]})
+			p.push(&Token{p.argi, TokenArg, parts[1]})
 		}
 		return token
 	}
 
 	if strings.HasPrefix(arg, "-") {
 		if len(arg) == 1 {
-			return &Token{Type: TokenShort}
+			return &Token{Index: p.argi, Type: TokenShort}
 		}
 		short := arg[1:2]
 		flag, ok := p.flags.short[short]
@@ -164,9 +175,9 @@ func (p *ParseContext) Next() *Token {
 			// Bool short flag.
 		} else {
 			// Short flag with combined argument: -fARG
-			token := &Token{TokenShort, short}
+			token := &Token{p.argi, TokenShort, short}
 			if len(arg) > 2 {
-				p.push(&Token{TokenArg, arg[2:]})
+				p.push(&Token{p.argi, TokenArg, arg[2:]})
 			}
 			return token
 		}
@@ -174,10 +185,10 @@ func (p *ParseContext) Next() *Token {
 		if len(arg) > 2 {
 			p.args = append([]string{"-" + arg[2:]}, p.args...)
 		}
-		return &Token{TokenShort, short}
+		return &Token{p.argi, TokenShort, short}
 	}
 
-	return &Token{TokenArg, arg}
+	return &Token{p.argi, TokenArg, arg}
 }
 
 func (p *ParseContext) Peek() *Token {

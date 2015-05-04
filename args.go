@@ -27,6 +27,9 @@ func (a *argGroup) parse(context *ParseContext) error {
 	for i < len(a.args) {
 		arg := a.args[i]
 		token := context.Peek()
+		if token.Type == TokenShort || token.Type == TokenLong {
+			return nil
+		}
 		if token.Type == TokenEOL {
 			if consumed == 0 && arg.required {
 				return fmt.Errorf("'%s' is required", arg.name)
@@ -42,7 +45,7 @@ func (a *argGroup) parse(context *ParseContext) error {
 
 		if arg.consumesRemainder() {
 			if last == context.Peek() {
-				return fmt.Errorf("expected positional arguments <%s>", arg.name)
+				return fmt.Errorf("expected positional argument <%s>", arg.name)
 			}
 			consumed++
 		} else {

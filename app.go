@@ -238,21 +238,51 @@ func checkDuplicateFlags(current *CmdClause, flagGroups []*flagGroup) error {
 	return nil
 }
 
+func parsePositional(context *ParseContext, cmds *cmdGroup, args *argGroup) (selected []string, err error) {
+	if cmds.have() {
+		selected, err = cmds.parse(context)
+	} else if args.have() {
+		context.mergeArgs(args)
+		err = args.parse(context)
+	}
+	return
+}
+
+func parseNode(context *ParseContext, flags *flagGroup, args *argGroup, cmds *cmdGroup) (selected []string, err error) {
+	context.mergeFlags(flags)
+	seenArg := false
+loop:
+	for !context.EOL() && err == nil {
+		token := context.Peek()
+		switch token.Type {
+		case TokenLong, TokenShort:
+			err = context.flags.parse(context)
+
+		case TokenArg:
+			if seenArg {
+				return nil, fmt.Errorf("unexpected %s", token)
+			}
+			selected, err = parsePositional(context, cmds, args)
+			seenArg = true
+
+		default:
+			break loop
+		}
+
+		// Token has not moved; nothing matched.
+		if !context.EOL() && token.Equal(context.Peek()) {
+			return nil, fmt.Errorf("unexpected %s", token)
+		}
+	}
+	if !seenArg && context.Peek().Type == TokenArg {
+		selected, err = parsePositional(context, cmds, args)
+	}
+	return
+}
+
 func (a *Application) parse(context *ParseContext) (err error) {
-	context.mergeFlags(a.flagGroup)
-
-	err = a.flagGroup.parse(context)
-	if err != nil {
-		return
-	}
-
-	// Parse arguments or commands.
-	if a.argGroup.have() {
-		err = a.argGroup.parse(context)
-	} else if a.cmdGroup.have() {
-		_, err = a.cmdGroup.parse(context)
-	}
-	return err
+	_, err = parseNode(context, a.flagGroup, a.argGroup, a.cmdGroup)
+	return
 }
 
 func (a *Application) execute(context *ParseContext) (string, error) {
