@@ -246,11 +246,23 @@ func (p *parserMixin) URLListVar(target *[]*url.URL) {
 // Enum allows a value from a set of options.
 func (p *parserMixin) Enum(options ...string) (target *string) {
 	target = new(string)
-	p.EnumVar(target, options...)
+	p.EnumVar(&target, options...)
 	return
 }
 
 // EnumVar allows a value from a set of options.
-func (p *parserMixin) EnumVar(target *string, options ...string) {
-	p.SetValue(newEnumValue(target, options...))
+func (p *parserMixin) EnumVar(target **string, options ...string) {
+	p.SetValue(newEnumFlag(target, options...))
+}
+
+// Enums allows a set of values from a set of options.
+func (p *parserMixin) Enums(options ...string) (target *[]string) {
+	target = new([]string)
+	p.EnumsVar(target, options...)
+	return
+}
+
+// EnumVar allows a value from a set of options.
+func (p *parserMixin) EnumsVar(target *[]string, options ...string) {
+	p.SetValue(newEnumsFlag(target, options...))
 }

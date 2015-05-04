@@ -419,9 +419,9 @@ type enumValue struct {
 	options []string
 }
 
-func newEnumValue(target *string, options ...string) *enumValue {
+func newEnumFlag(target **string, options ...string) *enumValue {
 	return &enumValue{
-		value:   target,
+		value:   *target,
 		options: options,
 	}
 }
@@ -438,6 +438,37 @@ func (a *enumValue) Set(value string) error {
 		}
 	}
 	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(a.options, ","), value)
+}
+
+// -- []string Enum Value
+type enumsValue struct {
+	value   *[]string
+	options []string
+}
+
+func newEnumsFlag(target *[]string, options ...string) *enumsValue {
+	return &enumsValue{
+		value:   target,
+		options: options,
+	}
+}
+
+func (s *enumsValue) Set(value string) error {
+	for _, v := range s.options {
+		if v == value {
+			*s.value = append(*s.value, value)
+			return nil
+		}
+	}
+	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(s.options, ","), value)
+}
+
+func (s *enumsValue) String() string {
+	return strings.Join(*s.value, ",")
+}
+
+func (s *enumsValue) IsCumulative() bool {
+	return true
 }
 
 // -- units.Base2Bytes Value

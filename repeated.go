@@ -72,14 +72,3 @@ func (p *parserMixin) TCPList() (target *[]*net.TCPAddr) {
 func (p *parserMixin) TCPListVar(target *[]*net.TCPAddr) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newTCPAddrValue(v.(**net.TCPAddr)) }))
 }
-
-// Enums accumulates string values into a slice.
-func (p *parserMixin) Enums() (target *[]string) {
-	target = new([]string)
-	p.EnumsVar(target)
-	return
-}
-
-func (p *parserMixin) EnumsVar(target *[]string) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newEnumValue(v.(*string)) }))
-}
