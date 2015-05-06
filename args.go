@@ -20,53 +20,6 @@ func (a *argGroup) Arg(name, help string) *ArgClause {
 	return arg
 }
 
-func (a *argGroup) parse(context *ParseContext) error {
-	i := 0
-	var last *Token
-	consumed := 0
-	for i < len(a.args) {
-		arg := a.args[i]
-		token := context.Peek()
-		if token.Type == TokenShort || token.Type == TokenLong {
-			return nil
-		}
-		if token.Type == TokenEOL {
-			if consumed == 0 && arg.required {
-				return fmt.Errorf("'%s' is required", arg.name)
-			}
-			break
-		}
-
-		var err error
-		err = arg.parse(context)
-		if err != nil {
-			return err
-		}
-
-		if arg.consumesRemainder() {
-			if last == context.Peek() {
-				return fmt.Errorf("expected positional argument <%s>", arg.name)
-			}
-			consumed++
-		} else {
-			i++
-		}
-		last = token
-	}
-
-	// Set defaults for all remaining args.
-	for i < len(a.args) {
-		arg := a.args[i]
-		if arg.defaultValue != "" {
-			if err := arg.value.Set(arg.defaultValue); err != nil {
-				return fmt.Errorf("invalid default value '%s' for argument '%s'", arg.defaultValue, arg.name)
-			}
-		}
-		i++
-	}
-	return nil
-}
-
 func (a *argGroup) init() error {
 	required := 0
 	seen := map[string]struct{}{}
@@ -143,15 +96,5 @@ func (a *ArgClause) init() error {
 	if a.value == nil {
 		return fmt.Errorf("no parser defined for arg '%s'", a.name)
 	}
-	return nil
-}
-
-func (a *ArgClause) parse(context *ParseContext) error {
-	token := context.Peek()
-	if token.Type != TokenArg {
-		return fmt.Errorf("expected positional argument <%s>", a.name)
-	}
-	context.matchedArg(a, token.Value)
-	context.Next()
 	return nil
 }

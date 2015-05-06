@@ -16,10 +16,6 @@ type Settings interface {
 	SetValue(value Value)
 }
 
-type listValue struct {
-	values []interface{}
-}
-
 type parserMixin struct {
 	value    Value
 	required bool

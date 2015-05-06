@@ -2,6 +2,7 @@ package kingpin
 
 import (
 	"bufio"
+	"fmt"
 	"os"
 	"strings"
 )
@@ -83,12 +84,24 @@ type ParseContext struct {
 	SelectedCommand string
 	argsOnly        bool
 	peek            []*Token
+	argi            int // Index of current command-line arg we're processing.
 	args            []string
-	argi            int
 	flags           *flagGroup
 	arguments       *argGroup
+	argumenti       int // Cursor into arguments
 	// Flags, arguments and commands encountered and collected during parse.
 	Elements []*ParseElement
+}
+
+func (p *ParseContext) nextArg() *ArgClause {
+	if p.argumenti >= len(p.arguments.args) {
+		return nil
+	}
+	arg := p.arguments.args[p.argumenti]
+	if !arg.consumesRemainder() {
+		p.argumenti++
+	}
+	return arg
 }
 
 func (p *ParseContext) next() {
@@ -224,6 +237,9 @@ func (p *ParseContext) matchedArg(arg *ArgClause, value string) {
 
 func (p *ParseContext) matchedCmd(cmd *CmdClause) {
 	p.Elements = append(p.Elements, &ParseElement{Clause: cmd})
+	p.mergeFlags(cmd.flagGroup)
+	p.mergeArgs(cmd.argGroup)
+	p.SelectedCommand = cmd.name
 }
 
 // ExpandArgsFromFiles expands arguments in the form @<file> into one-arg-per-
@@ -249,4 +265,61 @@ func ExpandArgsFromFiles(args []string) ([]string, error) {
 		}
 	}
 	return out, nil
+}
+
+func parse(context *ParseContext, app *Application) (selected []string, err error) {
+	context.mergeFlags(app.flagGroup)
+	context.mergeArgs(app.argGroup)
+
+	cmds := app.cmdGroup
+
+loop:
+	for !context.EOL() {
+		token := context.Peek()
+		switch token.Type {
+		case TokenLong, TokenShort:
+			if err := context.flags.parse(context); err != nil {
+				return nil, err
+			}
+
+		case TokenArg:
+			if cmds.have() {
+				cmd, ok := cmds.commands[token.String()]
+				if !ok {
+					return nil, fmt.Errorf("expected command but got %s", token)
+				}
+				context.matchedCmd(cmd)
+				selected = append([]string{token.String()}, selected...)
+				cmds = cmd.cmdGroup
+				context.Next()
+			} else if context.arguments.have() {
+				arg := context.nextArg()
+				if arg == nil {
+					break loop
+				}
+				context.matchedArg(arg, token.String())
+				context.Next()
+			} else {
+				break loop
+			}
+
+		case TokenEOL:
+			break loop
+		}
+	}
+
+	if !context.EOL() {
+		return nil, fmt.Errorf("unexpected %s", context.Peek())
+	}
+
+	// Set defaults for all remaining args.
+	for arg := context.nextArg(); arg != nil && !arg.consumesRemainder(); arg = context.nextArg() {
+		if arg.defaultValue != "" {
+			if err := arg.value.Set(arg.defaultValue); err != nil {
+				return nil, fmt.Errorf("invalid default value '%s' for argument '%s'", arg.defaultValue, arg.name)
+			}
+		}
+	}
+
+	return
 }

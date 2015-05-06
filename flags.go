@@ -19,6 +19,16 @@ func newFlagGroup() *flagGroup {
 	}
 }
 
+func (f *flagGroup) merge(o *flagGroup) {
+	for _, flag := range o.flagOrder {
+		if flag.shorthand != 0 {
+			f.short[string(flag.shorthand)] = flag
+		}
+		f.long[flag.name] = flag
+		f.flagOrder = append(f.flagOrder, flag)
+	}
+}
+
 // Flag defines a new flag with the given long name and help.
 func (f *flagGroup) Flag(name, help string) *FlagClause {
 	flag := newFlag(name, help)

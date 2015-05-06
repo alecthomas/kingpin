@@ -49,29 +49,6 @@ func (c *cmdGroup) init() error {
 	}
 	return nil
 }
-
-// TODO: Remove selected. It is now collected during execute()
-func (c *cmdGroup) parse(context *ParseContext) (selected []string, _ error) {
-	token := context.Peek()
-	if token.Type == TokenEOL {
-		return nil, nil
-	}
-	if token.Type != TokenArg {
-		return nil, fmt.Errorf("expected command but got '%s'", token)
-	}
-	cmd, ok := c.commands[token.String()]
-	if !ok {
-		return nil, fmt.Errorf("no such command '%s'", token)
-	}
-	context.Next()
-	context.SelectedCommand = cmd.name
-	selected, err := cmd.parse(context)
-	if err == nil {
-		selected = append([]string{token.String()}, selected...)
-	}
-	return selected, err
-}
-
 func (c *cmdGroup) have() bool {
 	return len(c.commands) > 0
 }
@@ -143,10 +120,4 @@ func (c *CmdClause) init() error {
 		return err
 	}
 	return nil
-}
-
-// Called when this command has already been selected.
-func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
-	context.matchedCmd(c)
-	return parseNode(context, c.flagGroup, c.argGroup, c.cmdGroup)
 }
