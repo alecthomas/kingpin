@@ -1,30 +1,3 @@
-// Package commander is used to manage a set of command-line "commands", with
-// per-command flags and arguments.
-//
-// Supports command like so:
-//
-//   <command> <required> [<optional> [<optional> ...]]
-//   <command> <remainder...>
-//
-// eg.
-//
-//   register [--name <name>] <nick>|<id>
-//   post --channel|-a <channel> [--image <image>] [<text>]
-//
-// var (
-//   chat = commander.New()
-//   debug = chat.Flag("debug", "enable debug mode").Default("false").Bool()
-//
-//   register = chat.Command("register", "Register a new user.")
-//   registerName = register.Flag("name", "name of user").Required().String()
-//   registerNick = register.Arg("nick", "nickname for user").Required().String()
-//
-//   post = chat.Command("post", "Post a message to a channel.")
-//   postChannel = post.Flag("channel", "channel to post to").Short('a').Required().String()
-//   postImage = post.Flag("image", "image to post").String()
-// )
-//
-
 package kingpin
 
 import (
