@@ -29,17 +29,17 @@ $ chat post --server=chat.server.com:8080 --image=~/Downloads/owls.jpg pics
 
 ## Versions
 
-Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin.v1) for versioning.
+Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin.v2-unstable) for versioning.
 
-### [V1](https://gopkg.in/alecthomas/kingpin.v1) is the current stable version
+### [V1](https://gopkg.in/alecthomas/kingpin.v2-unstable) is the current stable version
 
 Installation:
 
 ```sh
-$ go get gopkg.in/alecthomas/kingpin.v1
+$ go get gopkg.in/alecthomas/kingpin.v2-unstable
 ```
 
-### [V2](https://gopkg.in/alecthomas/kingpin.v2-unstable) is the current *unstable* version
+### [V2](https://gopkg.in/alecthomas/kingpin.v2-unstable-unstable) is the current *unstable* version
 
 The goals for V2 are:
 
@@ -62,7 +62,7 @@ Current task list:
 Installation:
 
 ```
-$ go get gopkg.in/alecthomas/kingpin.v2-unstable
+$ go get gopkg.in/alecthomas/kingpin.v2-unstable-unstable
 ```
 
 #### Changes between V1 and V2
@@ -136,7 +136,7 @@ package main
 import (
   "fmt"
 
-  "gopkg.in/alecthomas/kingpin.v1"
+  "gopkg.in/alecthomas/kingpin.v2-unstable"
 )
 
 var (
@@ -203,7 +203,7 @@ package main
 import (
   "os"
   "strings"
-  "gopkg.in/alecthomas/kingpin.v1"
+  "gopkg.in/alecthomas/kingpin.v2-unstable"
 )
 
 var (
