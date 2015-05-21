@@ -1,8 +1,10 @@
 package kingpin
 
 import (
+	"io/ioutil"
 	"net"
 	"net/url"
+	"os"
 
 	"github.com/stretchr/testify/assert"
 
@@ -43,11 +45,18 @@ func TestParseURL(t *testing.T) {
 }
 
 func TestParseExistingFile(t *testing.T) {
+	f, err := ioutil.TempFile("", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer f.Close()
+	defer os.Remove(f.Name())
+
 	p := parserMixin{}
 	v := p.ExistingFile()
-	err := p.value.Set("/etc/hosts")
+	err = p.value.Set(f.Name())
 	assert.NoError(t, err)
-	assert.Equal(t, "/etc/hosts", *v)
+	assert.Equal(t, f.Name(), *v)
 	err = p.value.Set("/etc/hostsDEFINITELYMISSING")
 	assert.Error(t, err)
 }
