@@ -244,7 +244,7 @@ func main() {
 Second to parsing, providing the user with useful help is probably the most
 important thing a command-line parser does.
 
-Since 1.3.x, Kingpin uses a bunch of heuristics to display help. For example,
+Since 2.x, Kingpin uses a bunch of heuristics to display help. For example,
 `--help` should generally "just work" without much thought from users.
 
 ### Sub-commands

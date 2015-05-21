@@ -75,8 +75,8 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	context, err := a.ParseContext(args)
 	if err != nil {
 		if a.hasHelp(args) {
-			a.Errorf(os.Stdout, "%s", err)
-			a.usageForContext(os.Stdout, context)
+			a.Errorf(os.Stderr, "%s", err)
+			a.usageForContext(os.Stderr, context)
 			a.terminate(1)
 		}
 		return "", err
@@ -100,7 +100,7 @@ func (a *Application) hasHelp(args []string) bool {
 func (a *Application) maybeHelp(context *ParseContext) {
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok && flag.name == "help" {
-			a.usageForContext(os.Stdout, context)
+			a.usageForContext(os.Stderr, context)
 			a.terminate(1)
 		}
 	}

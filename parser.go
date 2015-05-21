@@ -81,7 +81,7 @@ type ParseElement struct {
 // *ArgClause and *CmdClause values and their corresponding arguments (if
 // any).
 type ParseContext struct {
-	SelectedCommand string
+	SelectedCommand *CmdClause
 	argsOnly        bool
 	peek            []*Token
 	argi            int // Index of current command-line arg we're processing.
@@ -224,7 +224,7 @@ func (p *ParseContext) pop() *Token {
 }
 
 func (p *ParseContext) String() string {
-	return p.SelectedCommand
+	return p.SelectedCommand.FullCommand()
 }
 
 func (p *ParseContext) matchedFlag(flag *FlagClause, value string) {
@@ -239,7 +239,7 @@ func (p *ParseContext) matchedCmd(cmd *CmdClause) {
 	p.Elements = append(p.Elements, &ParseElement{Clause: cmd})
 	p.mergeFlags(cmd.flagGroup)
 	p.mergeArgs(cmd.argGroup)
-	p.SelectedCommand = cmd.name
+	p.SelectedCommand = cmd
 }
 
 // ExpandArgsFromFiles expands arguments in the form @<file> into one-arg-per-

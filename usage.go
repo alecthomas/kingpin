@@ -6,6 +6,8 @@ import (
 	"go/doc"
 	"io"
 	"strings"
+
+	"github.com/alecthomas/template"
 )
 
 var (
@@ -42,185 +44,158 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 // Usage writes application usage to w. It parses args to determine
 // appropriate help context, such as which command to show help for.
 func (a *Application) Usage(w io.Writer, args []string) {
-	command, _ := a.findCommandFromArgs(args)
-	if command == "" {
-		a.writeHelp(guessWidth(w), w)
-	} else {
-		a.CommandUsage(w, command)
-	}
+	context, err := a.ParseContext(args)
+	a.FatalIfError(w, err, "")
+	a.UsageTemplate(context, w, 2, UsageTemplate)
 }
 
-/// CommandUsage writes usage for a specific command to w. It will fail with
-/// an error if the command does not exist.
-func (a *Application) CommandUsage(w io.Writer, command string) {
-	cmd := a.findCommand(command)
-	if cmd == nil {
-		a.Fatalf(w, "unknown command '%s'", command)
+func formatAppUsage(app *ApplicationModel) string {
+	s := []string{app.Name}
+	if len(app.Flags) > 0 {
+		s = append(s, app.FlagSummary())
 	}
-	s := []string{formatArgsAndFlags(a.Name, a.argGroup, a.flagGroup, cmd.cmdGroup)}
-	s = append(s, formatArgsAndFlags(cmd.FullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
-	fmt.Fprintf(w, "usage: %s\n", strings.Join(s, " "))
-	if cmd.help != "" {
-		fmt.Fprintf(w, "\n%s\n", cmd.help)
+	if len(app.Args) > 0 {
+		s = append(s, app.ArgSummary())
 	}
-	cmd.writeHelp(guessWidth(w), w)
-}
-
-func (a *Application) usageForContext(w io.Writer, context *ParseContext) {
-	command := a.findCommandFromContext(context)
-	if command == "" {
-		a.writeHelp(guessWidth(w), w)
-	} else {
-		a.CommandUsage(w, command)
-	}
-}
-
-func (a *Application) findCommand(command string) *CmdClause {
-	parts := strings.Split(command, " ")
-	var cmd *CmdClause
-	group := a.cmdGroup
-	for _, part := range parts {
-		next, ok := group.commands[part]
-		if !ok {
-			return nil
-		}
-		cmd = next
-		group = next.cmdGroup
-	}
-	return cmd
-}
-
-func (a *Application) writeHelp(width int, w io.Writer) {
-	s := []string{formatArgsAndFlags(a.Name, a.argGroup, a.flagGroup, a.cmdGroup)}
-	if len(a.commands) > 0 {
-		s = append(s, "<command>", "[<flags>]", "[<args> ...]")
-	}
-
-	prefix := "usage: "
-	usage := strings.Join(s, " ")
-	buf := bytes.NewBuffer(nil)
-	doc.ToText(buf, usage, "", preIndent, width-len(prefix))
-	lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
-
-	fmt.Fprintf(w, "%s%s\n", prefix, lines[0])
-	for _, l := range lines[1:] {
-		fmt.Fprintf(w, "%*s%s\n", len(prefix), "", l)
-	}
-	if a.Help != "" {
-		fmt.Fprintf(w, "\n")
-		doc.ToText(w, a.Help, "", preIndent, width)
-	}
-
-	a.flagGroup.writeHelp(width, w)
-	a.argGroup.writeHelp(width, w)
-	a.cmdGroup.writeHelp(width, w)
-}
-
-func (f *flagGroup) writeHelp(width int, w io.Writer) {
-	if f.visibleFlags() == 0 {
-		return
-	}
-
-	fmt.Fprintf(w, "\nFlags:\n")
-
-	rows := [][2]string{}
-	for _, flag := range f.flagOrder {
-		if !flag.hidden {
-			rows = append(rows, [2]string{formatFlag(flag), flag.help})
-		}
-	}
-	formatTwoColumns(w, 2, 2, width, rows)
-}
-
-func (f *flagGroup) gatherFlagSummary() (out []string) {
-	count := 0
-	for _, flag := range f.flagOrder {
-		if flag.name != "help" {
-			count++
-		}
-		if flag.required {
-			fb, ok := flag.value.(boolFlag)
-			if ok && fb.IsBoolFlag() {
-				out = append(out, fmt.Sprintf("--%s", flag.name))
-			} else {
-				out = append(out, fmt.Sprintf("--%s=%s", flag.name, flag.formatPlaceHolder()))
-			}
-		}
-	}
-	if count != len(out) {
-		out = append(out, "[<flags>]")
-	}
-	return
-}
-
-func (a *argGroup) writeHelp(width int, w io.Writer) {
-	if len(a.args) == 0 {
-		return
-	}
-
-	fmt.Fprintf(w, "\nArgs:\n")
-
-	rows := [][2]string{}
-	for _, arg := range a.args {
-		s := "<" + arg.name + ">"
-		if !arg.required {
-			s = "[" + s + "]"
-		}
-		rows = append(rows, [2]string{s, arg.help})
-	}
-
-	formatTwoColumns(w, 2, 2, width, rows)
-}
-
-func (a *CmdClause) writeHelp(width int, w io.Writer) {
-	a.flagGroup.writeHelp(width, w)
-	a.argGroup.writeHelp(width, w)
-	a.cmdGroup.writeHelp(width, w)
-}
-
-func (c *cmdGroup) writeHelp(width int, w io.Writer) {
-	if len(c.commands) == 0 {
-		return
-	}
-	fmt.Fprintf(w, "\nCommands:\n")
-	flattened := c.flattenedCommands()
-	for _, cmd := range flattened {
-		fmt.Fprintf(w, "  %s\n", formatArgsAndFlags(cmd.FullCommand(), cmd.argGroup, cmd.flagGroup, cmd.cmdGroup))
-		buf := bytes.NewBuffer(nil)
-		doc.ToText(buf, cmd.help, "", preIndent, width-4)
-		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
-		for _, line := range lines {
-			fmt.Fprintf(w, "    %s\n", line)
-		}
-		fmt.Fprintf(w, "\n")
-	}
-}
-
-func formatArgsAndFlags(name string, args *argGroup, flags *flagGroup, commands *cmdGroup) string {
-	s := []string{name}
-	s = append(s, flags.gatherFlagSummary()...)
-	depth := 0
-	for _, arg := range args.args {
-		h := "<" + arg.name + ">"
-		if !arg.required {
-			h = "[" + h
-			depth++
-		}
-		s = append(s, h)
-	}
-	s[len(s)-1] = s[len(s)-1] + strings.Repeat("]", depth)
 	return strings.Join(s, " ")
 }
 
-func formatFlag(flag *FlagClause) string {
-	flagString := ""
-	if flag.shorthand != 0 {
-		flagString += fmt.Sprintf("-%c, ", flag.shorthand)
+func formatCmdUsage(app *ApplicationModel, cmd *CmdModel) string {
+	s := []string{app.Name, cmd.String()}
+	if len(app.Flags) > 0 {
+		s = append(s, app.FlagSummary())
 	}
-	flagString += fmt.Sprintf("--%s", flag.name)
-	fb, ok := flag.value.(boolFlag)
-	if !ok || !fb.IsBoolFlag() {
-		flagString += fmt.Sprintf("=%s", flag.formatPlaceHolder())
+	if len(app.Args) > 0 {
+		s = append(s, app.ArgSummary())
+	}
+	return strings.Join(s, " ")
+}
+
+func formatFlag(flag *FlagModel) string {
+	flagString := ""
+	if flag.Short != 0 {
+		flagString += fmt.Sprintf("-%c, ", flag.Short)
+	}
+	flagString += fmt.Sprintf("--%s", flag.Name)
+	if !flag.IsBoolFlag() {
+		flagString += fmt.Sprintf("=%s", flag.FormatPlaceHolder())
 	}
 	return flagString
+}
+
+var UsageTemplate = `{{define "FormatCommand"}}\
+{{if .FlagSummary}} {{.FlagSummary}}{{end}}\
+{{range .Args}} <{{.Name}}>{{end}}\
+{{end}}\
+
+{{define "FormatCommands"}}\
+Commands:
+{{range .FlattenedCommands}}\
+  {{.}}{{template "FormatCommand" .}}
+{{.Help|Wrap 4}}
+{{end}}\
+{{end}}\
+
+{{define "FormatUsage"}}\
+{{template "FormatCommand" .}}{{if .Commands}} <command> [<args> ...]{{end}}
+{{if .Help}}
+{{.Help|Wrap 0}}\
+{{end}}\
+
+{{end}}\
+
+{{if .Context.SelectedCommand}}\
+usage: {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
+{{else}}\
+usage: {{.App.Name}}{{template "FormatUsage" .App}}
+{{end}}\
+{{if .Context.Flags}}\
+Flags:
+{{.Context.Flags|FlagsToTwoColumns|FormatTwoColumns}}
+{{end}}\
+{{if .Context.Args}}\
+Args:
+{{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
+{{end}}\
+{{if .Context.SelectedCommand}}\
+{{if .Context.SelectedCommand.Commands}}\
+{{template "FormatCommands" .Context.SelectedCommand}}
+{{end}}\
+{{else if .App.Commands}}\
+{{template "FormatCommands" .App}}
+{{end}}\
+`
+
+type templateParseContext struct {
+	SelectedCommand *CmdModel
+	*FlagGroupModel
+	*ArgGroupModel
+}
+
+type templateContext struct {
+	App     *ApplicationModel
+	Width   int
+	Context *templateParseContext
+}
+
+func (a *Application) usageForContext(w io.Writer, context *ParseContext) error {
+	return a.UsageTemplate(context, w, 2, UsageTemplate)
+}
+
+func (a *Application) UsageTemplate(context *ParseContext, w io.Writer, indent int, tmpl string) error {
+	width := guessWidth(w)
+	funcs := template.FuncMap{
+		"Wrap": func(indent int, s string) string {
+			buf := bytes.NewBuffer(nil)
+			indentText := strings.Repeat(" ", indent)
+			doc.ToText(buf, s, indentText, indentText, width)
+			return buf.String()
+		},
+		"FormatFlag": formatFlag,
+		"FlagsToTwoColumns": func(f []*FlagModel) [][2]string {
+			rows := [][2]string{}
+			for _, flag := range f {
+				if !flag.Hidden {
+					rows = append(rows, [2]string{formatFlag(flag), flag.Help})
+				}
+			}
+			return rows
+		},
+		"ArgsToTwoColumns": func(a []*ArgModel) [][2]string {
+			rows := [][2]string{}
+			for _, arg := range a {
+				s := "<" + arg.Name + ">"
+				if !arg.Required {
+					s = "[" + s + "]"
+				}
+				rows = append(rows, [2]string{s, arg.Help})
+			}
+			return rows
+		},
+		"FormatTwoColumns": func(rows [][2]string) string {
+			buf := bytes.NewBuffer(nil)
+			formatTwoColumns(buf, indent, indent, width, rows)
+			return buf.String()
+		},
+		"FormatAppUsage":     formatAppUsage,
+		"FormatCommandUsage": formatCmdUsage,
+	}
+	t, err := template.New("usage").Funcs(funcs).Parse(tmpl)
+	if err != nil {
+		return err
+	}
+	var selectedCommand *CmdModel
+	if context.SelectedCommand != nil {
+		selectedCommand = context.SelectedCommand.Model()
+	}
+	ctx := templateContext{
+		App:   a.Model(),
+		Width: width,
+		Context: &templateParseContext{
+			SelectedCommand: selectedCommand,
+			FlagGroupModel:  context.flags.Model(),
+			ArgGroupModel:   context.arguments.Model(),
+		},
+	}
+	return t.Execute(w, ctx)
 }
