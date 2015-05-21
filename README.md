@@ -1,14 +1,15 @@
 # Kingpin - A Go (golang) command line and flag parser [![Build Status](https://travis-ci.org/alecthomas/kingpin.png)](https://travis-ci.org/alecthomas/kingpin)
 
-<!-- MarkdownTOC autolink=true depth=3 bracket=round -->
+<!-- MarkdownTOC -->
 
 - [Features](#features)
 - [Usability changes between v1 and v2](#usability-changes-between-v1-and-v2)
 - [Versions](#versions)
   - [V2 is the current stable version](#v2-is-the-current-stable-version)
 - [Change History](#change-history)
-- [Simple Example](#simple-example)
-- [Complex Example](#complex-example)
+- [Examples](#examples)
+  - [Simple Example](#simple-example)
+  - [Complex Example](#complex-example)
 - [Reference Documentation](#reference-documentation)
   - [Help](#help)
   - [Displaying errors and usage information](#displaying-errors-and-usage-information)
@@ -105,7 +106,9 @@ $ go get gopkg.in/alecthomas/kingpin.v2
     - Removed `MetaVarFromDefault`. Kingpin now uses [heuristics](#place-holders-in-help)
       to determine what to display.
 
-## Simple Example
+## Examples
+
+### Simple Example
 
 Kingpin can be used for simple flag+arg applications like so:
 
@@ -150,7 +153,7 @@ func main() {
 }
 ```
 
-## Complex Example
+### Complex Example
 
 Kingpin can also produce complex command-line applications with global flags,
 subcommands, and per-subcommand flags, like this:
