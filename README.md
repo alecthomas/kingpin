@@ -1,26 +1,26 @@
 # Kingpin - A Go (golang) command line and flag parser [![Build Status](https://travis-ci.org/alecthomas/kingpin.png)](https://travis-ci.org/alecthomas/kingpin)
 
-<!-- MarkdownTOC depth=3 -->
+<!-- MarkdownTOC autolink=true depth=3 bracket=round -->
 
-- [Features][features]
-- Usability changes between v1 and v2
-- Versions
-  - V2 is the current stable version
-- Change History
-- Simple Example
-- Complex Example
-- Reference Documentation
-  - Help
-  - Displaying errors and usage information
-  - Sub-commands
-  - Custom Parsers
-  - Default Values
-  - Place-holders in Help
-  - Consuming all remaining arguments
+- [Features](#features)
+- [Usability changes between v1 and v2](#usability-changes-between-v1-and-v2)
+- [Versions](#versions)
+  - [V2 is the current stable version](#v2-is-the-current-stable-version)
+- [Change History](#change-history)
+- [Simple Example](#simple-example)
+- [Complex Example](#complex-example)
+- [Reference Documentation](#reference-documentation)
+  - [Help](#help)
+  - [Displaying errors and usage information](#displaying-errors-and-usage-information)
+  - [Sub-commands](#sub-commands)
+  - [Custom Parsers](#custom-parsers)
+  - [Default Values](#default-values)
+  - [Place-holders in Help](#place-holders-in-help)
+  - [Consuming all remaining arguments](#consuming-all-remaining-arguments)
 
 <!-- /MarkdownTOC -->
 
-## Features[features]
+## Features
 
 - POSIX-style short flag combining.
 - Parsed, type-safe flags.
