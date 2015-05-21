@@ -406,25 +406,25 @@ func (a *Application) Fatalf(w io.Writer, format string, args ...interface{}) {
 	a.terminate(1)
 }
 
-// UsageErrorf prints an error message followed by usage information, then
+// FatalUsagef prints an error message followed by usage information, then
 // exits with a non-zero status.
-func (a *Application) UsageErrorf(w io.Writer, format string, args ...interface{}) {
+func (a *Application) FatalUsagef(w io.Writer, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
 	a.Usage(w, []string{})
 	a.terminate(1)
 }
 
-// UsageErrorContextf writes a printf formatted error message to w, then usage
+// FatalUsageContextf writes a printf formatted error message to w, then usage
 // information for the given ParseContext, before exiting.
-func (a *Application) UsageErrorContextf(w io.Writer, context *ParseContext, format string, args ...interface{}) {
+func (a *Application) FatalUsageContextf(w io.Writer, context *ParseContext, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
 	a.UsageForContext(w, context)
 	a.terminate(1)
 }
 
-// FatalIfError prints an error and exits if err is not nil. The error is printed
+// FatalIfErrorf prints an error and exits if err is not nil. The error is printed
 // with the given formatted string, if any.
-func (a *Application) FatalIfError(w io.Writer, err error, format string, args ...interface{}) {
+func (a *Application) FatalIfErrorf(w io.Writer, err error, format string, args ...interface{}) {
 	if err != nil {
 		prefix := ""
 		if format != "" {

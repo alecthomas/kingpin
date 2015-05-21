@@ -14,6 +14,7 @@ const (
 	TokenShort TokenType = iota
 	TokenLong
 	TokenArg
+	TokenError
 	TokenEOL
 )
 
@@ -25,6 +26,8 @@ func (t TokenType) String() string {
 		return "long flag"
 	case TokenArg:
 		return "argument"
+	case TokenError:
+		return "error"
 	case TokenEOL:
 		return "<EOL>"
 	}
@@ -61,6 +64,8 @@ func (t *Token) String() string {
 		return "--" + t.Value
 	case TokenArg:
 		return t.Value
+	case TokenError:
+		return "error: " + t.Value
 	case TokenEOL:
 		return "<EOL>"
 	default:
@@ -199,6 +204,17 @@ func (p *ParseContext) Next() *Token {
 			p.args = append([]string{"-" + arg[2:]}, p.args...)
 		}
 		return &Token{p.argi, TokenShort, short}
+	} else if strings.HasPrefix(arg, "@") {
+		expanded, err := ExpandArgsFromFile(arg[1:])
+		if err != nil {
+			return &Token{p.argi, TokenError, err.Error()}
+		}
+		if p.argi >= len(p.args) {
+			p.args = append(p.args[:p.argi-1], expanded...)
+		} else {
+			p.args = append(p.args[:p.argi-1], append(expanded, p.args[p.argi+1:]...)...)
+		}
+		return p.Next()
 	}
 
 	return &Token{p.argi, TokenArg, arg}
@@ -242,29 +258,23 @@ func (p *ParseContext) matchedCmd(cmd *CmdClause) {
 	p.SelectedCommand = cmd
 }
 
-// ExpandArgsFromFiles expands arguments in the form @<file> into one-arg-per-
-// line read from that file.
-func ExpandArgsFromFiles(args []string) ([]string, error) {
-	out := []string{}
-	for _, arg := range args {
-		if strings.HasPrefix(arg, "@") {
-			r, err := os.Open(arg[1:])
-			if err != nil {
-				return nil, err
-			}
-			scanner := bufio.NewScanner(r)
-			for scanner.Scan() {
-				out = append(out, scanner.Text())
-			}
-			r.Close()
-			if scanner.Err() != nil {
-				return nil, scanner.Err()
-			}
-		} else {
-			out = append(out, arg)
-		}
+// Expand arguments from a file. Lines starting with # will be treated as comments.
+func ExpandArgsFromFile(filename string) (out []string, err error) {
+	r, err := os.Open(filename)
+	if err != nil {
+		return nil, err
 	}
-	return out, nil
+	defer r.Close()
+	scanner := bufio.NewScanner(r)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.HasPrefix(line, "#") {
+			continue
+		}
+		out = append(out, line)
+	}
+	err = scanner.Err()
+	return
 }
 
 func parse(context *ParseContext, app *Application) (selected []string, err error) {

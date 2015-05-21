@@ -36,20 +36,9 @@ func Parse() string {
 	return selected
 }
 
-// ParseWithFileExpansion is the same as Parse() but will expand flags from
-// arguments in the form @FILE.
-func ParseWithFileExpansion() string {
-	args, err := ExpandArgsFromFiles(os.Args[1:])
-	if err != nil {
-		Fatalf("failed to expand flags: %s", err)
-	}
-	selected := MustParse(CommandLine.Parse(args))
-	if selected == "" && CommandLine.cmdGroup.have() {
-		Usage()
-		CommandLine.terminate(0)
-	}
-	return selected
-
+// Errorf prints an error message to stderr.
+func Errorf(format string, args ...interface{}) {
+	CommandLine.Errorf(os.Stderr, format, args...)
 }
 
 // Fatalf prints an error message to stderr and exits.
@@ -57,22 +46,22 @@ func Fatalf(format string, args ...interface{}) {
 	CommandLine.Fatalf(os.Stderr, format, args...)
 }
 
-// FatalIfError prints an error and exits if err is not nil. The error is printed
+// FatalIfErrorf prints an error and exits if err is not nil. The error is printed
 // with the given prefix.
-func FatalIfError(err error, prefix string) {
-	CommandLine.FatalIfError(os.Stderr, err, prefix)
+func FatalIfErrorf(err error, prefix string) {
+	CommandLine.FatalIfErrorf(os.Stderr, err, prefix)
 }
 
-// UsageErrorf prints an error message followed by usage information, then
+// FatalUsagef prints an error message followed by usage information, then
 // exits with a non-zero status.
-func UsageErrorf(format string, args ...interface{}) {
-	CommandLine.UsageErrorf(os.Stderr, format, args...)
+func FatalUsagef(format string, args ...interface{}) {
+	CommandLine.FatalUsagef(os.Stderr, format, args...)
 }
 
-// UsageErrorContextf writes a printf formatted error message to stderr, then usage
-// information for the given ParseContext, before exiting.
-func UsageErrorContextf(context *ParseContext, format string, args ...interface{}) {
-	CommandLine.UsageErrorContextf(os.Stderr, context, format, args...)
+// FatalUsageContextf writes a printf formatted error message to stderr, then
+// usage information for the given ParseContext, before exiting.
+func FatalUsageContextf(context *ParseContext, format string, args ...interface{}) {
+	CommandLine.FatalUsageContextf(os.Stderr, context, format, args...)
 }
 
 // Usage prints usage to stderr.

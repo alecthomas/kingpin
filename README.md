@@ -244,8 +244,30 @@ func main() {
 Second to parsing, providing the user with useful help is probably the most
 important thing a command-line parser does.
 
-Since 2.x, Kingpin uses a bunch of heuristics to display help. For example,
-`--help` should generally "just work" without much thought from users.
+Kingpin tries to provide contextual help if `--help` is encountered at any
+point in the command line (excluding after `--`).
+
+### Displaying errors and usage information
+
+Kingpin exports a set of functions to provide consistent errors and usage
+information to the user.
+
+Error messages look something like this:
+
+    <app>: error: <message>
+
+The functions on `Application` are:
+
+Function | Purpose
+---------|--------------
+`Errorf(w, format, args)` | Display a printf formatted error to the user.
+`Fatalf(w, format, args)` | As with Errorf, but also call the termination handler.
+`FatalUsagef(w, format, args)` | As with Fatalf, but also print contextual usage information.
+`FatalUsageContextf(w, context, format, args)` | As with Fatalf, but also print contextual usage information from a `ParseContext`.
+`FatalIfErrorf(w, err, format, args)` | Conditionally print an error prefixed with format+args, then call the termination handler
+
+There are equivalent global functions in the kingpin namespace for the default
+`kingpin.CommandLine` instance.
 
 ### Sub-commands
 
