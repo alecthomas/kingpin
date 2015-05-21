@@ -37,14 +37,14 @@ func New(name, help string) *Application {
 		Name:          name,
 		Help:          help,
 		usageTemplate: UsageTemplate,
-		terminate:     func(status int) { os.Exit(status) },
+		terminate:     os.Exit,
 	}
 	a.cmdGroup = newCmdGroup(a)
 	a.Flag("help", "Show help.").Bool()
 	return a
 }
 
-// Terminate specifies the termination function. Defaults to os.Exit(status).
+// Terminate specifies the termination handler. Defaults to os.Exit(status).
 // If nil is passed, a no-op function will be used.
 func (a *Application) Terminate(terminate func(int)) *Application {
 	if terminate == nil {
@@ -418,7 +418,9 @@ func (a *Application) FatalUsagef(w io.Writer, format string, args ...interface{
 // information for the given ParseContext, before exiting.
 func (a *Application) FatalUsageContextf(w io.Writer, context *ParseContext, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
-	a.UsageForContext(w, context)
+	if err := a.UsageForContext(w, context); err != nil {
+		panic(err)
+	}
 	a.terminate(1)
 }
 

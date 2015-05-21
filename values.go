@@ -158,10 +158,6 @@ func (i *int64Value) String() string { return fmt.Sprintf("%v", *i) }
 // -- uint Value
 type uintValue uint
 
-func newUintValue(p *uint) *uintValue {
-	return (*uintValue)(p)
-}
-
 func (i *uintValue) Set(s string) error {
 	v, err := strconv.ParseUint(s, 0, 64)
 	*i = uintValue(v)

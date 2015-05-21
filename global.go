@@ -25,8 +25,8 @@ func Arg(name, help string) *ArgClause {
 	return CommandLine.Arg(name, help)
 }
 
-// Parse and return the selected command. Will exit with a non-zero status if
-// an error was encountered.
+// Parse and return the selected command. Will call the termination handler if
+// an error is encountered.
 func Parse() string {
 	selected := MustParse(CommandLine.Parse(os.Args[1:]))
 	if selected == "" && CommandLine.cmdGroup.have() {
