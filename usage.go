@@ -46,7 +46,9 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 func (a *Application) Usage(w io.Writer, args []string) {
 	context, err := a.ParseContext(args)
 	a.FatalIfError(w, err, "")
-	a.UsageTemplate(context, w, 2, UsageTemplate)
+	if err := a.UsageContextTemplate(context, w, 2, UsageContextTemplate); err != nil {
+		panic(err)
+	}
 }
 
 func formatAppUsage(app *ApplicationModel) string {
@@ -83,9 +85,9 @@ func formatFlag(flag *FlagModel) string {
 	return flagString
 }
 
-var UsageTemplate = `{{define "FormatCommand"}}\
+var UsageContextTemplate = `{{define "FormatCommand"}}\
 {{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} <{{.Name}}>{{end}}\
+{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
 {{end}}\
 
 {{define "FormatCommands"}}\
@@ -138,11 +140,13 @@ type templateContext struct {
 	Context *templateParseContext
 }
 
-func (a *Application) usageForContext(w io.Writer, context *ParseContext) error {
-	return a.UsageTemplate(context, w, 2, UsageTemplate)
+// UsageContext displays usage information from a ParseContext (obtained from
+// Application.ParseContext() or Action(f) callbacks).
+func (a *Application) UsageContext(w io.Writer, context *ParseContext) error {
+	return a.UsageContextTemplate(context, w, 2, UsageContextTemplate)
 }
 
-func (a *Application) UsageTemplate(context *ParseContext, w io.Writer, indent int, tmpl string) error {
+func (a *Application) UsageContextTemplate(context *ParseContext, w io.Writer, indent int, tmpl string) error {
 	width := guessWidth(w)
 	funcs := template.FuncMap{
 		"Wrap": func(indent int, s string) string {
@@ -179,6 +183,7 @@ func (a *Application) UsageTemplate(context *ParseContext, w io.Writer, indent i
 		},
 		"FormatAppUsage":     formatAppUsage,
 		"FormatCommandUsage": formatCmdUsage,
+		"IsCumulative":       func(value Value) bool { _, ok := value.(remainderArg); return ok },
 	}
 	t, err := template.New("usage").Funcs(funcs).Parse(tmpl)
 	if err != nil {

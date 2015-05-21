@@ -43,7 +43,11 @@ func New(name, help string) *Application {
 }
 
 // Terminate specifies the termination function. Defaults to os.Exit(status).
+// If nil is passed, a no-op function will be used.
 func (a *Application) Terminate(terminate func(int)) *Application {
+	if terminate == nil {
+		terminate = func(int) {}
+	}
 	a.terminate = terminate
 	return a
 }
@@ -76,7 +80,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	if err != nil {
 		if a.hasHelp(args) {
 			a.Errorf(os.Stderr, "%s", err)
-			a.usageForContext(os.Stderr, context)
+			a.UsageContext(os.Stderr, context)
 			a.terminate(1)
 		}
 		return "", err
@@ -100,7 +104,7 @@ func (a *Application) hasHelp(args []string) bool {
 func (a *Application) maybeHelp(context *ParseContext) {
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok && flag.name == "help" {
-			a.usageForContext(os.Stderr, context)
+			a.UsageContext(os.Stderr, context)
 			a.terminate(1)
 		}
 	}
@@ -160,6 +164,20 @@ func (a *Application) init() error {
 	}
 	if a.cmdGroup.have() && a.argGroup.have() {
 		return fmt.Errorf("can't mix top-level Arg()s with Command()s")
+	}
+
+	// If we have subcommands, add a help command at the top-level.
+	if a.cmdGroup.have() {
+		var command []string
+		help := a.Command("help", "Show help.").Action(func(c *ParseContext) error {
+			a.Usage(os.Stderr, command)
+			a.terminate(0)
+			return nil
+		})
+		help.Arg("command", "Show help on command.").StringsVar(&command)
+		// Make help first command.
+		l := len(a.commandOrder)
+		a.commandOrder = append(a.commandOrder[l-1:l], a.commandOrder[:l-1]...)
 	}
 
 	if err := a.flagGroup.init(); err != nil {
@@ -387,16 +405,17 @@ func (a *Application) UsageErrorf(w io.Writer, format string, args ...interface{
 // information for the given ParseContext, before exiting.
 func (a *Application) UsageErrorContextf(w io.Writer, context *ParseContext, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
-	a.usageForContext(w, context)
+	a.UsageContext(w, context)
 	a.terminate(1)
 }
 
 // FatalIfError prints an error and exits if err is not nil. The error is printed
-// with the given prefix if any.
-func (a *Application) FatalIfError(w io.Writer, err error, prefix string) {
+// with the given formatted string, if any.
+func (a *Application) FatalIfError(w io.Writer, err error, format string, args ...interface{}) {
 	if err != nil {
-		if prefix != "" {
-			prefix += ": "
+		prefix := ""
+		if format != "" {
+			prefix = fmt.Sprintf(format, args...) + ": "
 		}
 		a.Errorf(w, prefix+"%s", err)
 		a.terminate(1)

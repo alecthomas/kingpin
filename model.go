@@ -42,15 +42,15 @@ type FlagModel struct {
 	PlaceHolder string
 	Required    bool
 	Hidden      bool
-	flag        *FlagClause
+	Value       Value
 }
 
 func (f *FlagModel) String() string {
-	return f.flag.value.String()
+	return f.Value.String()
 }
 
 func (f *FlagModel) IsBoolFlag() bool {
-	if fl, ok := f.flag.value.(boolFlag); ok {
+	if fl, ok := f.Value.(boolFlag); ok {
 		return fl.IsBoolFlag()
 	}
 	return false
@@ -61,7 +61,7 @@ func (f *FlagModel) FormatPlaceHolder() string {
 		return f.PlaceHolder
 	}
 	if f.Default != "" {
-		if _, ok := f.flag.value.(*stringValue); ok {
+		if _, ok := f.Value.(*stringValue); ok {
 			return strconv.Quote(f.Default)
 		}
 		return f.Default
@@ -93,11 +93,11 @@ type ArgModel struct {
 	Help     string
 	Default  string
 	Required bool
-	arg      *ArgClause
+	Value    Value
 }
 
 func (a *ArgModel) String() string {
-	return a.arg.value.String()
+	return a.Value.String()
 }
 
 type CmdGroupModel struct {
@@ -115,16 +115,16 @@ func (c *CmdGroupModel) FlattenedCommands() (out []*CmdModel) {
 }
 
 type CmdModel struct {
-	Name string
-	Help string
+	Name        string
+	Help        string
+	FullCommand string
 	*FlagGroupModel
 	*ArgGroupModel
 	*CmdGroupModel
-	cmd *CmdClause
 }
 
 func (c *CmdModel) String() string {
-	return c.cmd.FullCommand()
+	return c.FullCommand
 }
 
 type ApplicationModel struct {
@@ -159,7 +159,7 @@ func (a *ArgClause) Model() *ArgModel {
 		Help:     a.help,
 		Default:  a.defaultValue,
 		Required: a.required,
-		arg:      a,
+		Value:    a.value,
 	}
 }
 
@@ -181,7 +181,7 @@ func (f *FlagClause) Model() *FlagModel {
 		PlaceHolder: f.placeholder,
 		Required:    f.required,
 		Hidden:      f.hidden,
-		flag:        f,
+		Value:       f.value,
 	}
 }
 
@@ -197,9 +197,9 @@ func (c *CmdClause) Model() *CmdModel {
 	return &CmdModel{
 		Name:           c.name,
 		Help:           c.help,
+		FullCommand:    c.FullCommand(),
 		FlagGroupModel: c.flagGroup.Model(),
 		ArgGroupModel:  c.argGroup.Model(),
 		CmdGroupModel:  c.cmdGroup.Model(),
-		cmd:            c,
 	}
 }
