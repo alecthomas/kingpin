@@ -118,6 +118,7 @@ type CmdModel struct {
 	Name        string
 	Help        string
 	FullCommand string
+	Depth       int
 	*FlagGroupModel
 	*ArgGroupModel
 	*CmdGroupModel
@@ -194,9 +195,14 @@ func (c *cmdGroup) Model() *CmdGroupModel {
 }
 
 func (c *CmdClause) Model() *CmdModel {
+	depth := 0
+	for i := c; i != nil; i = i.parent {
+		depth++
+	}
 	return &CmdModel{
 		Name:           c.name,
 		Help:           c.help,
+		Depth:          depth,
 		FullCommand:    c.FullCommand(),
 		FlagGroupModel: c.flagGroup.Model(),
 		ArgGroupModel:  c.argGroup.Model(),

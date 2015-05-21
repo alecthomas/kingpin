@@ -46,7 +46,7 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 func (a *Application) Usage(w io.Writer, args []string) {
 	context, err := a.ParseContext(args)
 	a.FatalIfError(w, err, "")
-	if err := a.UsageContextTemplate(context, w, 2, UsageContextTemplate); err != nil {
+	if err := a.UsageForContextWithTemplate(context, w, 2, a.usageTemplate); err != nil {
 		panic(err)
 	}
 }
@@ -85,15 +85,15 @@ func formatFlag(flag *FlagModel) string {
 	return flagString
 }
 
-var UsageContextTemplate = `{{define "FormatCommand"}}\
+// Default usage template.
+var UsageTemplate = `{{define "FormatCommand"}}\
 {{if .FlagSummary}} {{.FlagSummary}}{{end}}\
 {{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
 {{end}}\
 
 {{define "FormatCommands"}}\
-Commands:
 {{range .FlattenedCommands}}\
-  {{.}}{{template "FormatCommand" .}}
+  {{.FullCommand}}{{template "FormatCommand" .}}
 {{.Help|Wrap 4}}
 {{end}}\
 {{end}}\
@@ -120,11 +120,59 @@ Args:
 {{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
 {{end}}\
 {{if .Context.SelectedCommand}}\
+Subcommands:
 {{if .Context.SelectedCommand.Commands}}\
 {{template "FormatCommands" .Context.SelectedCommand}}
 {{end}}\
 {{else if .App.Commands}}\
+Commands:
 {{template "FormatCommands" .App}}
+{{end}}\
+`
+
+// Usage template with compactly formatted commands.
+var CompactUsageTemplate = `{{define "FormatCommand"}}\
+{{if .FlagSummary}} {{.FlagSummary}}{{end}}\
+{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
+{{end}}\
+
+{{define "FormatCommandList"}}\
+{{range .}}\
+{{.Depth|Indent}}{{.Name}}{{template "FormatCommand" .}}
+{{template "FormatCommandList" .Commands}}\
+{{end}}\
+{{end}}\
+
+{{define "FormatUsage"}}\
+{{template "FormatCommand" .}}{{if .Commands}} <command> [<args> ...]{{end}}
+{{if .Help}}
+{{.Help|Wrap 0}}\
+{{end}}\
+
+{{end}}\
+
+{{if .Context.SelectedCommand}}\
+usage: {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
+{{else}}\
+usage: {{.App.Name}}{{template "FormatUsage" .App}}
+{{end}}\
+{{if .Context.Flags}}\
+Flags:
+{{.Context.Flags|FlagsToTwoColumns|FormatTwoColumns}}
+{{end}}\
+{{if .Context.Args}}\
+Args:
+{{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
+{{end}}\
+{{if .Context.SelectedCommand}}\
+{{if .Context.SelectedCommand.Commands}}\
+Commands:
+  {{.Context.SelectedCommand}}
+{{template "FormatCommandList" .Context.SelectedCommand.Commands}}
+{{end}}\
+{{else if .App.Commands}}\
+Commands:
+{{template "FormatCommandList" .App.Commands}}
 {{end}}\
 `
 
@@ -140,15 +188,19 @@ type templateContext struct {
 	Context *templateParseContext
 }
 
-// UsageContext displays usage information from a ParseContext (obtained from
+// UsageForContext displays usage information from a ParseContext (obtained from
 // Application.ParseContext() or Action(f) callbacks).
-func (a *Application) UsageContext(w io.Writer, context *ParseContext) error {
-	return a.UsageContextTemplate(context, w, 2, UsageContextTemplate)
+func (a *Application) UsageForContext(w io.Writer, context *ParseContext) error {
+	return a.UsageForContextWithTemplate(context, w, 2, a.usageTemplate)
 }
 
-func (a *Application) UsageContextTemplate(context *ParseContext, w io.Writer, indent int, tmpl string) error {
+// UsageForContextWithTemplate is the base usage function. You generally don't need to use this.
+func (a *Application) UsageForContextWithTemplate(context *ParseContext, w io.Writer, indent int, tmpl string) error {
 	width := guessWidth(w)
 	funcs := template.FuncMap{
+		"Indent": func(level int) string {
+			return strings.Repeat(" ", level*indent)
+		},
 		"Wrap": func(indent int, s string) string {
 			buf := bytes.NewBuffer(nil)
 			indentText := strings.Repeat(" ", indent)
@@ -183,7 +235,10 @@ func (a *Application) UsageContextTemplate(context *ParseContext, w io.Writer, i
 		},
 		"FormatAppUsage":     formatAppUsage,
 		"FormatCommandUsage": formatCmdUsage,
-		"IsCumulative":       func(value Value) bool { _, ok := value.(remainderArg); return ok },
+		"IsCumulative": func(value Value) bool {
+			_, ok := value.(remainderArg)
+			return ok
+		},
 	}
 	t, err := template.New("usage").Funcs(funcs).Parse(tmpl)
 	if err != nil {

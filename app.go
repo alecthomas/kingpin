@@ -20,22 +20,24 @@ type Application struct {
 	*flagGroup
 	*argGroup
 	*cmdGroup
-	initialized bool
-	Name        string
-	Help        string
-	action      Action
-	validator   ApplicationValidator
-	terminate   func(status int) // See Terminate()
+	initialized   bool
+	Name          string
+	Help          string
+	usageTemplate string
+	action        Action
+	validator     ApplicationValidator
+	terminate     func(status int) // See Terminate()
 }
 
 // New creates a new Kingpin application instance.
 func New(name, help string) *Application {
 	a := &Application{
-		flagGroup: newFlagGroup(),
-		argGroup:  newArgGroup(),
-		Name:      name,
-		Help:      help,
-		terminate: func(status int) { os.Exit(status) },
+		flagGroup:     newFlagGroup(),
+		argGroup:      newArgGroup(),
+		Name:          name,
+		Help:          help,
+		usageTemplate: UsageTemplate,
+		terminate:     func(status int) { os.Exit(status) },
 	}
 	a.cmdGroup = newCmdGroup(a)
 	a.Flag("help", "Show help.").Bool()
@@ -49,6 +51,13 @@ func (a *Application) Terminate(terminate func(int)) *Application {
 		terminate = func(int) {}
 	}
 	a.terminate = terminate
+	return a
+}
+
+// UsageTemplate specifies the text template to use when displaying usage
+// information. The default is UsageTemplate.
+func (a *Application) UsageTemplate(template string) *Application {
+	a.usageTemplate = template
 	return a
 }
 
@@ -80,7 +89,9 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	if err != nil {
 		if a.hasHelp(args) {
 			a.Errorf(os.Stderr, "%s", err)
-			a.UsageContext(os.Stderr, context)
+			if err := a.UsageForContext(os.Stderr, context); err != nil {
+				panic(err)
+			}
 			a.terminate(1)
 		}
 		return "", err
@@ -104,7 +115,9 @@ func (a *Application) hasHelp(args []string) bool {
 func (a *Application) maybeHelp(context *ParseContext) {
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok && flag.name == "help" {
-			a.UsageContext(os.Stderr, context)
+			if err := a.UsageForContext(os.Stderr, context); err != nil {
+				panic(err)
+			}
 			a.terminate(1)
 		}
 	}
@@ -405,7 +418,7 @@ func (a *Application) UsageErrorf(w io.Writer, format string, args ...interface{
 // information for the given ParseContext, before exiting.
 func (a *Application) UsageErrorContextf(w io.Writer, context *ParseContext, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
-	a.UsageContext(w, context)
+	a.UsageForContext(w, context)
 	a.terminate(1)
 }
 
