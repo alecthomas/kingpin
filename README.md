@@ -1,8 +1,26 @@
 # Kingpin - A Go (golang) command line and flag parser [![Build Status](https://travis-ci.org/alecthomas/kingpin.png)](https://travis-ci.org/alecthomas/kingpin)
 
-(check out [v2-unstable](https://github.com/alecthomas/kingpin/tree/v2-unstable) for bleeding edge features)
+<!-- MarkdownTOC depth=3 -->
 
-## Features
+- [Features][features]
+- Usability changes between v1 and v2
+- Versions
+  - V2 is the current stable version
+- Change History
+- Simple Example
+- Complex Example
+- Reference Documentation
+  - Help
+  - Displaying errors and usage information
+  - Sub-commands
+  - Custom Parsers
+  - Default Values
+  - Place-holders in Help
+  - Consuming all remaining arguments
+
+<!-- /MarkdownTOC -->
+
+## Features[features]
 
 - POSIX-style short flag combining.
 - Parsed, type-safe flags.
@@ -11,7 +29,7 @@
 - Callbacks per command, flag and argument.
 - Help output that isn't as ugly as sin.
 
-### Usability changes between v1 and v2
+## Usability changes between v1 and v2
 
 #### Flags can be used at any point after their definition.
 
@@ -29,43 +47,22 @@ $ chat post --server=chat.server.com:8080 --image=~/Downloads/owls.jpg pics
 
 ## Versions
 
-Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin.v2-unstable) for versioning.
+Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin) for versioning.
 
-### [V1](https://gopkg.in/alecthomas/kingpin.v2-unstable) is the current stable version
+The current stable version is [gopkg.in/alecthomas/kingpin.v2](https://gopkg.in/alecthomas/kingpin.v2). The previous version, [gopkg.in/alecthomas/kingpin.v1](https://gopkg.in/alecthomas/kingpin.v1), is deprecated and in maintenance mode.
+
+### [V2](https://gopkg.in/alecthomas/kingpin.v2) is the current stable version
 
 Installation:
 
 ```sh
-$ go get gopkg.in/alecthomas/kingpin.v2-unstable
-```
-
-### [V2](https://gopkg.in/alecthomas/kingpin.v2-unstable-unstable) is the current *unstable* version
-
-The goals for V2 are:
-
-- Streamline the end user experience.
-- Include some more useful features for developers.
-- Don't unnecessarily break backwards compatibility.
-
-Current task list:
-
-- Make flags "just work" wherever a user thinks they should:
-  - <s>Don't require flags to immediately follow the command they are defined under.</s>
-  - <s>Short-flag + argument should not require a space (see #26)</s>.
-- <s>Use "go generate" to automate generation of repeated flags/args (eg. Strings())?</s>
-- Streamline help:
-  - Default to a more compact help?
-  - Provide a `--help-full` flag to fully expand all subcommands and all flags.
-  - Expose internal structure so templates can be used to generate the help?
-    This would allow developers to display help in any way they prefer.
-
-Installation:
-
-```
-$ go get gopkg.in/alecthomas/kingpin.v2-unstable-unstable
+$ go get gopkg.in/alecthomas/kingpin.v2
 ```
 
 #### Changes between V1 and V2
+
+- *2015-05-21* -- Stable v2.0.0 release.
+    - Initial stable release of v2.0.0.
 
 - *2015-02-27*
     - Support for parsing flags at any point after their definition in the command tree.
@@ -136,7 +133,7 @@ package main
 import (
   "fmt"
 
-  "gopkg.in/alecthomas/kingpin.v2-unstable"
+  "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -203,7 +200,7 @@ package main
 import (
   "os"
   "strings"
-  "gopkg.in/alecthomas/kingpin.v2-unstable"
+  "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
