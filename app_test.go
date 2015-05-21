@@ -1,6 +1,8 @@
 package kingpin
 
 import (
+	"io/ioutil"
+
 	"github.com/stretchr/testify/assert"
 
 	"testing"
@@ -54,18 +56,21 @@ func TestArgsRequiredAfterNonRequiredErrors(t *testing.T) {
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").String()
 	cmd.Arg("b", "b").Required().String()
-	_, err := c.Parse([]string{})
+	_, err := c.Parse([]string{"cmd"})
 	assert.Error(t, err)
 }
 
 func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
-	c := New("test", "test")
+	c := New("test", "test").Terminate(nil).Writer(ioutil.Discard)
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").Required().String()
 	cmd.Arg("b", "b").Required().String()
 	cmd.Arg("c", "c").String()
 	cmd.Arg("d", "d").String()
-	assert.NotPanics(t, func() { c.Parse([]string{}) })
+	_, err := c.Parse([]string{"cmd", "a", "b"})
+	assert.NoError(t, err)
+	_, err = c.Parse([]string{})
+	assert.Error(t, err)
 }
 
 func TestDispatchCallbackIsCalled(t *testing.T) {

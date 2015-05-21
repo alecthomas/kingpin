@@ -24,9 +24,6 @@ var (
 
 func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
-	case "":
-		app.Usage(os.Stderr, []string{})
-
 	// Register user
 	case register.FullCommand():
 		println(*registerNick)

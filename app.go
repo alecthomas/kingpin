@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+var (
+	ErrCommandNotSpecified = fmt.Errorf("command not specified")
+)
+
 // Action callback executed at various stages after all values are populated.
 // The application, commands, arguments and flags all have corresponding
 // actions.
@@ -23,6 +27,7 @@ type Application struct {
 	initialized   bool
 	Name          string
 	Help          string
+	writer        io.Writer // Destination for usage and errors.
 	usageTemplate string
 	action        Action
 	validator     ApplicationValidator
@@ -36,6 +41,7 @@ func New(name, help string) *Application {
 		argGroup:      newArgGroup(),
 		Name:          name,
 		Help:          help,
+		writer:        os.Stderr,
 		usageTemplate: UsageTemplate,
 		terminate:     os.Exit,
 	}
@@ -51,6 +57,12 @@ func (a *Application) Terminate(terminate func(int)) *Application {
 		terminate = func(int) {}
 	}
 	a.terminate = terminate
+	return a
+}
+
+// Specify the writer to use for usage and errors. Defaults to os.Stderr.
+func (a *Application) Writer(w io.Writer) *Application {
+	a.writer = w
 	return a
 }
 
@@ -88,11 +100,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	context, err := a.ParseContext(args)
 	if err != nil {
 		if a.hasHelp(args) {
-			a.Errorf(os.Stderr, "%s", err)
-			if err := a.UsageForContext(os.Stderr, context); err != nil {
-				panic(err)
-			}
-			a.terminate(1)
+			a.writeUsage(context, err)
 		}
 		return "", err
 	}
@@ -100,7 +108,21 @@ func (a *Application) Parse(args []string) (command string, err error) {
 	if !context.EOL() {
 		return "", fmt.Errorf("unexpected argument '%s'", context.Peek())
 	}
-	return a.execute(context)
+	command, err = a.execute(context)
+	if err == ErrCommandNotSpecified {
+		a.writeUsage(context, nil)
+	}
+	return command, err
+}
+
+func (a *Application) writeUsage(context *ParseContext, err error) {
+	if err != nil {
+		a.Errorf(a.writer, "%s", err)
+	}
+	if err := a.UsageForContext(a.writer, context); err != nil {
+		panic(err)
+	}
+	a.terminate(1)
 }
 
 func (a *Application) hasHelp(args []string) bool {
@@ -115,10 +137,7 @@ func (a *Application) hasHelp(args []string) bool {
 func (a *Application) maybeHelp(context *ParseContext) {
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok && flag.name == "help" {
-			if err := a.UsageForContext(os.Stderr, context); err != nil {
-				panic(err)
-			}
-			a.terminate(1)
+			a.writeUsage(context, nil)
 		}
 	}
 }
@@ -183,7 +202,7 @@ func (a *Application) init() error {
 	if a.cmdGroup.have() {
 		var command []string
 		help := a.Command("help", "Show help.").Action(func(c *ParseContext) error {
-			a.Usage(os.Stderr, command)
+			a.Usage(a.writer, command)
 			a.terminate(0)
 			return nil
 		})
@@ -263,7 +282,11 @@ func (a *Application) execute(context *ParseContext) (string, error) {
 		return "", err
 	}
 
-	return strings.Join(selected, " "), err
+	command := strings.Join(selected, " ")
+	if command == "" && a.cmdGroup.have() {
+		return "", ErrCommandNotSpecified
+	}
+	return command, err
 }
 
 func (a *Application) setDefaults(context *ParseContext) error {
