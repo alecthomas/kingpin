@@ -101,7 +101,7 @@ be separated by a space. That is no longer the case.
 - Added `Terminate()` function to override the termination function.
 - Added `UsageForContextWithTemplate()` for printing usage via a custom template.
 - Added `UsageTemplate()` for overriding the default template to use. Two templates are included:
-    1. `UsageTemplate` - default template.
+    1. `DefaultUsageTemplate` - default template.
     2. `CompactUsageTemplate` - compact command template for larger applications.
 
 ## Versions
@@ -481,9 +481,8 @@ Kingpin v2 supports templatised help using the text/template library (actually, 
 
 You can specify the template to use with the [Application.UsageTemplate()](http://godoc.org/gopkg.in/alecthomas/kingpin.v2#Application.UsageTemplate) function.
 
-There are two included templates: [kingpin.UsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L88) is the default, and
-[kingpin.CompactUsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L133) provides a more compact representation for
-commands, for more complex command line structures.
+There are two included templates: [kingpin.DefaultUsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L88) is the default, and
+[kingpin.CompactUsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L133) provides a more compact representation for more complex command-line structures.
 
 See the above templates for examples of usage, and the the function [UsageForContextWithTemplate()](https://github.com/alecthomas/kingpin/blob/master/usage.go#L198) method for details on the context.
 

@@ -69,6 +69,11 @@ func Usage() {
 	CommandLine.Usage(os.Args[1:])
 }
 
+// Set global usage template to use (defaults to DefaultUsageTemplate).
+func UsageTemplate(template string) *Application {
+	return CommandLine.UsageTemplate(template)
+}
+
 // MustParse can be used with app.Parse(args) to exit with an error if parsing fails.
 func MustParse(command string, err error) string {
 	if err != nil {
@@ -78,6 +83,6 @@ func MustParse(command string, err error) string {
 }
 
 // Version adds a flag for displaying the application version number.
-func Version(version string) {
-	CommandLine.Version(version)
+func Version(version string) *Application {
+	return CommandLine.Version(version)
 }

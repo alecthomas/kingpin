@@ -42,7 +42,7 @@ func New(name, help string) *Application {
 		Name:          name,
 		Help:          help,
 		writer:        os.Stderr,
-		usageTemplate: UsageTemplate,
+		usageTemplate: DefaultUsageTemplate,
 		terminate:     os.Exit,
 	}
 	a.cmdGroup = newCmdGroup(a)
