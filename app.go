@@ -117,9 +117,9 @@ func (a *Application) Parse(args []string) (command string, err error) {
 
 func (a *Application) writeUsage(context *ParseContext, err error) {
 	if err != nil {
-		a.Errorf(a.writer, "%s", err)
+		a.Errorf("%s", err)
 	}
-	if err := a.UsageForContext(a.writer, context); err != nil {
+	if err := a.UsageForContext(context); err != nil {
 		panic(err)
 	}
 	a.terminate(1)
@@ -202,7 +202,7 @@ func (a *Application) init() error {
 	if a.cmdGroup.have() {
 		var command []string
 		help := a.Command("help", "Show help.").Action(func(c *ParseContext) error {
-			a.Usage(a.writer, command)
+			a.Usage(command)
 			a.terminate(0)
 			return nil
 		})
@@ -419,29 +419,29 @@ func (a *Application) applyActions(context *ParseContext) error {
 }
 
 // Errorf prints an error message to w in the format "<appname>: error: <message>".
-func (a *Application) Errorf(w io.Writer, format string, args ...interface{}) {
-	fmt.Fprintf(w, a.Name+": error: "+format+"\n", args...)
+func (a *Application) Errorf(format string, args ...interface{}) {
+	fmt.Fprintf(a.writer, a.Name+": error: "+format+"\n", args...)
 }
 
 // Fatalf writes a formatted error to w then terminates with exit status 1.
-func (a *Application) Fatalf(w io.Writer, format string, args ...interface{}) {
-	a.Errorf(w, format, args...)
+func (a *Application) Fatalf(format string, args ...interface{}) {
+	a.Errorf(format, args...)
 	a.terminate(1)
 }
 
 // FatalUsage prints an error message followed by usage information, then
 // exits with a non-zero status.
-func (a *Application) FatalUsage(w io.Writer, format string, args ...interface{}) {
-	a.Errorf(w, format, args...)
-	a.Usage(w, []string{})
+func (a *Application) FatalUsage(format string, args ...interface{}) {
+	a.Errorf(format, args...)
+	a.Usage([]string{})
 	a.terminate(1)
 }
 
 // FatalUsageContext writes a printf formatted error message to w, then usage
 // information for the given ParseContext, before exiting.
-func (a *Application) FatalUsageContext(w io.Writer, context *ParseContext, format string, args ...interface{}) {
-	a.Errorf(w, format, args...)
-	if err := a.UsageForContext(w, context); err != nil {
+func (a *Application) FatalUsageContext(context *ParseContext, format string, args ...interface{}) {
+	a.Errorf(format, args...)
+	if err := a.UsageForContext(context); err != nil {
 		panic(err)
 	}
 	a.terminate(1)
@@ -449,13 +449,13 @@ func (a *Application) FatalUsageContext(w io.Writer, context *ParseContext, form
 
 // FatalIfError prints an error and exits if err is not nil. The error is printed
 // with the given formatted string, if any.
-func (a *Application) FatalIfError(w io.Writer, err error, format string, args ...interface{}) {
+func (a *Application) FatalIfError(err error, format string, args ...interface{}) {
 	if err != nil {
 		prefix := ""
 		if format != "" {
 			prefix = fmt.Sprintf(format, args...) + ": "
 		}
-		a.Errorf(w, prefix+"%s", err)
+		a.Errorf(prefix+"%s", err)
 		a.terminate(1)
 	}
 }

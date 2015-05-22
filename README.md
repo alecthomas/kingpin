@@ -326,11 +326,11 @@ The functions on `Application` are:
 
 Function | Purpose
 ---------|--------------
-`Errorf(w, format, args)` | Display a printf formatted error to the user.
-`Fatalf(w, format, args)` | As with Errorf, but also call the termination handler.
-`FatalUsage(w, format, args)` | As with Fatalf, but also print contextual usage information.
-`FatalUsageContext(w, context, format, args)` | As with Fatalf, but also print contextual usage information from a `ParseContext`.
-`FatalIfError(w, err, format, args)` | Conditionally print an error prefixed with format+args, then call the termination handler
+`Errorf(format, args)` | Display a printf formatted error to the user.
+`Fatalf(format, args)` | As with Errorf, but also call the termination handler.
+`FatalUsage(format, args)` | As with Fatalf, but also print contextual usage information.
+`FatalUsageContext(context, format, args)` | As with Fatalf, but also print contextual usage information from a `ParseContext`.
+`FatalIfError(err, format, args)` | Conditionally print an error prefixed with format+args, then call the termination handler
 
 There are equivalent global functions in the kingpin namespace for the default
 `kingpin.CommandLine` instance.

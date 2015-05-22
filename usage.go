@@ -43,10 +43,10 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 
 // Usage writes application usage to w. It parses args to determine
 // appropriate help context, such as which command to show help for.
-func (a *Application) Usage(w io.Writer, args []string) {
+func (a *Application) Usage(args []string) {
 	context, err := a.ParseContext(args)
-	a.FatalIfError(w, err, "")
-	if err := a.UsageForContextWithTemplate(context, w, 2, a.usageTemplate); err != nil {
+	a.FatalIfError(err, "")
+	if err := a.UsageForContextWithTemplate(context, 2, a.usageTemplate); err != nil {
 		panic(err)
 	}
 }
@@ -190,13 +190,13 @@ type templateContext struct {
 
 // UsageForContext displays usage information from a ParseContext (obtained from
 // Application.ParseContext() or Action(f) callbacks).
-func (a *Application) UsageForContext(w io.Writer, context *ParseContext) error {
-	return a.UsageForContextWithTemplate(context, w, 2, a.usageTemplate)
+func (a *Application) UsageForContext(context *ParseContext) error {
+	return a.UsageForContextWithTemplate(context, 2, a.usageTemplate)
 }
 
 // UsageForContextWithTemplate is the base usage function. You generally don't need to use this.
-func (a *Application) UsageForContextWithTemplate(context *ParseContext, w io.Writer, indent int, tmpl string) error {
-	width := guessWidth(w)
+func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent int, tmpl string) error {
+	width := guessWidth(a.writer)
 	funcs := template.FuncMap{
 		"Indent": func(level int) string {
 			return strings.Repeat(" ", level*indent)
@@ -257,5 +257,5 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, w io.Wr
 			ArgGroupModel:   context.arguments.Model(),
 		},
 	}
-	return t.Execute(w, ctx)
+	return t.Execute(a.writer, ctx)
 }

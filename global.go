@@ -38,35 +38,35 @@ func Parse() string {
 
 // Errorf prints an error message to stderr.
 func Errorf(format string, args ...interface{}) {
-	CommandLine.Errorf(os.Stderr, format, args...)
+	CommandLine.Errorf(format, args...)
 }
 
 // Fatalf prints an error message to stderr and exits.
 func Fatalf(format string, args ...interface{}) {
-	CommandLine.Fatalf(os.Stderr, format, args...)
+	CommandLine.Fatalf(format, args...)
 }
 
 // FatalIfError prints an error and exits if err is not nil. The error is printed
 // with the given prefix.
 func FatalIfError(err error, prefix string) {
-	CommandLine.FatalIfError(os.Stderr, err, prefix)
+	CommandLine.FatalIfError(err, prefix)
 }
 
 // FatalUsage prints an error message followed by usage information, then
 // exits with a non-zero status.
 func FatalUsage(format string, args ...interface{}) {
-	CommandLine.FatalUsage(os.Stderr, format, args...)
+	CommandLine.FatalUsage(format, args...)
 }
 
 // FatalUsageContext writes a printf formatted error message to stderr, then
 // usage information for the given ParseContext, before exiting.
 func FatalUsageContext(context *ParseContext, format string, args ...interface{}) {
-	CommandLine.FatalUsageContext(os.Stderr, context, format, args...)
+	CommandLine.FatalUsageContext(context, format, args...)
 }
 
 // Usage prints usage to stderr.
 func Usage() {
-	CommandLine.Usage(os.Stderr, os.Args[1:])
+	CommandLine.Usage(os.Args[1:])
 }
 
 // MustParse can be used with app.Parse(args) to exit with an error if parsing fails.
