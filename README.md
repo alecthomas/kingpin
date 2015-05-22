@@ -7,6 +7,7 @@
 - [User-visible changes between v1 and v2](#user-visible-changes-between-v1-and-v2)
   - [Flags can be used at any point after their definition.](#flags-can-be-used-at-any-point-after-their-definition)
   - [Short flags can be combined with their parameters](#short-flags-can-be-combined-with-their-parameters)
+- [API changes between v1 and v2](#api-changes-between-v1-and-v2)
 - [Versions](#versions)
   - [V2 is the current stable version](#v2-is-the-current-stable-version)
   - [V1 is the OLD stable version](#v1-is-the-old-stable-version)
@@ -91,6 +92,18 @@ $ chat post --server=chat.server.com:8080 --image=~/Downloads/owls.jpg pics
 Previously, if a short flag was used, any argument to that flag would have to
 be separated by a space. That is no longer the case.
 
+## API changes between v1 and v2
+
+- `ParseWithFileExpansion()` is gone. The new parser directly supports expanding `@<file>`.
+- Added `FatalUsage()` and `FatalUsageContext()` for displaying an error + usage and terminating.
+- `Dispatch()` renamed to `Action()`.
+- Added `ParseContext()` for parsing a command line into its intermediate context form without executing.
+- Added `Terminate()` function to override the termination function.
+- Added `UsageForContextWithTemplate()` for printing usage via a custom template.
+- Added `UsageTemplate()` for overriding the default template to use. Two templates are included:
+    1. `UsageTemplate` - default template.
+    2. `CompactUsageTemplate` - compact command template for larger applications.
+
 ## Versions
 
 Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin) for versioning.
@@ -112,6 +125,7 @@ Installation:
 ```sh
 $ go get gopkg.in/alecthomas/kingpin.v1
 ```
+
 ## Change History
 
 - *2015-05-22* -- Stable v2.0.0 release.
@@ -464,6 +478,8 @@ ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
 ### Custom help
 
 Kingpin v2 supports templatised help using the text/template library (actually, [a fork](https://github.com/alecthomas/template)).
+
+You can specify the template to use with the [Application.UsageTemplate()](http://godoc.org/gopkg.in/alecthomas/kingpin.v2#Application.UsageTemplate) function.
 
 There are two included templates: [kingpin.UsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L88) is the default, and
 [kingpin.CompactUsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L133) provides a more compact representation for
