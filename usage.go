@@ -239,6 +239,9 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			_, ok := value.(remainderArg)
 			return ok
 		},
+		"Char": func(c rune) string {
+			return string(c)
+		},
 	}
 	t, err := template.New("usage").Funcs(funcs).Parse(tmpl)
 	if err != nil {

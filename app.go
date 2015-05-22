@@ -27,6 +27,8 @@ type Application struct {
 	initialized   bool
 	Name          string
 	Help          string
+	author        string
+	version       string
 	writer        io.Writer // Destination for usage and errors.
 	usageTemplate string
 	action        Action
@@ -47,7 +49,17 @@ func New(name, help string) *Application {
 	}
 	a.cmdGroup = newCmdGroup(a)
 	a.Flag("help", "Show help.").Bool()
+	a.Flag("man-page", "Generate a man page.").Hidden().Action(a.generateManPage).Bool()
 	return a
+}
+
+func (a *Application) generateManPage(c *ParseContext) error {
+	a.Writer(os.Stdout)
+	if err := a.UsageForContextWithTemplate(c, 2, ManPageTemplate); err != nil {
+		return err
+	}
+	a.terminate(0)
+	return nil
 }
 
 // Terminate specifies the termination handler. Defaults to os.Exit(status).
@@ -167,11 +179,17 @@ func (a *Application) findCommandFromContext(context *ParseContext) string {
 
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
+	a.version = version
 	a.Flag("version", "Show application version.").Action(func(*ParseContext) error {
 		fmt.Println(version)
 		a.terminate(0)
 		return nil
 	}).Bool()
+	return a
+}
+
+func (a *Application) Author(author string) *Application {
+	a.author = author
 	return a
 }
 

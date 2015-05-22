@@ -93,7 +93,7 @@ func applyPOST() error {
 }
 
 func main() {
-	kingpin.UsageTemplate(kingpin.CompactUsageTemplate)
+	kingpin.UsageTemplate(kingpin.CompactUsageTemplate).Version("1.0").Author("Alec Thomas")
 	kingpin.CommandLine.Help = "An example implementation of curl."
 	switch kingpin.Parse() {
 	case "get url":

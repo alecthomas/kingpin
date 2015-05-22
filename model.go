@@ -36,7 +36,7 @@ func (f *FlagGroupModel) FlagSummary() string {
 type FlagModel struct {
 	Name        string
 	Help        string
-	Short       byte
+	Short       rune
 	Default     string
 	Envar       string
 	PlaceHolder string
@@ -129,8 +129,10 @@ func (c *CmdModel) String() string {
 }
 
 type ApplicationModel struct {
-	Name string
-	Help string
+	Name    string
+	Help    string
+	Version string
+	Author  string
 	*ArgGroupModel
 	*CmdGroupModel
 	*FlagGroupModel
@@ -140,6 +142,8 @@ func (a *Application) Model() *ApplicationModel {
 	return &ApplicationModel{
 		Name:           a.Name,
 		Help:           a.Help,
+		Version:        a.version,
+		Author:         a.author,
 		FlagGroupModel: a.flagGroup.Model(),
 		ArgGroupModel:  a.argGroup.Model(),
 		CmdGroupModel:  a.cmdGroup.Model(),
@@ -176,7 +180,7 @@ func (f *FlagClause) Model() *FlagModel {
 	return &FlagModel{
 		Name:        f.name,
 		Help:        f.help,
-		Short:       f.shorthand,
+		Short:       rune(f.shorthand),
 		Default:     f.defaultValue,
 		Envar:       f.envar,
 		PlaceHolder: f.placeholder,

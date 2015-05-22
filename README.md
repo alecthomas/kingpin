@@ -68,6 +68,7 @@ contextual help if `--help` is encountered at any point in the command line
 - POSIX-style short flag combining (`-a -b` -> `-ab`).
 - Short-flag+parameter combining (`-a parm` -> `-aparm`).
 - Read command-line from files (`@<file>`).
+- Automatically generate man pages (`--man-page`).
 
 ## User-visible changes between v1 and v2
 
@@ -481,8 +482,8 @@ Kingpin v2 supports templatised help using the text/template library (actually, 
 
 You can specify the template to use with the [Application.UsageTemplate()](http://godoc.org/gopkg.in/alecthomas/kingpin.v2#Application.UsageTemplate) function.
 
-There are two included templates: [kingpin.DefaultUsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L88) is the default, and
-[kingpin.CompactUsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L133) provides a more compact representation for more complex command-line structures.
+There are three included templates: `kingpin.DefaultUsageTemplate` is the default,
+`kingpin.CompactUsageTemplate` provides a more compact representation for more complex command-line structures, and `kingpin.ManPageTemplate` is used to generate man pages.
 
 See the above templates for examples of usage, and the the function [UsageForContextWithTemplate()](https://github.com/alecthomas/kingpin/blob/master/usage.go#L198) method for details on the context.
 
