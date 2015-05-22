@@ -110,7 +110,7 @@ $ go get gopkg.in/alecthomas/kingpin.v2
 Installation:
 
 ```sh
-$ go get gopkg.in/alecthomas/kingpin.v2
+$ go get gopkg.in/alecthomas/kingpin.v1
 ```
 ## Change History
 
