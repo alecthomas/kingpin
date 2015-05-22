@@ -485,47 +485,54 @@ There are two included templates: [kingpin.UsageTemplate](https://github.com/ale
 [kingpin.CompactUsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L133) provides a more compact representation for
 commands, for more complex command line structures.
 
-This is the default template as of 22 May 2015:
-
-```
-{{define "FormatCommand"}}\
-{{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
-{{end}}\
-{{define "FormatCommands"}}\
-{{range .FlattenedCommands}}\
-  {{.FullCommand}}{{template "FormatCommand" .}}
-{{.Help|Wrap 4}}
-{{end}}\
-{{end}}\
-{{define "FormatUsage"}}\
-{{template "FormatCommand" .}}{{if .Commands}} <command> [<args> ...]{{end}}
-{{if .Help}}
-{{.Help|Wrap 0}}\
-{{end}}\
-{{end}}\
-{{if .Context.SelectedCommand}}\
-usage: {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
-{{else}}\
-usage: {{.App.Name}}{{template "FormatUsage" .App}}
-{{end}}\
-{{if .Context.Flags}}\
-Flags:
-{{.Context.Flags|FlagsToTwoColumns|FormatTwoColumns}}
-{{end}}\
-{{if .Context.Args}}\
-Args:
-{{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
-{{end}}\
-{{if .Context.SelectedCommand}}\
-Subcommands:
-{{if .Context.SelectedCommand.Commands}}\
-{{template "FormatCommands" .Context.SelectedCommand}}
-{{end}}\
-{{else if .App.Commands}}\
-Commands:
-{{template "FormatCommands" .App}}
-{{end}}\
-```
-
 See the above templates for examples of usage, and the the function [UsageForContextWithTemplate()](https://github.com/alecthomas/kingpin/blob/master/usage.go#L198) method for details on the context.
+
+#### Default help template
+
+```
+$ go run ./examples/curl/curl.go --help
+usage: curl [<flags>] <command> [<args> ...]
+
+An example implementation of curl.
+
+Flags:
+  --help            Show help.
+  -t, --timeout=5s  Set connection timeout.
+  -H, --headers=HEADER=VALUE
+                    Add HTTP headers to the request.
+
+Commands:
+  help [<command>...]
+    Show help.
+
+  get url <url>
+    Retrieve a URL.
+
+  get file <file>
+    Retrieve a file.
+
+  post [<flags>] <url>
+    POST a resource.
+```
+
+#### Compact help template
+
+```
+$ go run ./examples/curl/curl.go --help
+usage: curl [<flags>] <command> [<args> ...]
+
+An example implementation of curl.
+
+Flags:
+  --help            Show help.
+  -t, --timeout=5s  Set connection timeout.
+  -H, --headers=HEADER=VALUE
+                    Add HTTP headers to the request.
+
+Commands:
+  help [<command>...]
+  get [<flags>]
+    url <url>
+    file <file>
+  post [<flags>] <url>
+```
