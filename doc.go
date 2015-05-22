@@ -46,7 +46,7 @@
 //       registerName = register.Arg("name", "name of user").Required().String()
 //
 //       post        = kingpin.Command("post", "Post a message to a channel.")
-//       postImage   = post.Flag("image", "image to post").File()
+//       postImage   = post.Flag("image", "image to post").ExistingFile()
 //       postChannel = post.Arg("channel", "channel to post to").Required().String()
 //       postText    = post.Arg("text", "text to post").String()
 //     )

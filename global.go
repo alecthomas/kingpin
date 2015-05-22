@@ -25,31 +25,20 @@ func Arg(name, help string) *ArgClause {
 	return CommandLine.Arg(name, help)
 }
 
-// Parse and return the selected command. Will exit with a non-zero status if
-// an error was encountered.
+// Parse and return the selected command. Will call the termination handler if
+// an error is encountered.
 func Parse() string {
 	selected := MustParse(CommandLine.Parse(os.Args[1:]))
 	if selected == "" && CommandLine.cmdGroup.have() {
 		Usage()
-		os.Exit(0)
+		CommandLine.terminate(0)
 	}
 	return selected
 }
 
-// ParseWithFileExpansion is the same as Parse() but will expand flags from
-// arguments in the form @FILE.
-func ParseWithFileExpansion() string {
-	args, err := ExpandArgsFromFiles(os.Args[1:])
-	if err != nil {
-		Fatalf("failed to expand flags: %s", err)
-	}
-	selected := MustParse(CommandLine.Parse(args))
-	if selected == "" && CommandLine.cmdGroup.have() {
-		Usage()
-		os.Exit(0)
-	}
-	return selected
-
+// Errorf prints an error message to stderr.
+func Errorf(format string, args ...interface{}) {
+	CommandLine.Errorf(os.Stderr, format, args...)
 }
 
 // Fatalf prints an error message to stderr and exits.
@@ -63,15 +52,21 @@ func FatalIfError(err error, prefix string) {
 	CommandLine.FatalIfError(os.Stderr, err, prefix)
 }
 
-// UsageErrorf prints an error message followed by usage information, then
+// FatalUsage prints an error message followed by usage information, then
 // exits with a non-zero status.
-func UsageErrorf(format string, args ...interface{}) {
-	CommandLine.UsageErrorf(os.Stderr, format, args...)
+func FatalUsage(format string, args ...interface{}) {
+	CommandLine.FatalUsage(os.Stderr, format, args...)
+}
+
+// FatalUsageContext writes a printf formatted error message to stderr, then
+// usage information for the given ParseContext, before exiting.
+func FatalUsageContext(context *ParseContext, format string, args ...interface{}) {
+	CommandLine.FatalUsageContext(os.Stderr, context, format, args...)
 }
 
 // Usage prints usage to stderr.
 func Usage() {
-	CommandLine.Usage(os.Stderr)
+	CommandLine.Usage(os.Stderr, os.Args[1:])
 }
 
 // MustParse can be used with app.Parse(args) to exit with an error if parsing fails.

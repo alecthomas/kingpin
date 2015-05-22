@@ -1,18 +1,17 @@
 package kingpin
 
 import (
-	"github.com/stretchr/testify/assert"
-
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestArgRemainder(t *testing.T) {
-	a := newArgGroup()
-	v := a.Arg("test", "").Strings()
-	a.init()
+	app := New("test", "")
+	v := app.Arg("test", "").Strings()
 	args := []string{"hello", "world"}
-	tokens := Tokenize(args)
-	a.parse(tokens)
+	_, err := app.Parse(args)
+	assert.NoError(t, err)
 	assert.Equal(t, args, *v)
 }
 
@@ -24,24 +23,21 @@ func TestArgRemainderErrorsWhenNotLast(t *testing.T) {
 }
 
 func TestArgMultipleRequired(t *testing.T) {
-	a := newArgGroup()
-	a.Arg("a", "").Required().String()
-	a.Arg("b", "").Required().String()
-	a.init()
+	app := New("test", "")
+	app.Arg("a", "").Required().String()
+	app.Arg("b", "").Required().String()
 
-	err := a.parse(Tokenize([]string{}))
+	_, err := app.Parse([]string{})
 	assert.Error(t, err)
-	err = a.parse(Tokenize([]string{"A"}))
+	_, err = app.Parse([]string{"A"})
 	assert.Error(t, err)
-	err = a.parse(Tokenize([]string{"A", "B"}))
+	_, err = app.Parse([]string{"A", "B"})
 	assert.NoError(t, err)
 }
 
 func TestInvalidArgsDefaultCanBeOverridden(t *testing.T) {
-	a := newArgGroup()
-	a.Arg("a", "").Default("invalid").Bool()
-	assert.NoError(t, a.init())
-	tokens := Tokenize([]string{})
-	err := a.parse(tokens)
+	app := New("test", "")
+	app.Arg("a", "").Default("invalid").Bool()
+	_, err := app.Parse([]string{})
 	assert.Error(t, err)
 }

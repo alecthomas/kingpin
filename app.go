@@ -1,30 +1,3 @@
-// Package commander is used to manage a set of command-line "commands", with
-// per-command flags and arguments.
-//
-// Supports command like so:
-//
-//   <command> <required> [<optional> [<optional> ...]]
-//   <command> <remainder...>
-//
-// eg.
-//
-//   register [--name <name>] <nick>|<id>
-//   post --channel|-a <channel> [--image <image>] [<text>]
-//
-// var (
-//   chat = commander.New()
-//   debug = chat.Flag("debug", "enable debug mode").Default("false").Bool()
-//
-//   register = chat.Command("register", "Register a new user.")
-//   registerName = register.Flag("name", "name of user").Required().String()
-//   registerNick = register.Arg("nick", "nickname for user").Required().String()
-//
-//   post = chat.Command("post", "Post a message to a channel.")
-//   postChannel = post.Flag("channel", "channel to post to").Short('a').Required().String()
-//   postImage = post.Flag("image", "image to post").String()
-// )
-//
-
 package kingpin
 
 import (
@@ -34,7 +7,14 @@ import (
 	"strings"
 )
 
-type Dispatch func(*ParseContext) error
+var (
+	ErrCommandNotSpecified = fmt.Errorf("command not specified")
+)
+
+// Action callback executed at various stages after all values are populated.
+// The application, commands, arguments and flags all have corresponding
+// actions.
+type Action func(*ParseContext) error
 
 type ApplicationValidator func(*Application) error
 
@@ -44,22 +24,52 @@ type Application struct {
 	*flagGroup
 	*argGroup
 	*cmdGroup
-	initialized bool
-	Name        string
-	Help        string
-	validator   ApplicationValidator
+	initialized   bool
+	Name          string
+	Help          string
+	writer        io.Writer // Destination for usage and errors.
+	usageTemplate string
+	action        Action
+	validator     ApplicationValidator
+	terminate     func(status int) // See Terminate()
 }
 
 // New creates a new Kingpin application instance.
 func New(name, help string) *Application {
 	a := &Application{
-		flagGroup: newFlagGroup(),
-		argGroup:  newArgGroup(),
-		Name:      name,
-		Help:      help,
+		flagGroup:     newFlagGroup(),
+		argGroup:      newArgGroup(),
+		Name:          name,
+		Help:          help,
+		writer:        os.Stderr,
+		usageTemplate: UsageTemplate,
+		terminate:     os.Exit,
 	}
 	a.cmdGroup = newCmdGroup(a)
-	a.Flag("help", "Show help.").Dispatch(a.onHelp).Bool()
+	a.Flag("help", "Show help.").Bool()
+	return a
+}
+
+// Terminate specifies the termination handler. Defaults to os.Exit(status).
+// If nil is passed, a no-op function will be used.
+func (a *Application) Terminate(terminate func(int)) *Application {
+	if terminate == nil {
+		terminate = func(int) {}
+	}
+	a.terminate = terminate
+	return a
+}
+
+// Specify the writer to use for usage and errors. Defaults to os.Stderr.
+func (a *Application) Writer(w io.Writer) *Application {
+	a.writer = w
+	return a
+}
+
+// UsageTemplate specifies the text template to use when displaying usage
+// information. The default is UsageTemplate.
+func (a *Application) UsageTemplate(template string) *Application {
+	a.usageTemplate = template
 	return a
 }
 
@@ -69,35 +79,109 @@ func (a *Application) Validate(validator ApplicationValidator) *Application {
 	return a
 }
 
+// ParseContext parses the given command line and returns the fully populated
+// ParseContext.
+func (a *Application) ParseContext(args []string) (*ParseContext, error) {
+	if err := a.init(); err != nil {
+		return nil, err
+	}
+	context := tokenize(args)
+	_, err := parse(context, a)
+	return context, err
+}
+
 // Parse parses command-line arguments. It returns the selected command and an
 // error. The selected command will be a space separated subcommand, if
 // subcommands have been configured.
+//
+// This will populate all flag and argument values, call all callbacks, and so
+// on.
 func (a *Application) Parse(args []string) (command string, err error) {
+	context, err := a.ParseContext(args)
+	if err != nil {
+		if a.hasHelp(args) {
+			a.writeUsage(context, err)
+		}
+		return "", err
+	}
+	a.maybeHelp(context)
+	if !context.EOL() {
+		return "", fmt.Errorf("unexpected argument '%s'", context.Peek())
+	}
+	command, err = a.execute(context)
+	if err == ErrCommandNotSpecified {
+		a.writeUsage(context, nil)
+	}
+	return command, err
+}
+
+func (a *Application) writeUsage(context *ParseContext, err error) {
+	if err != nil {
+		a.Errorf(a.writer, "%s", err)
+	}
+	if err := a.UsageForContext(a.writer, context); err != nil {
+		panic(err)
+	}
+	a.terminate(1)
+}
+
+func (a *Application) hasHelp(args []string) bool {
+	for _, arg := range args {
+		if arg == "--help" {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *Application) maybeHelp(context *ParseContext) {
+	for _, element := range context.Elements {
+		if flag, ok := element.Clause.(*FlagClause); ok && flag.name == "help" {
+			a.writeUsage(context, nil)
+		}
+	}
+}
+
+// findCommandFromArgs finds a command (if any) from the given command line arguments.
+func (a *Application) findCommandFromArgs(args []string) (command string, err error) {
 	if err := a.init(); err != nil {
 		return "", err
 	}
-	context := Tokenize(args)
-	command, err = a.parse(context)
-	if err != nil {
+	context := tokenize(args)
+	if err := a.parse(context); err != nil {
 		return "", err
 	}
+	return a.findCommandFromContext(context), nil
+}
 
-	if len(context.Tokens) == 1 {
-		return "", fmt.Errorf("unexpected argument '%s'", context.Tokens)
-	} else if len(context.Tokens) > 0 {
-		return "", fmt.Errorf("unexpected arguments '%s'", context.Tokens)
+// findCommandFromContext finds a command (if any) from a parsed context.
+func (a *Application) findCommandFromContext(context *ParseContext) string {
+	commands := []string{}
+	for _, element := range context.Elements {
+		if c, ok := element.Clause.(*CmdClause); ok {
+			commands = append(commands, c.name)
+		}
 	}
-
-	return command, err
+	return strings.Join(commands, " ")
 }
 
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
-	a.Flag("version", "Show application version.").Dispatch(func(*ParseContext) error {
+	a.Flag("version", "Show application version.").Action(func(*ParseContext) error {
 		fmt.Println(version)
-		os.Exit(0)
+		a.terminate(0)
 		return nil
 	}).Bool()
+	return a
+}
+
+// Action callback to call when all values are populated and parsing is
+// complete, but before any command, flag or argument actions.
+//
+// All Action() callbacks are called in the order they are encountered on the
+// command line.
+func (a *Application) Action(action Action) *Application {
+	a.action = action
 	return a
 }
 
@@ -114,12 +198,18 @@ func (a *Application) init() error {
 		return fmt.Errorf("can't mix top-level Arg()s with Command()s")
 	}
 
-	if len(a.commands) > 0 {
-		cmd := a.Command("help", "Show help for a command.").Dispatch(a.onHelp)
-		cmd.Arg("command", "Command name.").String()
-		// Make "help" command first in order. Also, Go's slice operations are woeful.
-		l := len(a.commandOrder) - 1
-		a.commandOrder = append(a.commandOrder[l:], a.commandOrder[:l]...)
+	// If we have subcommands, add a help command at the top-level.
+	if a.cmdGroup.have() {
+		var command []string
+		help := a.Command("help", "Show help.").Action(func(c *ParseContext) error {
+			a.Usage(a.writer, command)
+			a.terminate(0)
+			return nil
+		})
+		help.Arg("command", "Show help on command.").StringsVar(&command)
+		// Make help first command.
+		l := len(a.commandOrder)
+		a.commandOrder = append(a.commandOrder[l-1:l], a.commandOrder[:l-1]...)
 	}
 
 	if err := a.flagGroup.init(); err != nil {
@@ -136,88 +226,236 @@ func (a *Application) init() error {
 			return err
 		}
 	}
+	flagGroups := []*flagGroup{a.flagGroup}
+	for _, cmd := range a.commandOrder {
+		if err := checkDuplicateFlags(cmd, flagGroups); err != nil {
+			return err
+		}
+	}
 	a.initialized = true
 	return nil
 }
 
-func (a *Application) onHelp(context *ParseContext) error {
-	candidates := []string{}
-	for {
-		token := context.Peek()
-		if token.Type == TokenArg {
-			candidates = append(candidates, token.String())
-			context.Next()
-		} else {
-			break
+// Recursively check commands for duplicate flags.
+func checkDuplicateFlags(current *CmdClause, flagGroups []*flagGroup) error {
+	// Check for duplicates.
+	for _, flags := range flagGroups {
+		for _, flag := range current.flagOrder {
+			if flag.shorthand != 0 {
+				if _, ok := flags.short[string(flag.shorthand)]; ok {
+					return fmt.Errorf("duplicate short flag -%c", flag.shorthand)
+				}
+			}
+			if _, ok := flags.long[flag.name]; ok {
+				return fmt.Errorf("duplicate long flag --%s", flag.name)
+			}
 		}
 	}
-
-	var cmd *CmdClause
-	for i := len(candidates); i > 0; i-- {
-		command := strings.Join(candidates[:i], " ")
-		cmd = a.findCommand(command)
-		if cmd != nil {
-			a.CommandUsage(os.Stderr, command)
-			break
+	flagGroups = append(flagGroups, current.flagGroup)
+	// Check subcommands.
+	for _, subcmd := range current.commandOrder {
+		if err := checkDuplicateFlags(subcmd, flagGroups); err != nil {
+			return err
 		}
 	}
-	if cmd == nil {
-		a.Usage(os.Stderr)
-	}
-	os.Exit(0)
 	return nil
 }
 
-func (a *Application) parse(context *ParseContext) (string, error) {
-	// Special-case "help" to avoid issues with required flags.
-	runHelp := (context.Peek().Value == "help")
-
+func (a *Application) execute(context *ParseContext) (string, error) {
 	var err error
-	err = a.flagGroup.parse(context, runHelp)
+	selected := []string{}
+
+	if err = a.setDefaults(context); err != nil {
+		return "", err
+	}
+
+	selected, err = a.setValues(context)
 	if err != nil {
 		return "", err
 	}
 
-	selected := []string{}
-
-	// Parse arguments or commands.
-	if a.argGroup.have() {
-		err = a.argGroup.parse(context)
-	} else if a.cmdGroup.have() {
-		selected, err = a.cmdGroup.parse(context)
+	if err = a.applyValidators(context); err != nil {
+		return "", err
 	}
+
+	if err = a.applyActions(context); err != nil {
+		return "", err
+	}
+
+	command := strings.Join(selected, " ")
+	if command == "" && a.cmdGroup.have() {
+		return "", ErrCommandNotSpecified
+	}
+	return command, err
+}
+
+func (a *Application) setDefaults(context *ParseContext) error {
+	flagElements := map[string]*ParseElement{}
+	for _, element := range context.Elements {
+		if flag, ok := element.Clause.(*FlagClause); ok {
+			flagElements[flag.name] = element
+		}
+	}
+
+	argElements := map[string]*ParseElement{}
+	for _, element := range context.Elements {
+		if arg, ok := element.Clause.(*ArgClause); ok {
+			argElements[arg.name] = element
+		}
+	}
+
+	// Check required flags and set defaults.
+	for _, flag := range context.flags.long {
+		if flagElements[flag.name] == nil {
+			// Check required flags were provided.
+			if flag.needsValue() {
+				return fmt.Errorf("required flag --%s not provided", flag.name)
+			}
+			// Set defaults, if any.
+			if flag.defaultValue != "" {
+				if err := flag.value.Set(flag.defaultValue); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	for _, arg := range context.arguments.args {
+		if argElements[arg.name] == nil {
+			if arg.required {
+				return fmt.Errorf("required argument '%s' not provided", arg.name)
+			}
+			// Set defaults, if any.
+			if arg.defaultValue != "" {
+				if err := arg.value.Set(arg.defaultValue); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
+}
+
+func (a *Application) setValues(context *ParseContext) (selected []string, err error) {
+	// Set all arg and flag values.
+	var lastCmd *CmdClause
+	for _, element := range context.Elements {
+		switch clause := element.Clause.(type) {
+		case *FlagClause:
+			if err = clause.value.Set(*element.Value); err != nil {
+				return
+			}
+
+		case *ArgClause:
+			if err = clause.value.Set(*element.Value); err != nil {
+				return
+			}
+
+		case *CmdClause:
+			if clause.validator != nil {
+				if err = clause.validator(clause); err != nil {
+					return
+				}
+			}
+			selected = append(selected, clause.name)
+			lastCmd = clause
+		}
+	}
+
+	if lastCmd != nil && len(lastCmd.commands) > 0 {
+		return nil, fmt.Errorf("must select a subcommand of '%s'", lastCmd.FullCommand())
+	}
+
+	return
+}
+
+func (a *Application) applyValidators(context *ParseContext) (err error) {
+	// Call command validation functions.
+	for _, element := range context.Elements {
+		if cmd, ok := element.Clause.(*CmdClause); ok && cmd.validator != nil {
+			if err = cmd.validator(cmd); err != nil {
+				return err
+			}
+		}
+	}
+
 	if a.validator != nil {
 		err = a.validator(a)
 	}
-	return strings.Join(selected, " "), err
+	return err
 }
 
-// Errorf prints an error message to w.
+func (a *Application) applyActions(context *ParseContext) error {
+	if a.action != nil {
+		if err := a.action(context); err != nil {
+			return err
+		}
+	}
+	// Dispatch to actions.
+	for _, element := range context.Elements {
+		switch clause := element.Clause.(type) {
+		case *ArgClause:
+			if clause.dispatch != nil {
+				if err := clause.dispatch(context); err != nil {
+					return err
+				}
+			}
+		case *CmdClause:
+			if clause.dispatch != nil {
+				if err := clause.dispatch(context); err != nil {
+					return err
+				}
+			}
+		case *FlagClause:
+			if clause.dispatch != nil {
+				if err := clause.dispatch(context); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// Errorf prints an error message to w in the format "<appname>: error: <message>".
 func (a *Application) Errorf(w io.Writer, format string, args ...interface{}) {
 	fmt.Fprintf(w, a.Name+": error: "+format+"\n", args...)
 }
 
+// Fatalf writes a formatted error to w then terminates with exit status 1.
 func (a *Application) Fatalf(w io.Writer, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
-	os.Exit(1)
+	a.terminate(1)
 }
 
-// UsageErrorf prints an error message followed by usage information, then
+// FatalUsage prints an error message followed by usage information, then
 // exits with a non-zero status.
-func (a *Application) UsageErrorf(w io.Writer, format string, args ...interface{}) {
+func (a *Application) FatalUsage(w io.Writer, format string, args ...interface{}) {
 	a.Errorf(w, format, args...)
-	a.Usage(w)
-	os.Exit(1)
+	a.Usage(w, []string{})
+	a.terminate(1)
+}
+
+// FatalUsageContext writes a printf formatted error message to w, then usage
+// information for the given ParseContext, before exiting.
+func (a *Application) FatalUsageContext(w io.Writer, context *ParseContext, format string, args ...interface{}) {
+	a.Errorf(w, format, args...)
+	if err := a.UsageForContext(w, context); err != nil {
+		panic(err)
+	}
+	a.terminate(1)
 }
 
 // FatalIfError prints an error and exits if err is not nil. The error is printed
-// with the given prefix.
-func (a *Application) FatalIfError(w io.Writer, err error, prefix string) {
+// with the given formatted string, if any.
+func (a *Application) FatalIfError(w io.Writer, err error, format string, args ...interface{}) {
 	if err != nil {
-		if prefix != "" {
-			prefix += ": "
+		prefix := ""
+		if format != "" {
+			prefix = fmt.Sprintf(format, args...) + ": "
 		}
 		a.Errorf(w, prefix+"%s", err)
-		os.Exit(1)
+		a.terminate(1)
 	}
 }

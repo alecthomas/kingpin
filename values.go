@@ -5,6 +5,7 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -51,11 +52,57 @@ type remainderArg interface {
 	IsCumulative() bool
 }
 
+type accumulator struct {
+	element func(value interface{}) Value
+	typ     reflect.Type
+	slice   reflect.Value
+}
+
+// Use reflection to accumulate values into a slice.
+//
+// target := []string{}
+// newAccumulator(&target, func (value interface{}) Value {
+//   return newStringValue(value.(*string))
+// })
+func newAccumulator(slice interface{}, element func(value interface{}) Value) *accumulator {
+	typ := reflect.TypeOf(slice)
+	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Slice {
+		panic("expected a pointer to a slice")
+	}
+	return &accumulator{
+		element: element,
+		typ:     typ.Elem().Elem(),
+		slice:   reflect.ValueOf(slice),
+	}
+}
+
+func (a *accumulator) String() string {
+	out := []string{}
+	s := a.slice.Elem()
+	for i := 0; i < s.Len(); i++ {
+		out = append(out, a.element(s.Index(i).Addr().Interface()).String())
+	}
+	return strings.Join(out, ",")
+}
+
+func (a *accumulator) Set(value string) error {
+	e := reflect.New(a.typ)
+	if err := a.element(e.Interface()).Set(value); err != nil {
+		return err
+	}
+	slice := reflect.Append(a.slice.Elem(), e.Elem())
+	a.slice.Elem().Set(slice)
+	return nil
+}
+
+func (a *accumulator) IsCumulative() bool {
+	return true
+}
+
 // -- bool Value
 type boolValue bool
 
-func newBoolValue(val bool, p *bool) *boolValue {
-	*p = val
+func newBoolValue(p *bool) *boolValue {
 	return (*boolValue)(p)
 }
 
@@ -77,8 +124,7 @@ func (b *boolValue) IsBoolFlag() bool { return true }
 // -- int Value
 type intValue int
 
-func newIntValue(val int, p *int) *intValue {
-	*p = val
+func newIntValue(p *int) *intValue {
 	return (*intValue)(p)
 }
 
@@ -95,8 +141,7 @@ func (i *intValue) String() string { return fmt.Sprintf("%v", *i) }
 // -- int64 Value
 type int64Value int64
 
-func newInt64Value(val int64, p *int64) *int64Value {
-	*p = val
+func newInt64Value(p *int64) *int64Value {
 	return (*int64Value)(p)
 }
 
@@ -113,11 +158,6 @@ func (i *int64Value) String() string { return fmt.Sprintf("%v", *i) }
 // -- uint Value
 type uintValue uint
 
-func newUintValue(val uint, p *uint) *uintValue {
-	*p = val
-	return (*uintValue)(p)
-}
-
 func (i *uintValue) Set(s string) error {
 	v, err := strconv.ParseUint(s, 0, 64)
 	*i = uintValue(v)
@@ -131,8 +171,7 @@ func (i *uintValue) String() string { return fmt.Sprintf("%v", *i) }
 // -- uint64 Value
 type uint64Value uint64
 
-func newUint64Value(val uint64, p *uint64) *uint64Value {
-	*p = val
+func newUint64Value(p *uint64) *uint64Value {
 	return (*uint64Value)(p)
 }
 
@@ -149,8 +188,7 @@ func (i *uint64Value) String() string { return fmt.Sprintf("%v", *i) }
 // -- string Value
 type stringValue string
 
-func newStringValue(val string, p *string) *stringValue {
-	*p = val
+func newStringValue(p *string) *stringValue {
 	return (*stringValue)(p)
 }
 
@@ -166,8 +204,7 @@ func (s *stringValue) String() string { return fmt.Sprintf("%s", *s) }
 // -- float64 Value
 type float64Value float64
 
-func newFloat64Value(val float64, p *float64) *float64Value {
-	*p = val
+func newFloat64Value(p *float64) *float64Value {
 	return (*float64Value)(p)
 }
 
@@ -184,8 +221,7 @@ func (f *float64Value) String() string { return fmt.Sprintf("%v", *f) }
 // -- time.Duration Value
 type durationValue time.Duration
 
-func newDurationValue(val time.Duration, p *time.Duration) *durationValue {
-	*p = val
+func newDurationValue(p *time.Duration) *durationValue {
 	return (*durationValue)(p)
 }
 
@@ -198,26 +234,6 @@ func (d *durationValue) Set(s string) error {
 func (d *durationValue) Get() interface{} { return time.Duration(*d) }
 
 func (d *durationValue) String() string { return (*time.Duration)(d).String() }
-
-// -- []string Value
-type stringsValue []string
-
-func newStringsValue(p *[]string) *stringsValue {
-	return (*stringsValue)(p)
-}
-
-func (s *stringsValue) Set(value string) error {
-	*s = append(*s, value)
-	return nil
-}
-
-func (s *stringsValue) String() string {
-	return strings.Join(*s, ",")
-}
-
-func (s *stringsValue) IsCumulative() bool {
-	return true
-}
 
 // -- map[string]string Value
 type stringMapValue map[string]string
@@ -284,30 +300,6 @@ func (i *tcpAddrValue) Set(value string) error {
 
 func (i *tcpAddrValue) String() string {
 	return (*i.addr).String()
-}
-
-// -- []*net.TCPAddr Value
-type tcpAddrsValue []*net.TCPAddr
-
-func newTCPAddrsValue(p *[]*net.TCPAddr) *tcpAddrsValue {
-	return (*tcpAddrsValue)(p)
-}
-
-func (i *tcpAddrsValue) Set(value string) error {
-	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
-		return fmt.Errorf("'%s' is not a valid TCP address: %s", value, err)
-	} else {
-		*i = append(*i, addr)
-		return nil
-	}
-}
-
-func (i *tcpAddrsValue) String() string {
-	s := make([]string, 0, len(*i))
-	for _, a := range *i {
-		s = append(s, a.String())
-	}
-	return strings.Join(s, ",")
 }
 
 // -- existingFile Value
@@ -478,8 +470,7 @@ func (s *enumsValue) IsCumulative() bool {
 // -- units.Base2Bytes Value
 type bytesValue units.Base2Bytes
 
-func newBytesValue(val units.Base2Bytes, p *units.Base2Bytes) *bytesValue {
-	*p = val
+func newBytesValue(p *units.Base2Bytes) *bytesValue {
 	return (*bytesValue)(p)
 }
 

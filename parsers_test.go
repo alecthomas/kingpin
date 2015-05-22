@@ -19,6 +19,14 @@ func TestParseStrings(t *testing.T) {
 	assert.Equal(t, []string{"a", "b"}, *v)
 }
 
+func TestStringsStringer(t *testing.T) {
+	target := []string{}
+	v := newAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
+	v.Set("hello")
+	v.Set("world")
+	assert.Equal(t, "hello,world", v.String())
+}
+
 func TestParseStringMap(t *testing.T) {
 	p := parserMixin{}
 	v := p.StringMap()
@@ -73,10 +81,10 @@ func TestParseTCPAddr(t *testing.T) {
 
 func TestParseTCPAddrList(t *testing.T) {
 	p := parserMixin{}
-	v := p.TCPList()
+	_ = p.TCPList()
 	err := p.value.Set("127.0.0.1:1234")
 	assert.NoError(t, err)
 	err = p.value.Set("127.0.0.1:1235")
 	assert.NoError(t, err)
-	assert.Equal(t, "127.0.0.1:1234,127.0.0.1:1235", (*tcpAddrsValue)(v).String())
+	assert.Equal(t, "127.0.0.1:1234,127.0.0.1:1235", p.value.String())
 }

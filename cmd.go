@@ -2,7 +2,6 @@ package kingpin
 
 import (
 	"fmt"
-	"os"
 	"strings"
 )
 
@@ -50,28 +49,6 @@ func (c *cmdGroup) init() error {
 	}
 	return nil
 }
-
-func (c *cmdGroup) parse(context *ParseContext) (selected []string, _ error) {
-	token := context.Peek()
-	if token.Type == TokenEOL {
-		return nil, nil
-	}
-	if token.Type != TokenArg {
-		return nil, fmt.Errorf("expected command but got '%s'", token)
-	}
-	cmd, ok := c.commands[token.String()]
-	if !ok {
-		return nil, fmt.Errorf("no such command '%s'", token)
-	}
-	context.Next()
-	context.SelectedCommand = cmd.name
-	selected, err := cmd.parse(context)
-	if err == nil {
-		selected = append([]string{token.String()}, selected...)
-	}
-	return selected, err
-}
-
 func (c *cmdGroup) have() bool {
 	return len(c.commands) > 0
 }
@@ -87,7 +64,7 @@ type CmdClause struct {
 	app       *Application
 	name      string
 	help      string
-	dispatch  Dispatch
+	dispatch  Action
 	validator CmdClauseValidator
 }
 
@@ -100,7 +77,6 @@ func newCommand(app *Application, name, help string) *CmdClause {
 		name:      name,
 		help:      help,
 	}
-	c.Flag("help", "Show help on this command.").Hidden().Dispatch(c.onHelp).Bool()
 	return c
 }
 
@@ -118,12 +94,6 @@ func (c *CmdClause) FullCommand() string {
 	return strings.Join(out, " ")
 }
 
-func (c *CmdClause) onHelp(context *ParseContext) error {
-	c.app.CommandUsage(os.Stderr, c.FullCommand())
-	os.Exit(0)
-	return nil
-}
-
 // Command adds a new sub-command.
 func (c *CmdClause) Command(name, help string) *CmdClause {
 	cmd := c.addCommand(name, help)
@@ -131,7 +101,7 @@ func (c *CmdClause) Command(name, help string) *CmdClause {
 	return cmd
 }
 
-func (c *CmdClause) Dispatch(dispatch Dispatch) *CmdClause {
+func (c *CmdClause) Action(dispatch Action) *CmdClause {
 	c.dispatch = dispatch
 	return c
 }
@@ -150,25 +120,4 @@ func (c *CmdClause) init() error {
 		return err
 	}
 	return nil
-}
-
-func (c *CmdClause) parse(context *ParseContext) (selected []string, _ error) {
-	err := c.flagGroup.parse(context, false)
-	if err != nil {
-		return nil, err
-	}
-	if context.SelectedCommand != "help" {
-		if c.cmdGroup.have() {
-			selected, err = c.cmdGroup.parse(context)
-		} else if c.argGroup.have() {
-			err = c.argGroup.parse(context)
-		}
-	}
-	if err == nil && c.dispatch != nil {
-		err = c.dispatch(context)
-	}
-	if c.validator != nil {
-		err = c.validator(c)
-	}
-	return selected, err
 }

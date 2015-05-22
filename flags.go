@@ -19,6 +19,16 @@ func newFlagGroup() *flagGroup {
 	}
 }
 
+func (f *flagGroup) merge(o *flagGroup) {
+	for _, flag := range o.flagOrder {
+		if flag.shorthand != 0 {
+			f.short[string(flag.shorthand)] = flag
+		}
+		f.long[flag.name] = flag
+		f.flagOrder = append(f.flagOrder, flag)
+	}
+}
+
 // Flag defines a new flag with the given long name and help.
 func (f *flagGroup) Flag(name, help string) *FlagClause {
 	flag := newFlag(name, help)
@@ -39,18 +49,7 @@ func (f *flagGroup) init() error {
 	return nil
 }
 
-func (f *flagGroup) parse(context *ParseContext, ignoreRequired bool) error {
-	// Track how many required flags we've seen.
-	required := make(map[string]bool)
-	// Keep track of any flags that we need to initialise with defaults.
-	defaults := make(map[string]bool)
-	for k, flag := range f.long {
-		defaults[k] = true
-		if !ignoreRequired && flag.needsValue() {
-			required[k] = true
-		}
-	}
-
+func (f *flagGroup) parse(context *ParseContext) error {
 	var token *Token
 
 loop:
@@ -84,9 +83,6 @@ loop:
 				}
 			}
 
-			delete(required, flag.name)
-			delete(defaults, flag.name)
-
 			context.Next()
 
 			fb, ok := flag.value.(boolFlag)
@@ -108,41 +104,10 @@ loop:
 				defaultValue = token.Value
 			}
 
-			if err := flag.value.Set(defaultValue); err != nil {
-				return err
-			}
-
-			if flag.dispatch != nil {
-				if err := flag.dispatch(context); err != nil {
-					return err
-				}
-			}
+			context.matchedFlag(flag, defaultValue)
 
 		default:
 			break loop
-		}
-	}
-
-	// Check that required flags were provided.
-	if len(required) == 1 {
-		for k := range required {
-			return fmt.Errorf("required flag --%s not provided", k)
-		}
-	} else if len(required) > 1 {
-		flags := make([]string, 0, len(required))
-		for k := range required {
-			flags = append(flags, "--"+k)
-		}
-		return fmt.Errorf("required flags %s not provided", strings.Join(flags, ", "))
-	}
-
-	// Apply defaults to all unprocessed flags.
-	for k := range defaults {
-		flag := f.long[k]
-		if flag.defaultValue != "" {
-			if err := flag.value.Set(flag.defaultValue); err != nil {
-				return fmt.Errorf("default value for --%s is invalid: %s", flag.name, err)
-			}
 		}
 	}
 	return nil
@@ -167,7 +132,7 @@ type FlagClause struct {
 	envar        string
 	defaultValue string
 	placeholder  string
-	dispatch     Dispatch
+	dispatch     Action
 	hidden       bool
 }
 
@@ -212,7 +177,7 @@ func (f *FlagClause) init() error {
 }
 
 // Dispatch to the given function when the flag is parsed.
-func (f *FlagClause) Dispatch(dispatch Dispatch) *FlagClause {
+func (f *FlagClause) Action(dispatch Action) *FlagClause {
 	f.dispatch = dispatch
 	return f
 }
@@ -259,6 +224,6 @@ func (f *FlagClause) Short(name byte) *FlagClause {
 // Bool makes this flag a boolean flag.
 func (f *FlagClause) Bool() (target *bool) {
 	target = new(bool)
-	f.SetValue(newBoolValue(false, target))
+	f.SetValue(newBoolValue(target))
 	return
 }

@@ -1,6 +1,8 @@
 package kingpin
 
 import (
+	"io/ioutil"
+
 	"github.com/stretchr/testify/assert"
 
 	"testing"
@@ -54,24 +56,27 @@ func TestArgsRequiredAfterNonRequiredErrors(t *testing.T) {
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").String()
 	cmd.Arg("b", "b").Required().String()
-	_, err := c.Parse([]string{})
+	_, err := c.Parse([]string{"cmd"})
 	assert.Error(t, err)
 }
 
 func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
-	c := New("test", "test")
+	c := New("test", "test").Terminate(nil).Writer(ioutil.Discard)
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").Required().String()
 	cmd.Arg("b", "b").Required().String()
 	cmd.Arg("c", "c").String()
 	cmd.Arg("d", "d").String()
-	assert.NotPanics(t, func() { c.Parse([]string{}) })
+	_, err := c.Parse([]string{"cmd", "a", "b"})
+	assert.NoError(t, err)
+	_, err = c.Parse([]string{})
+	assert.Error(t, err)
 }
 
 func TestDispatchCallbackIsCalled(t *testing.T) {
 	dispatched := false
 	c := New("test", "")
-	c.Command("cmd", "").Dispatch(func(*ParseContext) error {
+	c.Command("cmd", "").Action(func(*ParseContext) error {
 		dispatched = true
 		return nil
 	})
@@ -100,12 +105,7 @@ func TestTopLevelArgCantBeUsedWithCommands(t *testing.T) {
 func TestTooManyArgs(t *testing.T) {
 	a := New("test", "test")
 	a.Arg("a", "").String()
-	assert.NoError(t, a.init())
-	context := Tokenize([]string{"a", "b"})
-	_, err := a.parse(context)
-	assert.NoError(t, err)
-	assert.Equal(t, Tokens{&Token{TokenArg, "b"}}, context.Tokens)
-	_, err = a.Parse([]string{"a", "b"})
+	_, err := a.Parse([]string{"a", "b"})
 	assert.Error(t, err)
 }
 
@@ -113,11 +113,7 @@ func TestTooManyArgsAfterCommand(t *testing.T) {
 	a := New("test", "test")
 	a.Command("a", "")
 	assert.NoError(t, a.init())
-	context := Tokenize([]string{"a", "b"})
-	_, err := a.parse(context)
-	assert.NoError(t, err)
-	assert.Equal(t, Tokens{&Token{TokenArg, "b"}}, context.Tokens)
-	_, err = a.Parse([]string{"a", "b"})
+	_, err := a.Parse([]string{"a", "b"})
 	assert.Error(t, err)
 }
 
@@ -125,5 +121,42 @@ func TestArgsLooksLikeFlagsWithConsumeRemainder(t *testing.T) {
 	a := New("test", "")
 	a.Arg("opts", "").Required().Strings()
 	_, err := a.Parse([]string{"hello", "-world"})
+	assert.Error(t, err)
+}
+
+func TestCommandParseDoesNotResetFlagsToDefault(t *testing.T) {
+	app := New("test", "")
+	flag := app.Flag("flag", "").Default("default").String()
+	app.Command("cmd", "")
+
+	_, err := app.Parse([]string{"--flag=123", "cmd"})
+	assert.NoError(t, err)
+	assert.Equal(t, "123", *flag)
+}
+
+func TestCommandParseDoesNotFailRequired(t *testing.T) {
+	app := New("test", "")
+	flag := app.Flag("flag", "").Required().String()
+	app.Command("cmd", "")
+
+	_, err := app.Parse([]string{"cmd", "--flag=123"})
+	assert.NoError(t, err)
+	assert.Equal(t, "123", *flag)
+}
+
+func TestSelectedCommand(t *testing.T) {
+	app := New("test", "help")
+	c0 := app.Command("c0", "")
+	c0.Command("c1", "")
+	s, err := app.Parse([]string{"c0", "c1"})
+	assert.NoError(t, err)
+	assert.Equal(t, "c0 c1", s)
+}
+
+func TestSubCommandRequired(t *testing.T) {
+	app := New("test", "help")
+	c0 := app.Command("c0", "")
+	c0.Command("c1", "")
+	_, err := app.Parse([]string{"c0"})
 	assert.Error(t, err)
 }
