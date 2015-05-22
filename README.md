@@ -2,39 +2,79 @@
 
 <!-- MarkdownTOC -->
 
+- [Overview](#overview)
 - [Features](#features)
-- [Usability changes between v1 and v2](#usability-changes-between-v1-and-v2)
+- [User-visible changes between v1 and v2](#user-visible-changes-between-v1-and-v2)
+  - [Flags can be used at any point after their definition.](#flags-can-be-used-at-any-point-after-their-definition)
+  - [Short flags can be combined with their parameters](#short-flags-can-be-combined-with-their-parameters)
 - [Versions](#versions)
   - [V2 is the current stable version](#v2-is-the-current-stable-version)
+  - [V1 is the OLD stable version](#v1-is-the-old-stable-version)
 - [Change History](#change-history)
 - [Examples](#examples)
   - [Simple Example](#simple-example)
   - [Complex Example](#complex-example)
 - [Reference Documentation](#reference-documentation)
-  - [Help](#help)
   - [Displaying errors and usage information](#displaying-errors-and-usage-information)
   - [Sub-commands](#sub-commands)
   - [Custom Parsers](#custom-parsers)
   - [Default Values](#default-values)
   - [Place-holders in Help](#place-holders-in-help)
   - [Consuming all remaining arguments](#consuming-all-remaining-arguments)
+  - [Custom help](#custom-help)
 
 <!-- /MarkdownTOC -->
 
+## Overview
+
+Kingpin is a [fluent-style](http://en.wikipedia.org/wiki/Fluent_interface),
+type-safe command-line parser. It supports flags, nested commands, and
+positional arguments.
+
+Install it with:
+
+    $ go get gopkg.in/alecthomas/kingpin.v2
+
+It looks like this:
+
+```go
+var (
+  verbose = kingpin.Flag("verbose", "Verbose mode.").Short('v').Bool()
+  name    = kingpin.Arg("name", "Name of user.").Required().String()
+)
+
+func main() {
+  kingpin.Parse()
+  fmt.Printf("%v, %s\n", *verbose, *name)
+}
+```
+
+More [examples](https://github.com/alecthomas/kingpin/tree/master/examples) are available.
+
+Second to parsing, providing the user with useful help is probably the most
+important thing a command-line parser does. Kingpin tries to provide detailed
+contextual help if `--help` is encountered at any point in the command line
+(excluding after `--`).
+
 ## Features
 
-- POSIX-style short flag combining.
-- Parsed, type-safe flags.
-- Parsed, type-safe positional arguments.
-- Support for required flags and required positional arguments
-- Callbacks per command, flag and argument.
 - Help output that isn't as ugly as sin.
+- Fully [customisable help](#custom-help), via Go templates.
+- Parsed, type-safe flags (`kingpin.Flag("f", "help").Int()`)
+- Parsed, type-safe positional arguments (`kingpin.Arg("a", "help").Int()`).
+- Support for required flags and required positional arguments (`kingpin.Flag("f", "").Required().Int()`).
+- Callbacks per command, flag and argument (`kingpin.Command("c", "").Action(myAction)`).
+- POSIX-style short flag combining (`-a -b` -> `-ab`).
+- Short-flag+parameter combining (`-a parm` -> `-aparm`).
+- Read command-line from files (`@<file>`).
 
-## Usability changes between v1 and v2
+## User-visible changes between v1 and v2
 
-#### Flags can be used at any point after their definition.
+### Flags can be used at any point after their definition.
 
-Flags can be specified at any point after their definition, not just *immediately after their associated command*. From the chat example below, the following used to be required:
+Flags can be specified at any point after their definition, not just
+*immediately after their associated command*. From the chat example below, the
+following used to be required:
 
 ```
 $ chat --server=chat.server.com:8080 post --image=~/Downloads/owls.jpg pics
@@ -45,6 +85,11 @@ But the following will now work:
 ```
 $ chat post --server=chat.server.com:8080 --image=~/Downloads/owls.jpg pics
 ```
+
+### Short flags can be combined with their parameters
+
+Previously, if a short flag was used, any argument to that flag would have to
+be separated by a space. That is no longer the case.
 
 ## Versions
 
@@ -60,17 +105,32 @@ Installation:
 $ go get gopkg.in/alecthomas/kingpin.v2
 ```
 
-#### Changes between V1 and V2
+### [V1](https://gopkg.in/alecthomas/kingpin.v1) is the OLD stable version
 
-- *2015-05-21* -- Stable v2.0.0 release.
-    - Initial stable release of v2.0.0.
+Installation:
 
-- *2015-02-27*
-    - Support for parsing flags at any point after their definition in the command tree.
-    - Support combined short-flag+argument: -fARG.
-    - Use `go generate` to generate repeated flags.
-
+```sh
+$ go get gopkg.in/alecthomas/kingpin.v2
+```
 ## Change History
+
+- *2015-05-22* -- Stable v2.0.0 release.
+    - Initial stable release of v2.0.0.
+    - Fully supports interspersed flags, commands and arguments.
+    - Flags can be present at any point after their logical definition.
+    - Application.Parse() terminates if commands are present and a command is not parsed.
+    - Dispatch() -> Action().
+    - Actions are dispatched after all values are populated.
+    - Override termination function (defaults to os.Exit).
+    - Override output stream (defaults to os.Stderr).
+    - Templatised usage help, with default and compact templates.
+    - Make error/usage functions more consistent.
+    - Support argument expansion from files by default (with @<file>).
+    - Fully public data model is available via .Model().
+    - Parser has been completely refactored.
+    - Parsing and execution has been split into distinct stages.
+    - Use `go generate` to generate repeated flags.
+    - Support combined short-flag+argument: -fARG.
 
 - *2015-01-23* -- Stable v1.3.4 release.
     - Support "--" for separating flags from positional arguments.
@@ -239,14 +299,6 @@ func main() {
 
 ## Reference Documentation
 
-### Help
-
-Second to parsing, providing the user with useful help is probably the most
-important thing a command-line parser does.
-
-Kingpin tries to provide contextual help if `--help` is encountered at any
-point in the command line (excluding after `--`).
-
 ### Displaying errors and usage information
 
 Kingpin exports a set of functions to provide consistent errors and usage
@@ -262,9 +314,9 @@ Function | Purpose
 ---------|--------------
 `Errorf(w, format, args)` | Display a printf formatted error to the user.
 `Fatalf(w, format, args)` | As with Errorf, but also call the termination handler.
-`FatalUsagef(w, format, args)` | As with Fatalf, but also print contextual usage information.
-`FatalUsageContextf(w, context, format, args)` | As with Fatalf, but also print contextual usage information from a `ParseContext`.
-`FatalIfErrorf(w, err, format, args)` | Conditionally print an error prefixed with format+args, then call the termination handler
+`FatalUsage(w, format, args)` | As with Fatalf, but also print contextual usage information.
+`FatalUsageContext(w, context, format, args)` | As with Fatalf, but also print contextual usage information from a `ParseContext`.
+`FatalIfError(w, err, format, args)` | Conditionally print an error prefixed with format+args, then call the termination handler
 
 There are equivalent global functions in the kingpin namespace for the default
 `kingpin.CommandLine` instance.
@@ -408,3 +460,56 @@ And use it like so:
 ```go
 ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
 ```
+
+### Custom help
+
+Kingpin v2 supports templatised help using the text/template library (actually, [a fork](https://github.com/alecthomas/template)).
+
+There are two included templates: [kingpin.UsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L88) is the default, and
+[kingpin.CompactUsageTemplate](https://github.com/alecthomas/kingpin/blob/master/usage.go#L133) provides a more compact representation for
+commands, for more complex command line structures.
+
+This is the default template as of 22 May 2015:
+
+```
+{{define "FormatCommand"}}\
+{{if .FlagSummary}} {{.FlagSummary}}{{end}}\
+{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
+{{end}}\
+{{define "FormatCommands"}}\
+{{range .FlattenedCommands}}\
+  {{.FullCommand}}{{template "FormatCommand" .}}
+{{.Help|Wrap 4}}
+{{end}}\
+{{end}}\
+{{define "FormatUsage"}}\
+{{template "FormatCommand" .}}{{if .Commands}} <command> [<args> ...]{{end}}
+{{if .Help}}
+{{.Help|Wrap 0}}\
+{{end}}\
+{{end}}\
+{{if .Context.SelectedCommand}}\
+usage: {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
+{{else}}\
+usage: {{.App.Name}}{{template "FormatUsage" .App}}
+{{end}}\
+{{if .Context.Flags}}\
+Flags:
+{{.Context.Flags|FlagsToTwoColumns|FormatTwoColumns}}
+{{end}}\
+{{if .Context.Args}}\
+Args:
+{{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
+{{end}}\
+{{if .Context.SelectedCommand}}\
+Subcommands:
+{{if .Context.SelectedCommand.Commands}}\
+{{template "FormatCommands" .Context.SelectedCommand}}
+{{end}}\
+{{else if .App.Commands}}\
+Commands:
+{{template "FormatCommands" .App}}
+{{end}}\
+```
+
+See the above templates for examples of usage, and the the function [UsageForContextWithTemplate()](https://github.com/alecthomas/kingpin/blob/master/usage.go#L198) method for details on the context.

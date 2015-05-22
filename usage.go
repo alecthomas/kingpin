@@ -45,7 +45,7 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 // appropriate help context, such as which command to show help for.
 func (a *Application) Usage(w io.Writer, args []string) {
 	context, err := a.ParseContext(args)
-	a.FatalIfErrorf(w, err, "")
+	a.FatalIfError(w, err, "")
 	if err := a.UsageForContextWithTemplate(context, w, 2, a.usageTemplate); err != nil {
 		panic(err)
 	}

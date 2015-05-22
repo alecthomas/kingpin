@@ -46,22 +46,22 @@ func Fatalf(format string, args ...interface{}) {
 	CommandLine.Fatalf(os.Stderr, format, args...)
 }
 
-// FatalIfErrorf prints an error and exits if err is not nil. The error is printed
+// FatalIfError prints an error and exits if err is not nil. The error is printed
 // with the given prefix.
-func FatalIfErrorf(err error, prefix string) {
-	CommandLine.FatalIfErrorf(os.Stderr, err, prefix)
+func FatalIfError(err error, prefix string) {
+	CommandLine.FatalIfError(os.Stderr, err, prefix)
 }
 
-// FatalUsagef prints an error message followed by usage information, then
+// FatalUsage prints an error message followed by usage information, then
 // exits with a non-zero status.
-func FatalUsagef(format string, args ...interface{}) {
-	CommandLine.FatalUsagef(os.Stderr, format, args...)
+func FatalUsage(format string, args ...interface{}) {
+	CommandLine.FatalUsage(os.Stderr, format, args...)
 }
 
-// FatalUsageContextf writes a printf formatted error message to stderr, then
+// FatalUsageContext writes a printf formatted error message to stderr, then
 // usage information for the given ParseContext, before exiting.
-func FatalUsageContextf(context *ParseContext, format string, args ...interface{}) {
-	CommandLine.FatalUsageContextf(os.Stderr, context, format, args...)
+func FatalUsageContext(context *ParseContext, format string, args ...interface{}) {
+	CommandLine.FatalUsageContext(os.Stderr, context, format, args...)
 }
 
 // Usage prints usage to stderr.
