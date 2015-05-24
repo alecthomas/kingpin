@@ -2,9 +2,11 @@ package kingpin
 
 var ManPageTemplate = `{{define "FormatFlags"}}\
 {{range .Flags}}\
+{{if not .Hidden}}\
 .TP
 \fB{{if .Short}}-{{.Short|Char}}, {{end}}--{{.Name}}{{if not .IsBoolFlag}}={{.FormatPlaceHolder}}{{end}}\\fR
 {{.Help}}
+{{end}}\
 {{end}}\
 {{end}}\
 
