@@ -132,7 +132,8 @@ type FlagClause struct {
 	envar        string
 	defaultValue string
 	placeholder  string
-	dispatch     Action
+	action       Action
+	preAction    Action
 	hidden       bool
 }
 
@@ -176,9 +177,14 @@ func (f *FlagClause) init() error {
 	return nil
 }
 
-// Dispatch to the given function when the flag is parsed.
-func (f *FlagClause) Action(dispatch Action) *FlagClause {
-	f.dispatch = dispatch
+// Dispatch to the given function after the flag is parsed and validated.
+func (f *FlagClause) Action(action Action) *FlagClause {
+	f.action = action
+	return f
+}
+
+func (f *FlagClause) PreAction(action Action) *FlagClause {
+	f.preAction = action
 	return f
 }
 

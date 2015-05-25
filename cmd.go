@@ -64,7 +64,8 @@ type CmdClause struct {
 	app       *Application
 	name      string
 	help      string
-	dispatch  Action
+	action    Action
+	preAction Action
 	validator CmdClauseValidator
 }
 
@@ -101,8 +102,13 @@ func (c *CmdClause) Command(name, help string) *CmdClause {
 	return cmd
 }
 
-func (c *CmdClause) Action(dispatch Action) *CmdClause {
-	c.dispatch = dispatch
+func (c *CmdClause) Action(action Action) *CmdClause {
+	c.action = action
+	return c
+}
+
+func (c *CmdClause) PreAction(action Action) *CmdClause {
+	c.preAction = action
 	return c
 }
 

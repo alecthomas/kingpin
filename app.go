@@ -32,6 +32,7 @@ type Application struct {
 	writer        io.Writer // Destination for usage and errors.
 	usageTemplate string
 	action        Action
+	preAction     Action
 	validator     ApplicationValidator
 	terminate     func(status int) // See Terminate()
 }
@@ -48,8 +49,8 @@ func New(name, help string) *Application {
 		terminate:     os.Exit,
 	}
 	a.cmdGroup = newCmdGroup(a)
-	a.Flag("help", "Show help.").Bool()
-	a.Flag("man-page", "Generate a man page.").Hidden().Action(a.generateManPage).Bool()
+	a.Flag("help", "Show help (also see --help-full and --help-man).").Bool()
+	a.Flag("help-man", "Generate a man page.").Hidden().Action(a.generateManPage).Bool()
 	return a
 }
 
@@ -203,6 +204,12 @@ func (a *Application) Action(action Action) *Application {
 	return a
 }
 
+// Action called after parsing completes but before validation and execution.
+func (a *Application) PreAction(action Action) *Application {
+	a.preAction = action
+	return a
+}
+
 // Command adds a new top-level command.
 func (a *Application) Command(name, help string) *CmdClause {
 	return a.addCommand(name, help)
@@ -289,6 +296,10 @@ func (a *Application) execute(context *ParseContext) (string, error) {
 
 	selected, err = a.setValues(context)
 	if err != nil {
+		return "", err
+	}
+
+	if err = a.applyPreActions(context); err != nil {
 		return "", err
 	}
 
@@ -404,6 +415,38 @@ func (a *Application) applyValidators(context *ParseContext) (err error) {
 	return err
 }
 
+func (a *Application) applyPreActions(context *ParseContext) error {
+	if a.action != nil {
+		if err := a.action(context); err != nil {
+			return err
+		}
+	}
+	// Dispatch to actions.
+	for _, element := range context.Elements {
+		switch clause := element.Clause.(type) {
+		case *ArgClause:
+			if clause.preAction != nil {
+				if err := clause.preAction(context); err != nil {
+					return err
+				}
+			}
+		case *CmdClause:
+			if clause.preAction != nil {
+				if err := clause.preAction(context); err != nil {
+					return err
+				}
+			}
+		case *FlagClause:
+			if clause.preAction != nil {
+				if err := clause.preAction(context); err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
+}
+
 func (a *Application) applyActions(context *ParseContext) error {
 	if a.action != nil {
 		if err := a.action(context); err != nil {
@@ -414,20 +457,20 @@ func (a *Application) applyActions(context *ParseContext) error {
 	for _, element := range context.Elements {
 		switch clause := element.Clause.(type) {
 		case *ArgClause:
-			if clause.dispatch != nil {
-				if err := clause.dispatch(context); err != nil {
+			if clause.action != nil {
+				if err := clause.action(context); err != nil {
 					return err
 				}
 			}
 		case *CmdClause:
-			if clause.dispatch != nil {
-				if err := clause.dispatch(context); err != nil {
+			if clause.action != nil {
+				if err := clause.action(context); err != nil {
 					return err
 				}
 			}
 		case *FlagClause:
-			if clause.dispatch != nil {
-				if err := clause.dispatch(context); err != nil {
+			if clause.action != nil {
+				if err := clause.action(context); err != nil {
 					return err
 				}
 			}
