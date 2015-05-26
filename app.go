@@ -49,9 +49,19 @@ func New(name, help string) *Application {
 		terminate:     os.Exit,
 	}
 	a.cmdGroup = newCmdGroup(a)
-	a.Flag("help", "Show help (also see --help-full and --help-man).").Bool()
-	a.Flag("help-man", "Generate a man page.").Hidden().Action(a.generateManPage).Bool()
+	a.Flag("help", "Show help (also see --help-long and --help-man).").Bool()
+	a.Flag("help-long", "Generate long help.").Hidden().PreAction(a.generateLongHelp).Bool()
+	a.Flag("help-man", "Generate a man page.").Hidden().PreAction(a.generateManPage).Bool()
 	return a
+}
+
+func (a *Application) generateLongHelp(c *ParseContext) error {
+	a.Writer(os.Stdout)
+	if err := a.UsageForContextWithTemplate(c, 2, LongHelpTemplate); err != nil {
+		return err
+	}
+	a.terminate(0)
+	return nil
 }
 
 func (a *Application) generateManPage(c *ParseContext) error {
@@ -303,6 +313,10 @@ func (a *Application) execute(context *ParseContext) (string, error) {
 		return "", err
 	}
 
+	if err = a.validateRequired(context); err != nil {
+		return "", err
+	}
+
 	if err = a.applyValidators(context); err != nil {
 		return "", err
 	}
@@ -336,10 +350,6 @@ func (a *Application) setDefaults(context *ParseContext) error {
 	// Check required flags and set defaults.
 	for _, flag := range context.flags.long {
 		if flagElements[flag.name] == nil {
-			// Check required flags were provided.
-			if flag.needsValue() {
-				return fmt.Errorf("required flag --%s not provided", flag.name)
-			}
 			// Set defaults, if any.
 			if flag.defaultValue != "" {
 				if err := flag.value.Set(flag.defaultValue); err != nil {
@@ -351,9 +361,6 @@ func (a *Application) setDefaults(context *ParseContext) error {
 
 	for _, arg := range context.arguments.args {
 		if argElements[arg.name] == nil {
-			if arg.required {
-				return fmt.Errorf("required argument '%s' not provided", arg.name)
-			}
 			// Set defaults, if any.
 			if arg.defaultValue != "" {
 				if err := arg.value.Set(arg.defaultValue); err != nil {
@@ -363,6 +370,41 @@ func (a *Application) setDefaults(context *ParseContext) error {
 		}
 	}
 
+	return nil
+}
+
+func (a *Application) validateRequired(context *ParseContext) error {
+	flagElements := map[string]*ParseElement{}
+	for _, element := range context.Elements {
+		if flag, ok := element.Clause.(*FlagClause); ok {
+			flagElements[flag.name] = element
+		}
+	}
+
+	argElements := map[string]*ParseElement{}
+	for _, element := range context.Elements {
+		if arg, ok := element.Clause.(*ArgClause); ok {
+			argElements[arg.name] = element
+		}
+	}
+
+	// Check required flags and set defaults.
+	for _, flag := range context.flags.long {
+		if flagElements[flag.name] == nil {
+			// Check required flags were provided.
+			if flag.needsValue() {
+				return fmt.Errorf("required flag --%s not provided", flag.name)
+			}
+		}
+	}
+
+	for _, arg := range context.arguments.args {
+		if argElements[arg.name] == nil {
+			if arg.required {
+				return fmt.Errorf("required argument '%s' not provided", arg.name)
+			}
+		}
+	}
 	return nil
 }
 

@@ -85,97 +85,6 @@ func formatFlag(flag *FlagModel) string {
 	return flagString
 }
 
-// Default usage template.
-var DefaultUsageTemplate = `{{define "FormatCommand"}}\
-{{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
-{{end}}\
-
-{{define "FormatCommands"}}\
-{{range .FlattenedCommands}}\
-  {{.FullCommand}}{{template "FormatCommand" .}}
-{{.Help|Wrap 4}}
-{{end}}\
-{{end}}\
-
-{{define "FormatUsage"}}\
-{{template "FormatCommand" .}}{{if .Commands}} <command> [<args> ...]{{end}}
-{{if .Help}}
-{{.Help|Wrap 0}}\
-{{end}}\
-
-{{end}}\
-
-{{if .Context.SelectedCommand}}\
-usage: {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
-{{else}}\
-usage: {{.App.Name}}{{template "FormatUsage" .App}}
-{{end}}\
-{{if .Context.Flags}}\
-Flags:
-{{.Context.Flags|FlagsToTwoColumns|FormatTwoColumns}}
-{{end}}\
-{{if .Context.Args}}\
-Args:
-{{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
-{{end}}\
-{{if .Context.SelectedCommand}}\
-Subcommands:
-{{if .Context.SelectedCommand.Commands}}\
-{{template "FormatCommands" .Context.SelectedCommand}}
-{{end}}\
-{{else if .App.Commands}}\
-Commands:
-{{template "FormatCommands" .App}}
-{{end}}\
-`
-
-// Usage template with compactly formatted commands.
-var CompactUsageTemplate = `{{define "FormatCommand"}}\
-{{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
-{{end}}\
-
-{{define "FormatCommandList"}}\
-{{range .}}\
-{{.Depth|Indent}}{{.Name}}{{template "FormatCommand" .}}
-{{template "FormatCommandList" .Commands}}\
-{{end}}\
-{{end}}\
-
-{{define "FormatUsage"}}\
-{{template "FormatCommand" .}}{{if .Commands}} <command> [<args> ...]{{end}}
-{{if .Help}}
-{{.Help|Wrap 0}}\
-{{end}}\
-
-{{end}}\
-
-{{if .Context.SelectedCommand}}\
-usage: {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
-{{else}}\
-usage: {{.App.Name}}{{template "FormatUsage" .App}}
-{{end}}\
-{{if .Context.Flags}}\
-Flags:
-{{.Context.Flags|FlagsToTwoColumns|FormatTwoColumns}}
-{{end}}\
-{{if .Context.Args}}\
-Args:
-{{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
-{{end}}\
-{{if .Context.SelectedCommand}}\
-{{if .Context.SelectedCommand.Commands}}\
-Commands:
-  {{.Context.SelectedCommand}}
-{{template "FormatCommandList" .Context.SelectedCommand.Commands}}
-{{end}}\
-{{else if .App.Commands}}\
-Commands:
-{{template "FormatCommandList" .App.Commands}}
-{{end}}\
-`
-
 type templateParseContext struct {
 	SelectedCommand *CmdModel
 	*FlagGroupModel
@@ -231,6 +140,11 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 		"FormatTwoColumns": func(rows [][2]string) string {
 			buf := bytes.NewBuffer(nil)
 			formatTwoColumns(buf, indent, indent, width, rows)
+			return buf.String()
+		},
+		"FormatTwoColumnsWithIndent": func(rows [][2]string, indent, padding int) string {
+			buf := bytes.NewBuffer(nil)
+			formatTwoColumns(buf, indent, padding, width, rows)
 			return buf.String()
 		},
 		"FormatAppUsage":     formatAppUsage,
