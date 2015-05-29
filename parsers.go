@@ -121,6 +121,13 @@ func (p *parserMixin) ExistingDir() (target *string) {
 	return
 }
 
+// ExistingFileOrDir sets the parser to one that requires and returns an existing file OR directory.
+func (p *parserMixin) ExistingFileOrDir() (target *string) {
+	target = new(string)
+	p.ExistingFileOrDirVar(target)
+	return
+}
+
 // File returns an os.File against an existing file.
 func (p *parserMixin) File() (target **os.File) {
 	target = new(*os.File)
@@ -210,6 +217,11 @@ func (p *parserMixin) ExistingDirVar(target *string) {
 		}
 		return nil
 	}))
+}
+
+// ExistingDir sets the parser to one that requires and returns an existing directory.
+func (p *parserMixin) ExistingFileOrDirVar(target *string) {
+	p.SetValue(newFileStatValue(target, func(s os.FileInfo) error { return nil }))
 }
 
 // FileVar opens an existing file.
