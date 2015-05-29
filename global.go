@@ -48,8 +48,8 @@ func Fatalf(format string, args ...interface{}) {
 
 // FatalIfError prints an error and exits if err is not nil. The error is printed
 // with the given prefix.
-func FatalIfError(err error, prefix string) {
-	CommandLine.FatalIfError(err, prefix)
+func FatalIfError(err error, format string, args ...interface{}) {
+	CommandLine.FatalIfError(err, format, args...)
 }
 
 // FatalUsage prints an error message followed by usage information, then
