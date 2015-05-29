@@ -72,3 +72,36 @@ func (p *parserMixin) TCPList() (target *[]*net.TCPAddr) {
 func (p *parserMixin) TCPListVar(target *[]*net.TCPAddr) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newTCPAddrValue(v.(**net.TCPAddr)) }))
 }
+
+// ExistingFiles accumulates string values into a slice.
+func (p *parserMixin) ExistingFiles() (target *[]string) {
+	target = new([]string)
+	p.ExistingFilesVar(target)
+	return
+}
+
+func (p *parserMixin) ExistingFilesVar(target *[]string) {
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newExistingFileValue(v.(*string)) }))
+}
+
+// ExistingDirs accumulates string values into a slice.
+func (p *parserMixin) ExistingDirs() (target *[]string) {
+	target = new([]string)
+	p.ExistingDirsVar(target)
+	return
+}
+
+func (p *parserMixin) ExistingDirsVar(target *[]string) {
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newExistingDirValue(v.(*string)) }))
+}
+
+// ExistingFilesOrDirs accumulates string values into a slice.
+func (p *parserMixin) ExistingFilesOrDirs() (target *[]string) {
+	target = new([]string)
+	p.ExistingFilesOrDirsVar(target)
+	return
+}
+
+func (p *parserMixin) ExistingFilesOrDirsVar(target *[]string) {
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newExistingFileOrDirValue(v.(*string)) }))
+}

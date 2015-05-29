@@ -483,3 +483,25 @@ func (d *bytesValue) Set(s string) error {
 func (d *bytesValue) Get() interface{} { return units.Base2Bytes(*d) }
 
 func (d *bytesValue) String() string { return (*units.Base2Bytes)(d).String() }
+
+func newExistingFileValue(target *string) *fileStatValue {
+	return newFileStatValue(target, func(s os.FileInfo) error {
+		if s.IsDir() {
+			return fmt.Errorf("'%s' is a directory", s.Name())
+		}
+		return nil
+	})
+}
+
+func newExistingDirValue(target *string) *fileStatValue {
+	return newFileStatValue(target, func(s os.FileInfo) error {
+		if !s.IsDir() {
+			return fmt.Errorf("'%s' is a file", s.Name())
+		}
+		return nil
+	})
+}
+
+func newExistingFileOrDirValue(target *string) *fileStatValue {
+	return newFileStatValue(target, func(s os.FileInfo) error { return nil })
+}
