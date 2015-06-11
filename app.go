@@ -459,7 +459,7 @@ func (a *Application) applyValidators(context *ParseContext) (err error) {
 
 func (a *Application) applyPreActions(context *ParseContext) error {
 	if a.action != nil {
-		if err := a.action(context); err != nil {
+		if err := a.preAction(context); err != nil {
 			return err
 		}
 	}
