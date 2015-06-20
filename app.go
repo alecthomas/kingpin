@@ -192,7 +192,7 @@ func (a *Application) findCommandFromContext(context *ParseContext) string {
 func (a *Application) Version(version string) *Application {
 	a.version = version
 	a.Flag("version", "Show application version.").Action(func(*ParseContext) error {
-		fmt.Println(version)
+		fmt.Fprintln(a.writer, version)
 		a.terminate(0)
 		return nil
 	}).Bool()

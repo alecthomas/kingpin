@@ -1,6 +1,8 @@
 package kingpin
 
 import (
+	"os"
+
 	"github.com/stretchr/testify/assert"
 
 	"testing"
@@ -82,4 +84,20 @@ func TestCombinedShortFlagArg(t *testing.T) {
 func TestEmptyShortFlagIsAnError(t *testing.T) {
 	_, err := New("test", "").Parse([]string{"-"})
 	assert.Error(t, err)
+}
+
+func TestRequiredWithEnvarMissingErrors(t *testing.T) {
+	app := New("test", "")
+	app.Flag("t", "").OverrideDefaultFromEnvar("TEST_ENVAR").Required().Int()
+	_, err := app.Parse([]string{})
+	assert.Error(t, err)
+}
+
+func TestRequiredWithEnvar(t *testing.T) {
+	os.Setenv("TEST_ENVAR", "123")
+	app := New("test", "")
+	flag := app.Flag("t", "").OverrideDefaultFromEnvar("TEST_ENVAR").Required().Int()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, 123, *flag)
 }
