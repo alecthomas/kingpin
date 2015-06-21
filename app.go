@@ -24,18 +24,18 @@ type Application struct {
 	*flagGroup
 	*argGroup
 	*cmdGroup
-	initialized   bool
-	Name          string
-	Help          string
-	author        string
-	version       string
-	writer        io.Writer // Destination for usage and errors.
-	usageTemplate string
-	action        Action
-	preAction     Action
-	validator     ApplicationValidator
-	terminate     func(status int) // See Terminate()
-	optionsFirst  bool             // Force options to be before positional arguments
+	initialized    bool
+	Name           string
+	Help           string
+	author         string
+	version        string
+	writer         io.Writer // Destination for usage and errors.
+	usageTemplate  string
+	action         Action
+	preAction      Action
+	validator      ApplicationValidator
+	terminate      func(status int) // See Terminate()
+	noInterspersed bool             // can flags be interspersed with args (or must they come first)
 }
 
 // New creates a new Kingpin application instance.
@@ -226,10 +226,11 @@ func (a *Application) Command(name, help string) *CmdClause {
 	return a.addCommand(name, help)
 }
 
-// Options first forces options to come before positional arguments
-// That is after the first positional argument is seen, all the next arguments are not handled as flags
-func (a *Application) OptionsFirst() *Application {
-	a.optionsFirst = true
+// Interspersed control if flags can be interspersed with positional arguments
+//
+// true (the default) means that they can, false means that all the flags must appear before the first positional arguments.
+func (a *Application) Interspersed(interspersed bool) *Application {
+	a.noInterspersed = !interspersed
 	return a
 }
 

@@ -303,7 +303,7 @@ loop:
 				cmds = cmd.cmdGroup
 				context.Next()
 			} else if context.arguments.have() {
-				if app.optionsFirst {
+				if app.noInterspersed {
 					// no more flags
 					context.argsOnly = true
 				}
