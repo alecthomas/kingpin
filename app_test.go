@@ -160,3 +160,29 @@ func TestSubCommandRequired(t *testing.T) {
 	_, err := app.Parse([]string{"c0"})
 	assert.Error(t, err)
 }
+
+func TestOptionsFirstWith(t *testing.T) {
+	app := New("test", "help").OptionsFirst()
+	a1 := app.Arg("a1", "").String()
+	a2 := app.Arg("a2", "").String()
+	f1 := app.Flag("flag", "").String()
+
+	_, err := app.Parse([]string{"a1", "--flag=flag"})
+	assert.NoError(t, err)
+	assert.Equal(t, "a1", *a1)
+	assert.Equal(t, "--flag=flag", *a2)
+	assert.Equal(t, "", *f1)
+}
+
+func TestOptionsFirstWithout(t *testing.T) {
+	app := New("test", "help")
+	a1 := app.Arg("a1", "").String()
+	a2 := app.Arg("a2", "").String()
+	f1 := app.Flag("flag", "").String()
+
+	_, err := app.Parse([]string{"a1", "--flag=flag"})
+	assert.NoError(t, err)
+	assert.Equal(t, "a1", *a1)
+	assert.Equal(t, "", *a2)
+	assert.Equal(t, "flag", *f1)
+}

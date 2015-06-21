@@ -35,6 +35,7 @@ type Application struct {
 	preAction     Action
 	validator     ApplicationValidator
 	terminate     func(status int) // See Terminate()
+	optionsFirst  bool             // Force options to be before positional arguments
 }
 
 // New creates a new Kingpin application instance.
@@ -223,6 +224,13 @@ func (a *Application) PreAction(action Action) *Application {
 // Command adds a new top-level command.
 func (a *Application) Command(name, help string) *CmdClause {
 	return a.addCommand(name, help)
+}
+
+// Options first forces options to come before positional arguments
+// That is after the first positional argument is seen, all the next arguments are not handled as flags
+func (a *Application) OptionsFirst() *Application {
+	a.optionsFirst = true
+	return a
 }
 
 func (a *Application) init() error {
