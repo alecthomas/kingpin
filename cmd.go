@@ -67,6 +67,7 @@ type CmdClause struct {
 	action    Action
 	preAction Action
 	validator CmdClauseValidator
+	hidden    bool
 }
 
 func newCommand(app *Application, name, help string) *CmdClause {
@@ -126,4 +127,9 @@ func (c *CmdClause) init() error {
 		return err
 	}
 	return nil
+}
+
+func (c *CmdClause) Hidden() *CmdClause {
+	c.hidden = true
+	return c
 }

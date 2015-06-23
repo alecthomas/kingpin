@@ -37,3 +37,35 @@ xxxxxxxxxxxxxxxxxxxx
 `
 	assert.Equal(t, expected, buf.String())
 }
+
+func TestHiddenCommand(t *testing.T) {
+	templates := []struct{ name, template string }{
+		{"default", DefaultUsageTemplate},
+		{"Compact", CompactUsageTemplate},
+		{"Long", LongHelpTemplate},
+		{"Man", ManPageTemplate},
+	}
+
+	var buf bytes.Buffer
+	t.Log("1")
+
+	a := New("Test", "Test").Writer(&buf).Terminate(nil)
+	a.Command("visible", "visible")
+	a.Command("hidden", "hidden").Hidden()
+
+	for _, tp := range templates {
+		buf.Reset()
+		a.UsageTemplate(tp.template)
+		a.Parse(nil)
+		// a.Parse([]string{"--help"})
+		usage := buf.String()
+		t.Logf("Usage for %s is:\n%s\n", tp.name, usage)
+
+		if strings.Contains(usage, "hidden") {
+			t.Errorf("Error: Usage contain hidden (%s)", tp.name)
+		}
+		if !strings.Contains(usage, "visible") {
+			t.Errorf("Error; Usage does not contain visible (%s)", tp.name)
+		}
+	}
+}
