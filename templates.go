@@ -8,8 +8,10 @@ var DefaultUsageTemplate = `{{define "FormatCommand"}}\
 
 {{define "FormatCommands"}}\
 {{range .FlattenedCommands}}\
+{{if not .Hidden}}\
   {{.FullCommand}}{{template "FormatCommand" .}}
 {{.Help|Wrap 4}}
+{{end}}\
 {{end}}\
 {{end}}\
 
@@ -53,7 +55,9 @@ var CompactUsageTemplate = `{{define "FormatCommand"}}\
 
 {{define "FormatCommandList"}}\
 {{range .}}\
+{{if not .Hidden}}\
 {{.Depth|Indent}}{{.Name}}{{template "FormatCommand" .}}
+{{end}}\
 {{template "FormatCommandList" .Commands}}\
 {{end}}\
 {{end}}\
@@ -108,11 +112,13 @@ var ManPageTemplate = `{{define "FormatFlags"}}\
 
 {{define "FormatCommands"}}\
 {{range .FlattenedCommands}}\
+{{if not .Hidden}}\
 .SS
 \fB{{.FullCommand}}{{template "FormatCommand" .}}\\fR
 .PP
 {{.Help}}
 {{template "FormatFlags" .}}\
+{{end}}\
 {{end}}\
 {{end}}\
 
@@ -144,9 +150,11 @@ var LongHelpTemplate = `{{define "FormatCommand"}}\
 
 {{define "FormatCommands"}}\
 {{range .FlattenedCommands}}\
+{{if not .Hidden}}\
   {{.FullCommand}}{{template "FormatCommand" .}}
 {{.Help|Wrap 4}}
 {{with .Flags|FlagsToTwoColumns}}{{FormatTwoColumnsWithIndent . 4 2}}{{end}}
+{{end}}\
 {{end}}\
 {{end}}\
 
