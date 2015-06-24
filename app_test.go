@@ -160,3 +160,38 @@ func TestSubCommandRequired(t *testing.T) {
 	_, err := app.Parse([]string{"c0"})
 	assert.Error(t, err)
 }
+
+func TestInterspersedFalse(t *testing.T) {
+	app := New("test", "help").Interspersed(false)
+	a1 := app.Arg("a1", "").String()
+	a2 := app.Arg("a2", "").String()
+	f1 := app.Flag("flag", "").String()
+
+	_, err := app.Parse([]string{"a1", "--flag=flag"})
+	assert.NoError(t, err)
+	assert.Equal(t, "a1", *a1)
+	assert.Equal(t, "--flag=flag", *a2)
+	assert.Equal(t, "", *f1)
+}
+
+func TestInterspersedTrue(t *testing.T) {
+	// test once with the default value and once with explicit true
+	for i := 0; i < 2; i++ {
+		app := New("test", "help")
+		if i != 0 {
+			t.Log("Setting explicit")
+			app.Interspersed(true)
+		} else {
+			t.Log("Using default")
+		}
+		a1 := app.Arg("a1", "").String()
+		a2 := app.Arg("a2", "").String()
+		f1 := app.Flag("flag", "").String()
+
+		_, err := app.Parse([]string{"a1", "--flag=flag"})
+		assert.NoError(t, err)
+		assert.Equal(t, "a1", *a1)
+		assert.Equal(t, "", *a2)
+		assert.Equal(t, "flag", *f1)
+	}
+}

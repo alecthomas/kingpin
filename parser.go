@@ -303,6 +303,10 @@ loop:
 				cmds = cmd.cmdGroup
 				context.Next()
 			} else if context.arguments.have() {
+				if app.noInterspersed {
+					// no more flags
+					context.argsOnly = true
+				}
 				arg := context.nextArg()
 				if arg == nil {
 					break loop
