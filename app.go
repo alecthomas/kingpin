@@ -192,7 +192,7 @@ func (a *Application) findCommandFromContext(context *ParseContext) string {
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
 	a.version = version
-	a.Flag("version", "Show application version.").Action(func(*ParseContext) error {
+	a.Flag("version", "Show application version.").PreAction(func(*ParseContext) error {
 		fmt.Fprintln(a.writer, version)
 		a.terminate(0)
 		return nil
@@ -386,11 +386,6 @@ func (a *Application) validateRequired(context *ParseContext) error {
 	flagElements := map[string]*ParseElement{}
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok {
-			if flag.name == "version" {
-				// Short-circuit, no validation of required flags/arguments when
-				// --version is specified.
-				return nil
-			}
 			flagElements[flag.name] = element
 		}
 	}
