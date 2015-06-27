@@ -192,7 +192,7 @@ func (a *Application) findCommandFromContext(context *ParseContext) string {
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
 	a.version = version
-	a.Flag("version", "Show application version.").Action(func(*ParseContext) error {
+	a.Flag("version", "Show application version.").PreAction(func(*ParseContext) error {
 		fmt.Fprintln(a.writer, version)
 		a.terminate(0)
 		return nil
