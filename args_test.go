@@ -24,6 +24,7 @@ func TestArgRemainderErrorsWhenNotLast(t *testing.T) {
 
 func TestArgMultipleRequired(t *testing.T) {
 	app := New("test", "")
+	app.Version("0.0.0")
 	app.Arg("a", "").Required().String()
 	app.Arg("b", "").Required().String()
 
@@ -32,6 +33,8 @@ func TestArgMultipleRequired(t *testing.T) {
 	_, err = app.Parse([]string{"A"})
 	assert.Error(t, err)
 	_, err = app.Parse([]string{"A", "B"})
+	assert.NoError(t, err)
+	_, err = app.Parse([]string{"--version"})
 	assert.NoError(t, err)
 }
 

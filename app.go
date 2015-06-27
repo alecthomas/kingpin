@@ -386,6 +386,11 @@ func (a *Application) validateRequired(context *ParseContext) error {
 	flagElements := map[string]*ParseElement{}
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok {
+			if flag.name == "version" {
+				// Short-circuit, no validation of required flags/arguments when
+				// --version is specified.
+				return nil
+			}
 			flagElements[flag.name] = element
 		}
 	}
