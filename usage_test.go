@@ -49,7 +49,7 @@ func TestHiddenCommand(t *testing.T) {
 	var buf bytes.Buffer
 	t.Log("1")
 
-	a := New("Test", "Test").Writer(&buf).Terminate(nil)
+	a := New("test", "Test").Writer(&buf).Terminate(nil)
 	a.Command("visible", "visible")
 	a.Command("hidden", "hidden").Hidden()
 
@@ -61,11 +61,7 @@ func TestHiddenCommand(t *testing.T) {
 		usage := buf.String()
 		t.Logf("Usage for %s is:\n%s\n", tp.name, usage)
 
-		if strings.Contains(usage, "hidden") {
-			t.Errorf("Error: Usage contain hidden (%s)", tp.name)
-		}
-		if !strings.Contains(usage, "visible") {
-			t.Errorf("Error; Usage does not contain visible (%s)", tp.name)
-		}
+		assert.NotContains(t, usage, "hidden")
+		assert.Contains(t, usage, "visible")
 	}
 }
