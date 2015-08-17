@@ -23,3 +23,24 @@ func TestStrings(t *testing.T) {
 	app.Parse([]string{"a", "b", "a", "b"})
 	assert.Equal(t, []string{"a", "b"}, *c)
 }
+
+func TestEnum(t *testing.T) {
+	app := New("", "")
+	a := app.Arg("a", "").Enum("one", "two", "three")
+	_, err := app.Parse([]string{"moo"})
+	assert.Error(t, err)
+	_, err = app.Parse([]string{"one"})
+	assert.NoError(t, err)
+	assert.Equal(t, "one", *a)
+}
+
+func TestEnumVar(t *testing.T) {
+	app := New("", "")
+	var a string
+	app.Arg("a", "").EnumVar(&a, "one", "two", "three")
+	_, err := app.Parse([]string{"moo"})
+	assert.Error(t, err)
+	_, err = app.Parse([]string{"one"})
+	assert.NoError(t, err)
+	assert.Equal(t, "one", a)
+}
