@@ -126,6 +126,24 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			}
 			return rows
 		},
+		"RequiredFlags": func(f []*FlagModel) []*FlagModel {
+			requiredFlags := []*FlagModel{}
+			for _, flag := range f {
+				if flag.Required == true {
+					requiredFlags = append(requiredFlags, flag)
+				}
+			}
+			return requiredFlags
+		},
+		"OptionalFlags": func(f []*FlagModel) []*FlagModel {
+			optionalFlags := []*FlagModel{}
+			for _, flag := range f {
+				if flag.Required == false {
+					optionalFlags = append(optionalFlags, flag)
+				}
+			}
+			return optionalFlags
+		},
 		"ArgsToTwoColumns": func(a []*ArgModel) [][2]string {
 			rows := [][2]string{}
 			for _, arg := range a {
