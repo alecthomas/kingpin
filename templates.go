@@ -216,6 +216,7 @@ var LongHelpTemplate = `{{define "FormatCommand"}}\
 {{end}}\
 
 {{end}}\
+
 usage: {{.App.Name}}{{template "FormatUsage" .App}}
 {{if .Context.Flags}}\
 Flags:
