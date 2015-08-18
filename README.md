@@ -482,8 +482,10 @@ Kingpin v2 supports templatised help using the text/template library (actually, 
 
 You can specify the template to use with the [Application.UsageTemplate()](http://godoc.org/gopkg.in/alecthomas/kingpin.v2#Application.UsageTemplate) function.
 
-There are three included templates: `kingpin.DefaultUsageTemplate` is the default,
-`kingpin.CompactUsageTemplate` provides a more compact representation for more complex command-line structures, and `kingpin.ManPageTemplate` is used to generate man pages.
+There are four included templates: `kingpin.DefaultUsageTemplate` is the default,
+`kingpin.CompactUsageTemplate` provides a more compact representation for more complex command-line structures,
+`kingpin.SeparateOptionalFlagsUsageTemplate` looks like the default template, but splits required
+and optional command flags into separate lists, and `kingpin.ManPageTemplate` is used to generate man pages.
 
 See the above templates for examples of usage, and the the function [UsageForContextWithTemplate()](https://github.com/alecthomas/kingpin/blob/master/usage.go#L198) method for details on the context.
 
