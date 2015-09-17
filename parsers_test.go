@@ -94,5 +94,5 @@ func TestFloat32(t *testing.T) {
 	v := p.Float32()
 	err := p.value.Set("123.45")
 	assert.NoError(t, err)
-	assert.Equal(t, 123.45, *v)
+	assert.InEpsilon(t, 123.45, *v, 0.001)
 }
