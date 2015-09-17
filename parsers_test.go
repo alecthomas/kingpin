@@ -88,3 +88,11 @@ func TestParseTCPAddrList(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "127.0.0.1:1234,127.0.0.1:1235", p.value.String())
 }
+
+func TestFloat32(t *testing.T) {
+	p := parserMixin{}
+	v := p.Float32()
+	err := p.value.Set("123.45")
+	assert.NoError(t, err)
+	assert.Equal(t, 123.45, *v)
+}

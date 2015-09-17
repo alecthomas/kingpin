@@ -1,5 +1,7 @@
 package kingpin
 
+//go:generate go run ./cmd/genvalues/main.go
+
 import (
 	"fmt"
 	"net"
@@ -7,7 +9,6 @@ import (
 	"os"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -99,124 +100,7 @@ func (a *accumulator) IsCumulative() bool {
 	return true
 }
 
-// -- bool Value
-type boolValue bool
-
-func newBoolValue(p *bool) *boolValue {
-	return (*boolValue)(p)
-}
-
-func (b *boolValue) Set(s string) error {
-	if s == "" {
-		s = "true"
-	}
-	v, err := strconv.ParseBool(s)
-	*b = boolValue(v)
-	return err
-}
-
-func (b *boolValue) Get() interface{} { return bool(*b) }
-
-func (b *boolValue) String() string { return fmt.Sprintf("%v", *b) }
-
 func (b *boolValue) IsBoolFlag() bool { return true }
-
-// -- int Value
-type intValue int
-
-func newIntValue(p *int) *intValue {
-	return (*intValue)(p)
-}
-
-func (i *intValue) Set(s string) error {
-	v, err := strconv.ParseInt(s, 0, 64)
-	*i = intValue(v)
-	return err
-}
-
-func (i *intValue) Get() interface{} { return int(*i) }
-
-func (i *intValue) String() string { return fmt.Sprintf("%v", *i) }
-
-// -- int64 Value
-type int64Value int64
-
-func newInt64Value(p *int64) *int64Value {
-	return (*int64Value)(p)
-}
-
-func (i *int64Value) Set(s string) error {
-	v, err := strconv.ParseInt(s, 0, 64)
-	*i = int64Value(v)
-	return err
-}
-
-func (i *int64Value) Get() interface{} { return int64(*i) }
-
-func (i *int64Value) String() string { return fmt.Sprintf("%v", *i) }
-
-// -- uint Value
-type uintValue uint
-
-func (i *uintValue) Set(s string) error {
-	v, err := strconv.ParseUint(s, 0, 64)
-	*i = uintValue(v)
-	return err
-}
-
-func (i *uintValue) Get() interface{} { return uint(*i) }
-
-func (i *uintValue) String() string { return fmt.Sprintf("%v", *i) }
-
-// -- uint64 Value
-type uint64Value uint64
-
-func newUint64Value(p *uint64) *uint64Value {
-	return (*uint64Value)(p)
-}
-
-func (i *uint64Value) Set(s string) error {
-	v, err := strconv.ParseUint(s, 0, 64)
-	*i = uint64Value(v)
-	return err
-}
-
-func (i *uint64Value) Get() interface{} { return uint64(*i) }
-
-func (i *uint64Value) String() string { return fmt.Sprintf("%v", *i) }
-
-// -- string Value
-type stringValue string
-
-func newStringValue(p *string) *stringValue {
-	return (*stringValue)(p)
-}
-
-func (s *stringValue) Set(val string) error {
-	*s = stringValue(val)
-	return nil
-}
-
-func (s *stringValue) Get() interface{} { return string(*s) }
-
-func (s *stringValue) String() string { return fmt.Sprintf("%s", *s) }
-
-// -- float64 Value
-type float64Value float64
-
-func newFloat64Value(p *float64) *float64Value {
-	return (*float64Value)(p)
-}
-
-func (f *float64Value) Set(s string) error {
-	v, err := strconv.ParseFloat(s, 64)
-	*f = float64Value(v)
-	return err
-}
-
-func (f *float64Value) Get() interface{} { return float64(*f) }
-
-func (f *float64Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // -- time.Duration Value
 type durationValue time.Duration
