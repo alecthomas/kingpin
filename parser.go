@@ -290,8 +290,7 @@ loop:
 		switch token.Type {
 		case TokenLong, TokenShort:
 			if err := context.flags.parse(context); err != nil {
-				if cmds.defaultSubcommand != "" {
-					cmd := cmds.commands[cmds.defaultSubcommand]
+				if cmd := cmds.defaultSubcommand(); cmd != nil {
 					context.matchedCmd(cmd)
 					cmds = cmd.cmdGroup
 					break
@@ -304,11 +303,11 @@ loop:
 				selectedDefault := false
 				cmd, ok := cmds.commands[token.String()]
 				if !ok {
-					if cmds.defaultSubcommand == "" {
+					if cmd = cmds.defaultSubcommand(); cmd == nil {
 						return nil, fmt.Errorf("expected command but got %q", token)
+					} else {
+						selectedDefault = true
 					}
-					cmd = cmds.commands[cmds.defaultSubcommand]
-					selectedDefault = true
 				}
 				context.matchedCmd(cmd)
 				selected = append([]string{token.String()}, selected...)
@@ -337,11 +336,14 @@ loop:
 	}
 
 	// Move to innermost default command.
-	for cmds.defaultSubcommand != "" {
-		selected = append(selected, cmds.defaultSubcommand)
-		cmd := cmds.commands[cmds.defaultSubcommand]
-		context.matchedCmd(cmd)
-		cmds = cmd.cmdGroup
+	for {
+		if cmd := cmds.defaultSubcommand(); cmd != nil {
+			selected = append(selected, cmd.name)
+			context.matchedCmd(cmd)
+			cmds = cmd.cmdGroup
+		} else {
+			break
+		}
 	}
 
 	if !context.EOL() {

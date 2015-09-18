@@ -101,8 +101,7 @@ func (a *ArgModel) String() string {
 }
 
 type CmdGroupModel struct {
-	DefaultSubcommand string
-	Commands          []*CmdModel
+	Commands []*CmdModel
 }
 
 func (c *CmdGroupModel) FlattenedCommands() (out []*CmdModel) {
@@ -116,12 +115,12 @@ func (c *CmdGroupModel) FlattenedCommands() (out []*CmdModel) {
 }
 
 type CmdModel struct {
-	Name              string
-	Help              string
-	FullCommand       string
-	Depth             int
-	Hidden            bool
-	DefaultSubcommand string
+	Name        string
+	Help        string
+	FullCommand string
+	Depth       int
+	Hidden      bool
+	Default     bool
 	*FlagGroupModel
 	*ArgGroupModel
 	*CmdGroupModel
@@ -194,9 +193,7 @@ func (f *FlagClause) Model() *FlagModel {
 }
 
 func (c *cmdGroup) Model() *CmdGroupModel {
-	m := &CmdGroupModel{
-		DefaultSubcommand: c.defaultSubcommand,
-	}
+	m := &CmdGroupModel{}
 	for _, cm := range c.commandOrder {
 		m.Commands = append(m.Commands, cm.Model())
 	}

@@ -6,11 +6,19 @@ import (
 )
 
 type cmdGroup struct {
-	app               *Application
-	parent            *CmdClause
-	defaultSubcommand string
-	commands          map[string]*CmdClause
-	commandOrder      []*CmdClause
+	app          *Application
+	parent       *CmdClause
+	commands     map[string]*CmdClause
+	commandOrder []*CmdClause
+}
+
+func (c *cmdGroup) defaultSubcommand() *CmdClause {
+	for _, cmd := range c.commandOrder {
+		if cmd._default {
+			return cmd
+		}
+	}
+	return nil
 }
 
 func newCmdGroup(app *Application) *cmdGroup {
@@ -39,12 +47,13 @@ func (c *cmdGroup) addCommand(name, help string) *CmdClause {
 
 func (c *cmdGroup) init() error {
 	seen := map[string]bool{}
-	if c.defaultSubcommand != "" && !c.have() {
-		return fmt.Errorf("default subcommand %q provided but no subcommands defined", c.defaultSubcommand)
+	if c.defaultSubcommand() != nil && !c.have() {
+		return fmt.Errorf("default subcommand %q provided but no subcommands defined", c.defaultSubcommand().name)
 	}
+	defaults := []string{}
 	for _, cmd := range c.commandOrder {
-		if c.defaultSubcommand != "" && c.commands[c.defaultSubcommand] == nil {
-			return fmt.Errorf("default subcommand %q does not exist", c.defaultSubcommand)
+		if cmd._default {
+			defaults = append(defaults, cmd.name)
 		}
 		if seen[cmd.name] {
 			return fmt.Errorf("duplicate command %q", cmd.name)
@@ -53,6 +62,9 @@ func (c *cmdGroup) init() error {
 		if err := cmd.init(); err != nil {
 			return err
 		}
+	}
+	if len(defaults) > 1 {
+		return fmt.Errorf("more than one default subcommand exists: %s", strings.Join(defaults, ", "))
 	}
 	return nil
 }
@@ -73,6 +85,7 @@ type CmdClause struct {
 	name      string
 	help      string
 	action    Action
+	_default  bool
 	preAction Action
 	validator CmdClauseValidator
 	hidden    bool
@@ -111,9 +124,9 @@ func (c *CmdClause) Command(name, help string) *CmdClause {
 	return cmd
 }
 
-// DefaultSubcommand sets the subcommand to default to if no other subcommand match.
-func (c *CmdClause) DefaultSubcommand(name string) *CmdClause {
-	c.defaultSubcommand = name
+// Default makes this command the default if commands don't match.
+func (c *CmdClause) Default() *CmdClause {
+	c._default = true
 	return c
 }
 

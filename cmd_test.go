@@ -109,24 +109,10 @@ func TestNestedCommandWithArgAndMergedFlags(t *testing.T) {
 	assert.Equal(t, "hello", *cmd00a0)
 }
 
-func TestDefaultSubcommandDoesNotExist(t *testing.T) {
-	app := New("app", "").Terminate(nil)
-	app.Command("c0", "").DefaultSubcommand("c1")
-	_, err := app.Parse([]string{})
-	assert.Error(t, err)
-}
-
-func TestDefaultSubcommandWithNoSubcommands(t *testing.T) {
-	app := New("app", "").Terminate(nil)
-	app.DefaultSubcommand("foo")
-	_, err := app.Parse([]string{})
-	assert.Error(t, err)
-}
-
 func TestDefaultSubcommandEOL(t *testing.T) {
 	app := New("app", "").Terminate(nil)
-	c0 := app.Command("c0", "").DefaultSubcommand("c01")
-	c0.Command("c01", "")
+	c0 := app.Command("c0", "").Default()
+	c0.Command("c01", "").Default()
 	c0.Command("c02", "")
 
 	cmd, err := app.Parse([]string{"c0"})
@@ -136,9 +122,9 @@ func TestDefaultSubcommandEOL(t *testing.T) {
 
 func TestDefaultSubcommandWithArg(t *testing.T) {
 	app := New("app", "").Terminate(nil)
-	c0 := app.Command("c0", "").DefaultSubcommand("c01")
-	c01 := c0.Command("c01", "").DefaultSubcommand("c012")
-	c012 := c01.Command("c012", "")
+	c0 := app.Command("c0", "").Default()
+	c01 := c0.Command("c01", "").Default()
+	c012 := c01.Command("c012", "").Default()
 	a0 := c012.Arg("a0", "").String()
 	c0.Command("c02", "")
 
@@ -149,15 +135,23 @@ func TestDefaultSubcommandWithArg(t *testing.T) {
 }
 
 func TestDefaultSubcommandWithFlags(t *testing.T) {
-	app := New("app", "").Terminate(nil).DefaultSubcommand("c0")
-	c0 := app.Command("c0", "").DefaultSubcommand("c1")
+	app := New("app", "").Terminate(nil)
+	c0 := app.Command("c0", "").Default()
 	_ = c0.Flag("f0", "").Int()
-	c0c1 := c0.Command("c1", "")
+	c0c1 := c0.Command("c1", "").Default()
 	c0c1f1 := c0c1.Flag("f1", "").Int()
 	selected, err := app.Parse([]string{"--f1=2"})
 	assert.NoError(t, err)
 	assert.Equal(t, "c0 c1", selected)
 	assert.Equal(t, 2, *c0c1f1)
 	_, err = app.Parse([]string{"--f2"})
+	assert.Error(t, err)
+}
+
+func TestMultipleDefaultCommands(t *testing.T) {
+	app := New("app", "").Terminate(nil)
+	app.Command("c0", "").Default()
+	app.Command("c1", "").Default()
+	_, err := app.Parse([]string{})
 	assert.Error(t, err)
 }

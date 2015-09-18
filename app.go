@@ -74,11 +74,6 @@ func (a *Application) generateManPage(c *ParseContext) error {
 	return nil
 }
 
-func (a *Application) DefaultSubcommand(name string) *Application {
-	a.defaultSubcommand = name
-	return a
-}
-
 // Terminate specifies the termination handler. Defaults to os.Exit(status).
 // If nil is passed, a no-op function will be used.
 func (a *Application) Terminate(terminate func(int)) *Application {
