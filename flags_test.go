@@ -1,6 +1,7 @@
 package kingpin
 
 import (
+	"io/ioutil"
 	"os"
 
 	"github.com/stretchr/testify/assert"
@@ -46,7 +47,7 @@ func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
 
 func TestRequiredFlag(t *testing.T) {
 	app := New("test", "")
-	app.Version("0.0.0")
+	app.Version("0.0.0").Writer(ioutil.Discard)
 	exits := 0
 	app.Terminate(func(int) { exits++ })
 	app.Flag("a", "").Required().Bool()

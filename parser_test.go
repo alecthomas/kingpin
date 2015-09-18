@@ -24,3 +24,19 @@ func TestParserExpandFromFile(t *testing.T) {
 	assert.Equal(t, "hello", *arg0)
 	assert.Equal(t, "world", *arg1)
 }
+
+func TestParseContextPush(t *testing.T) {
+	app := New("test", "")
+	app.Command("foo", "").Command("bar", "")
+	c := tokenize([]string{"foo", "bar"})
+	a := c.Next()
+	assert.Equal(t, TokenArg, a.Type)
+	b := c.Next()
+	assert.Equal(t, TokenArg, b.Type)
+	c.Push(b)
+	c.Push(a)
+	a = c.Next()
+	assert.Equal(t, "foo", a.Value)
+	b = c.Next()
+	assert.Equal(t, "bar", b.Value)
+}

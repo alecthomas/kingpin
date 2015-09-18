@@ -176,7 +176,7 @@ func (p *ParseContext) Next() *Token {
 		parts := strings.SplitN(arg[2:], "=", 2)
 		token := &Token{p.argi, TokenLong, parts[0]}
 		if len(parts) == 2 {
-			p.push(&Token{p.argi, TokenArg, parts[1]})
+			p.Push(&Token{p.argi, TokenArg, parts[1]})
 		}
 		return token
 	}
@@ -195,7 +195,7 @@ func (p *ParseContext) Next() *Token {
 			// Short flag with combined argument: -fARG
 			token := &Token{p.argi, TokenShort, short}
 			if len(arg) > 2 {
-				p.push(&Token{p.argi, TokenArg, arg[2:]})
+				p.Push(&Token{p.argi, TokenArg, arg[2:]})
 			}
 			return token
 		}
@@ -222,12 +222,12 @@ func (p *ParseContext) Next() *Token {
 
 func (p *ParseContext) Peek() *Token {
 	if len(p.peek) == 0 {
-		return p.push(p.Next())
+		return p.Push(p.Next())
 	}
 	return p.peek[len(p.peek)-1]
 }
 
-func (p *ParseContext) push(token *Token) *Token {
+func (p *ParseContext) Push(token *Token) *Token {
 	p.peek = append(p.peek, token)
 	return token
 }
@@ -286,22 +286,36 @@ func parse(context *ParseContext, app *Application) (selected []string, err erro
 loop:
 	for !context.EOL() {
 		token := context.Peek()
+
 		switch token.Type {
 		case TokenLong, TokenShort:
 			if err := context.flags.parse(context); err != nil {
+				if cmds.defaultSubcommand != "" {
+					cmd := cmds.commands[cmds.defaultSubcommand]
+					context.matchedCmd(cmd)
+					cmds = cmd.cmdGroup
+					break
+				}
 				return nil, err
 			}
 
 		case TokenArg:
 			if cmds.have() {
+				selectedDefault := false
 				cmd, ok := cmds.commands[token.String()]
 				if !ok {
-					return nil, fmt.Errorf("expected command but got %s", token)
+					if cmds.defaultSubcommand == "" {
+						return nil, fmt.Errorf("expected command but got %q", token)
+					}
+					cmd = cmds.commands[cmds.defaultSubcommand]
+					selectedDefault = true
 				}
 				context.matchedCmd(cmd)
 				selected = append([]string{token.String()}, selected...)
 				cmds = cmd.cmdGroup
-				context.Next()
+				if !selectedDefault {
+					context.Next()
+				}
 			} else if context.arguments.have() {
 				if app.noInterspersed {
 					// no more flags
@@ -320,6 +334,14 @@ loop:
 		case TokenEOL:
 			break loop
 		}
+	}
+
+	// Move to innermost default command.
+	for cmds.defaultSubcommand != "" {
+		selected = append(selected, cmds.defaultSubcommand)
+		cmd := cmds.commands[cmds.defaultSubcommand]
+		context.matchedCmd(cmd)
+		cmds = cmd.cmdGroup
 	}
 
 	if !context.EOL() {

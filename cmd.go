@@ -6,10 +6,11 @@ import (
 )
 
 type cmdGroup struct {
-	app          *Application
-	parent       *CmdClause
-	commands     map[string]*CmdClause
-	commandOrder []*CmdClause
+	app               *Application
+	parent            *CmdClause
+	defaultSubcommand string
+	commands          map[string]*CmdClause
+	commandOrder      []*CmdClause
 }
 
 func newCmdGroup(app *Application) *cmdGroup {
@@ -38,9 +39,15 @@ func (c *cmdGroup) addCommand(name, help string) *CmdClause {
 
 func (c *cmdGroup) init() error {
 	seen := map[string]bool{}
+	if c.defaultSubcommand != "" && !c.have() {
+		return fmt.Errorf("default subcommand %q provided but no subcommands defined", c.defaultSubcommand)
+	}
 	for _, cmd := range c.commandOrder {
+		if c.defaultSubcommand != "" && c.commands[c.defaultSubcommand] == nil {
+			return fmt.Errorf("default subcommand %q does not exist", c.defaultSubcommand)
+		}
 		if seen[cmd.name] {
-			return fmt.Errorf("duplicate command '%s'", cmd.name)
+			return fmt.Errorf("duplicate command %q", cmd.name)
 		}
 		seen[cmd.name] = true
 		if err := cmd.init(); err != nil {
@@ -49,6 +56,7 @@ func (c *cmdGroup) init() error {
 	}
 	return nil
 }
+
 func (c *cmdGroup) have() bool {
 	return len(c.commands) > 0
 }
@@ -101,6 +109,12 @@ func (c *CmdClause) Command(name, help string) *CmdClause {
 	cmd := c.addCommand(name, help)
 	cmd.parent = c
 	return cmd
+}
+
+// DefaultSubcommand sets the subcommand to default to if no other subcommand match.
+func (c *CmdClause) DefaultSubcommand(name string) *CmdClause {
+	c.defaultSubcommand = name
+	return c
 }
 
 func (c *CmdClause) Action(action Action) *CmdClause {

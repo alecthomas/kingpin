@@ -63,7 +63,9 @@ contextual help if `--help` is encountered at any point in the command line
 - Fully [customisable help](#custom-help), via Go templates.
 - Parsed, type-safe flags (`kingpin.Flag("f", "help").Int()`)
 - Parsed, type-safe positional arguments (`kingpin.Arg("a", "help").Int()`).
+- Parsed, type-safe, arbitrarily deep commands (`kingpin.Command("c", "help")`).
 - Support for required flags and required positional arguments (`kingpin.Flag("f", "").Required().Int()`).
+- Support for arbitrarily nested default commands (`.DefaultCommand("foo")`).
 - Callbacks per command, flag and argument (`kingpin.Command("c", "").Action(myAction)`).
 - POSIX-style short flag combining (`-a -b` -> `-ab`).
 - Short-flag+parameter combining (`-a parm` -> `-aparm`).

@@ -94,10 +94,12 @@ loop:
 				}
 			} else {
 				if invert {
+					context.Push(token)
 					return fmt.Errorf("unknown long flag '%s'", flagToken)
 				}
 				token = context.Peek()
 				if token.Type != TokenArg {
+					context.Push(token)
 					return fmt.Errorf("expected argument for flag '%s'", flagToken)
 				}
 				context.Next()

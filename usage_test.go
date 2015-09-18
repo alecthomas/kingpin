@@ -2,7 +2,6 @@ package kingpin
 
 import (
 	"bytes"
-	"fmt"
 	"strings"
 	"testing"
 
@@ -30,7 +29,6 @@ func TestFormatTwoColumnsWide(t *testing.T) {
 		{strings.Repeat("x", 20), "20 chars"}}
 	buf := bytes.NewBuffer(nil)
 	formatTwoColumns(buf, 0, 0, 200, samples)
-	fmt.Println(buf.String())
 	expected := `xxxxxxxxxxxxxxxxxxx19 chars
 xxxxxxxxxxxxxxxxxxxx
                    20 chars
