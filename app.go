@@ -110,7 +110,7 @@ func (a *Application) ParseContext(args []string) (*ParseContext, error) {
 		return nil, err
 	}
 	context := tokenize(args)
-	_, err := parse(context, a)
+	err := parse(context, a)
 	return context, err
 }
 

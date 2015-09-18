@@ -9,7 +9,7 @@ import (
 )
 
 func parseAndExecute(app *Application, context *ParseContext) (string, error) {
-	if _, err := parse(context, app); err != nil {
+	if err := parse(context, app); err != nil {
 		return "", err
 	}
 	return app.execute(context)

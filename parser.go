@@ -277,7 +277,7 @@ func ExpandArgsFromFile(filename string) (out []string, err error) {
 	return
 }
 
-func parse(context *ParseContext, app *Application) (selected []string, err error) {
+func parse(context *ParseContext, app *Application) (err error) {
 	context.mergeFlags(app.flagGroup)
 	context.mergeArgs(app.argGroup)
 
@@ -295,7 +295,7 @@ loop:
 					cmds = cmd.cmdGroup
 					break
 				}
-				return nil, err
+				return err
 			}
 
 		case TokenArg:
@@ -304,13 +304,12 @@ loop:
 				cmd, ok := cmds.commands[token.String()]
 				if !ok {
 					if cmd = cmds.defaultSubcommand(); cmd == nil {
-						return nil, fmt.Errorf("expected command but got %q", token)
+						return fmt.Errorf("expected command but got %q", token)
 					} else {
 						selectedDefault = true
 					}
 				}
 				context.matchedCmd(cmd)
-				selected = append([]string{token.String()}, selected...)
 				cmds = cmd.cmdGroup
 				if !selectedDefault {
 					context.Next()
@@ -338,7 +337,6 @@ loop:
 	// Move to innermost default command.
 	for {
 		if cmd := cmds.defaultSubcommand(); cmd != nil {
-			selected = append(selected, cmd.name)
 			context.matchedCmd(cmd)
 			cmds = cmd.cmdGroup
 		} else {
@@ -347,14 +345,14 @@ loop:
 	}
 
 	if !context.EOL() {
-		return nil, fmt.Errorf("unexpected %s", context.Peek())
+		return fmt.Errorf("unexpected %s", context.Peek())
 	}
 
 	// Set defaults for all remaining args.
 	for arg := context.nextArg(); arg != nil && !arg.consumesRemainder(); arg = context.nextArg() {
 		if arg.defaultValue != "" {
 			if err := arg.value.Set(arg.defaultValue); err != nil {
-				return nil, fmt.Errorf("invalid default value '%s' for argument '%s'", arg.defaultValue, arg.name)
+				return fmt.Errorf("invalid default value '%s' for argument '%s'", arg.defaultValue, arg.name)
 			}
 		}
 	}
