@@ -131,6 +131,19 @@ $ go get gopkg.in/alecthomas/kingpin.v1
 
 ## Change History
 
+- *2015-09-19* -- Stable v2.1.0 release.
+    - Added `command.Default()` to specify a default command to use if no other
+      command matches. This allows for convenient user shortcuts.
+    - Exposed `HelpFlag` and `VersionFlag` for further cusomisation.
+    - `Action()` and `PreAction()` added and both now support an arbitrary
+      number of callbacks.
+    - `kingpin.SeparateOptionalFlagsUsageTemplate`.
+    - `--help-long` and `--help-man` (hidden by default) flags.
+    - Flags are "interspersed" by default, but can be disabled with `app.Interspersed(false)`.
+    - Added flags for all simple builtin types (int8, uint16, etc.) and slice variants.
+    - Use `app.Writer(os.Writer)` to specify the default writer for all output functions.
+    - Dropped `os.Writer` prefix from all printf-like functions.
+
 - *2015-05-22* -- Stable v2.0.0 release.
     - Initial stable release of v2.0.0.
     - Fully supports interspersed flags, commands and arguments.

@@ -51,7 +51,7 @@ func New(name, help string) *Application {
 		terminate:     os.Exit,
 	}
 	a.cmdGroup = newCmdGroup(a)
-	HelpFlag = a.Flag("help", "Show help (also see --help-long and --help-man).")
+	HelpFlag = a.Flag("help", "Show context-sensitive help (also try --help-long and --help-man).")
 	HelpFlag.Bool()
 	a.Flag("help-long", "Generate long help.").Hidden().PreAction(a.generateLongHelp).Bool()
 	a.Flag("help-man", "Generate a man page.").Hidden().PreAction(a.generateManPage).Bool()
