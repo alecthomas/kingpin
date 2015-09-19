@@ -251,7 +251,7 @@ func (a *Application) init() error {
 	if a.cmdGroup.have() {
 		var command []string
 		HelpCommand = a.Command("help", "Show help.").Action(func(c *ParseContext) error {
-			a.Usage(command)
+			a.UsageForContext(c)
 			a.terminate(0)
 			return nil
 		})
