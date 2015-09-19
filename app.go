@@ -39,7 +39,10 @@ type Application struct {
 }
 
 var (
+	// Global help flag. Exposed for user customisation.
 	HelpFlag *FlagClause
+	// Global version flag. Exposed for user customisation. May be nil.
+	VersionFlag *FlagClause
 )
 
 // New creates a new Kingpin application instance.
@@ -197,11 +200,12 @@ func (a *Application) findCommandFromContext(context *ParseContext) string {
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
 	a.version = version
-	a.Flag("version", "Show application version.").PreAction(func(*ParseContext) error {
+	VersionFlag = a.Flag("version", "Show application version.").PreAction(func(*ParseContext) error {
 		fmt.Fprintln(a.writer, version)
 		a.terminate(0)
 		return nil
-	}).Bool()
+	})
+	VersionFlag.Bool()
 	return a
 }
 
