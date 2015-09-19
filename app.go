@@ -11,11 +11,6 @@ var (
 	ErrCommandNotSpecified = fmt.Errorf("command not specified")
 )
 
-// Action callback executed at various stages after all values are populated.
-// The application, commands, arguments and flags all have corresponding
-// actions.
-type Action func(*ParseContext) error
-
 type ApplicationValidator func(*Application) error
 
 // An Application contains the definitions of flags, arguments and commands
@@ -24,6 +19,7 @@ type Application struct {
 	*flagGroup
 	*argGroup
 	*cmdGroup
+	actionMixin
 	initialized    bool
 	Name           string
 	Help           string
@@ -31,8 +27,6 @@ type Application struct {
 	version        string
 	writer         io.Writer // Destination for usage and errors.
 	usageTemplate  string
-	action         Action
-	preAction      Action
 	validator      ApplicationValidator
 	terminate      func(status int) // See Terminate()
 	noInterspersed bool             // can flags be interspersed with args (or must they come first)
@@ -220,13 +214,13 @@ func (a *Application) Author(author string) *Application {
 // All Action() callbacks are called in the order they are encountered on the
 // command line.
 func (a *Application) Action(action Action) *Application {
-	a.action = action
+	a.addAction(action)
 	return a
 }
 
 // Action called after parsing completes but before validation and execution.
 func (a *Application) PreAction(action Action) *Application {
-	a.preAction = action
+	a.addPreAction(action)
 	return a
 }
 
@@ -476,31 +470,14 @@ func (a *Application) applyValidators(context *ParseContext) (err error) {
 }
 
 func (a *Application) applyPreActions(context *ParseContext) error {
-	if a.preAction != nil {
-		if err := a.preAction(context); err != nil {
-			return err
-		}
+	if err := a.actionMixin.applyPreActions(context); err != nil {
+		return err
 	}
 	// Dispatch to actions.
 	for _, element := range context.Elements {
-		switch clause := element.Clause.(type) {
-		case *ArgClause:
-			if clause.preAction != nil {
-				if err := clause.preAction(context); err != nil {
-					return err
-				}
-			}
-		case *CmdClause:
-			if clause.preAction != nil {
-				if err := clause.preAction(context); err != nil {
-					return err
-				}
-			}
-		case *FlagClause:
-			if clause.preAction != nil {
-				if err := clause.preAction(context); err != nil {
-					return err
-				}
+		if applier, ok := element.Clause.(actionApplier); ok {
+			if err := applier.applyPreActions(context); err != nil {
+				return err
 			}
 		}
 	}
@@ -508,31 +485,14 @@ func (a *Application) applyPreActions(context *ParseContext) error {
 }
 
 func (a *Application) applyActions(context *ParseContext) error {
-	if a.action != nil {
-		if err := a.action(context); err != nil {
-			return err
-		}
+	if err := a.actionMixin.applyActions(context); err != nil {
+		return err
 	}
 	// Dispatch to actions.
 	for _, element := range context.Elements {
-		switch clause := element.Clause.(type) {
-		case *ArgClause:
-			if clause.action != nil {
-				if err := clause.action(context); err != nil {
-					return err
-				}
-			}
-		case *CmdClause:
-			if clause.action != nil {
-				if err := clause.action(context); err != nil {
-					return err
-				}
-			}
-		case *FlagClause:
-			if clause.action != nil {
-				if err := clause.action(context); err != nil {
-					return err
-				}
+		if applier, ok := element.Clause.(actionApplier); ok {
+			if err := applier.applyActions(context); err != nil {
+				return err
 			}
 		}
 	}

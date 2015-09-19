@@ -129,14 +129,13 @@ func (f *flagGroup) visibleFlags() int {
 // FlagClause is a fluid interface used to build flags.
 type FlagClause struct {
 	parserMixin
+	actionMixin
 	name         string
 	shorthand    byte
 	help         string
 	envar        string
 	defaultValue string
 	placeholder  string
-	action       Action
-	preAction    Action
 	hidden       bool
 }
 
@@ -182,12 +181,12 @@ func (f *FlagClause) init() error {
 
 // Dispatch to the given function after the flag is parsed and validated.
 func (f *FlagClause) Action(action Action) *FlagClause {
-	f.action = action
+	f.addAction(action)
 	return f
 }
 
 func (f *FlagClause) PreAction(action Action) *FlagClause {
-	f.preAction = action
+	f.addPreAction(action)
 	return f
 }
 

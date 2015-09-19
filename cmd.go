@@ -78,15 +78,14 @@ type CmdClauseValidator func(*CmdClause) error
 // A CmdClause is a single top-level command. It encapsulates a set of flags
 // and either subcommands or positional arguments.
 type CmdClause struct {
+	actionMixin
 	*flagGroup
 	*argGroup
 	*cmdGroup
 	app       *Application
 	name      string
 	help      string
-	action    Action
 	_default  bool
-	preAction Action
 	validator CmdClauseValidator
 	hidden    bool
 }
@@ -131,12 +130,12 @@ func (c *CmdClause) Default() *CmdClause {
 }
 
 func (c *CmdClause) Action(action Action) *CmdClause {
-	c.action = action
+	c.addAction(action)
 	return c
 }
 
 func (c *CmdClause) PreAction(action Action) *CmdClause {
-	c.preAction = action
+	c.addPreAction(action)
 	return c
 }
 
