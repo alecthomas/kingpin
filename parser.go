@@ -291,10 +291,12 @@ loop:
 		switch token.Type {
 		case TokenLong, TokenShort:
 			if flag, err := context.flags.parse(context); err != nil {
-				if cmd := cmds.defaultSubcommand(); cmd != nil {
-					context.matchedCmd(cmd)
-					cmds = cmd.cmdGroup
-					break
+				if !help {
+					if cmd := cmds.defaultSubcommand(); cmd != nil {
+						context.matchedCmd(cmd)
+						cmds = cmd.cmdGroup
+						break
+					}
 				}
 				return err
 			} else if flag == HelpFlag {
@@ -306,11 +308,17 @@ loop:
 				selectedDefault := false
 				cmd, ok := cmds.commands[token.String()]
 				if !ok {
-					if cmd = cmds.defaultSubcommand(); cmd == nil {
-						return fmt.Errorf("expected command but got %q", token)
-					} else {
-						selectedDefault = true
+					if !help {
+						if cmd = cmds.defaultSubcommand(); cmd != nil {
+							selectedDefault = true
+						}
 					}
+					if cmd == nil {
+						return fmt.Errorf("expected command but got %q", token)
+					}
+				}
+				if cmd == HelpCommand {
+					help = true
 				}
 				context.matchedCmd(cmd)
 				cmds = cmd.cmdGroup

@@ -35,6 +35,8 @@ type Application struct {
 var (
 	// Global help flag. Exposed for user customisation.
 	HelpFlag *FlagClause
+	// Top-level help command. Exposed for user customisation. May be nil.
+	HelpCommand *CmdClause
 	// Global version flag. Exposed for user customisation. May be nil.
 	VersionFlag *FlagClause
 )
@@ -162,7 +164,7 @@ func (a *Application) hasHelp(args []string) bool {
 
 func (a *Application) maybeHelp(context *ParseContext) {
 	for _, element := range context.Elements {
-		if flag, ok := element.Clause.(*FlagClause); ok && flag.name == "help" {
+		if flag, ok := element.Clause.(*FlagClause); ok && flag == HelpFlag {
 			a.writeUsage(context, nil)
 		}
 	}
@@ -248,12 +250,12 @@ func (a *Application) init() error {
 	// If we have subcommands, add a help command at the top-level.
 	if a.cmdGroup.have() {
 		var command []string
-		help := a.Command("help", "Show help.").Action(func(c *ParseContext) error {
+		HelpCommand = a.Command("help", "Show help.").Action(func(c *ParseContext) error {
 			a.Usage(command)
 			a.terminate(0)
 			return nil
 		})
-		help.Arg("command", "Show help on command.").StringsVar(&command)
+		HelpCommand.Arg("command", "Show help on command.").StringsVar(&command)
 		// Make help first command.
 		l := len(a.commandOrder)
 		a.commandOrder = append(a.commandOrder[l-1:l], a.commandOrder[:l-1]...)

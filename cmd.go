@@ -14,7 +14,7 @@ type cmdGroup struct {
 
 func (c *cmdGroup) defaultSubcommand() *CmdClause {
 	for _, cmd := range c.commandOrder {
-		if cmd._default {
+		if cmd.isDefault {
 			return cmd
 		}
 	}
@@ -52,7 +52,7 @@ func (c *cmdGroup) init() error {
 	}
 	defaults := []string{}
 	for _, cmd := range c.commandOrder {
-		if cmd._default {
+		if cmd.isDefault {
 			defaults = append(defaults, cmd.name)
 		}
 		if seen[cmd.name] {
@@ -85,7 +85,7 @@ type CmdClause struct {
 	app       *Application
 	name      string
 	help      string
-	_default  bool
+	isDefault bool
 	validator CmdClauseValidator
 	hidden    bool
 }
@@ -125,7 +125,7 @@ func (c *CmdClause) Command(name, help string) *CmdClause {
 
 // Default makes this command the default if commands don't match.
 func (c *CmdClause) Default() *CmdClause {
-	c._default = true
+	c.isDefault = true
 	return c
 }
 

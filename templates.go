@@ -9,7 +9,7 @@ var DefaultUsageTemplate = `{{define "FormatCommand"}}\
 {{define "FormatCommands"}}\
 {{range .FlattenedCommands}}\
 {{if not .Hidden}}\
-  {{.FullCommand}}{{template "FormatCommand" .}}
+  {{.FullCommand}}{{if .Default}}*{{end}}{{template "FormatCommand" .}}
 {{.Help|Wrap 4}}
 {{end}}\
 {{end}}\
@@ -56,7 +56,7 @@ var SeparateOptionalFlagsUsageTemplate = `{{define "FormatCommand"}}\
 {{define "FormatCommands"}}\
 {{range .FlattenedCommands}}\
 {{if not .Hidden}}\
-  {{.FullCommand}}{{template "FormatCommand" .}}
+  {{.FullCommand}}{{if .Default}}*{{end}}{{template "FormatCommand" .}}
 {{.Help|Wrap 4}}
 {{end}}\
 {{end}}\
@@ -107,7 +107,7 @@ var CompactUsageTemplate = `{{define "FormatCommand"}}\
 {{define "FormatCommandList"}}\
 {{range .}}\
 {{if not .Hidden}}\
-{{.Depth|Indent}}{{.Name}}{{template "FormatCommand" .}}
+{{.Depth|Indent}}{{.Name}}{{if .Default}}*{{end}}{{template "FormatCommand" .}}
 {{end}}\
 {{template "FormatCommandList" .Commands}}\
 {{end}}\
@@ -158,7 +158,7 @@ var ManPageTemplate = `{{define "FormatFlags"}}\
 
 {{define "FormatCommand"}}\
 {{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
+{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}{{if .Default}}*{{end}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
 {{end}}\
 
 {{define "FormatCommands"}}\

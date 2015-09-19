@@ -210,6 +210,7 @@ func (c *CmdClause) Model() *CmdModel {
 		Help:           c.help,
 		Depth:          depth,
 		Hidden:         c.hidden,
+		Default:        c.isDefault,
 		FullCommand:    c.FullCommand(),
 		FlagGroupModel: c.flagGroup.Model(),
 		ArgGroupModel:  c.argGroup.Model(),
