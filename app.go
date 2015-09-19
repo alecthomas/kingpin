@@ -38,6 +38,10 @@ type Application struct {
 	noInterspersed bool             // can flags be interspersed with args (or must they come first)
 }
 
+var (
+	HelpFlag *FlagClause
+)
+
 // New creates a new Kingpin application instance.
 func New(name, help string) *Application {
 	a := &Application{
@@ -50,7 +54,8 @@ func New(name, help string) *Application {
 		terminate:     os.Exit,
 	}
 	a.cmdGroup = newCmdGroup(a)
-	a.Flag("help", "Show help (also see --help-long and --help-man).").Bool()
+	HelpFlag = a.Flag("help", "Show help (also see --help-long and --help-man).")
+	HelpFlag.Bool()
 	a.Flag("help-long", "Generate long help.").Hidden().PreAction(a.generateLongHelp).Bool()
 	a.Flag("help-man", "Generate a man page.").Hidden().PreAction(a.generateManPage).Bool()
 	return a
@@ -172,7 +177,7 @@ func (a *Application) findCommandFromArgs(args []string) (command string, err er
 		return "", err
 	}
 	context := tokenize(args)
-	if err := a.parse(context); err != nil {
+	if _, err := a.parse(context); err != nil {
 		return "", err
 	}
 	return a.findCommandFromContext(context), nil

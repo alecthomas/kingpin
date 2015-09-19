@@ -282,6 +282,7 @@ func parse(context *ParseContext, app *Application) (err error) {
 	context.mergeArgs(app.argGroup)
 
 	cmds := app.cmdGroup
+	help := false
 
 loop:
 	for !context.EOL() {
@@ -289,13 +290,15 @@ loop:
 
 		switch token.Type {
 		case TokenLong, TokenShort:
-			if err := context.flags.parse(context); err != nil {
+			if flag, err := context.flags.parse(context); err != nil {
 				if cmd := cmds.defaultSubcommand(); cmd != nil {
 					context.matchedCmd(cmd)
 					cmds = cmd.cmdGroup
 					break
 				}
 				return err
+			} else if flag == HelpFlag {
+				help = true
 			}
 
 		case TokenArg:
@@ -335,7 +338,7 @@ loop:
 	}
 
 	// Move to innermost default command.
-	for {
+	for !help {
 		if cmd := cmds.defaultSubcommand(); cmd != nil {
 			context.matchedCmd(cmd)
 			cmds = cmd.cmdGroup

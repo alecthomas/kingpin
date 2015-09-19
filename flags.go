@@ -49,7 +49,7 @@ func (f *flagGroup) init() error {
 	return nil
 }
 
-func (f *flagGroup) parse(context *ParseContext) error {
+func (f *flagGroup) parse(context *ParseContext) (*FlagClause, error) {
 	var token *Token
 
 loop:
@@ -74,12 +74,12 @@ loop:
 				}
 				flag, ok = f.long[name]
 				if !ok {
-					return fmt.Errorf("unknown long flag '%s'", flagToken)
+					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
 				}
 			} else {
 				flag, ok = f.short[name]
 				if !ok {
-					return fmt.Errorf("unknown short flag '%s'", flagToken)
+					return nil, fmt.Errorf("unknown short flag '%s'", flagToken)
 				}
 			}
 
@@ -95,24 +95,25 @@ loop:
 			} else {
 				if invert {
 					context.Push(token)
-					return fmt.Errorf("unknown long flag '%s'", flagToken)
+					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
 				}
 				token = context.Peek()
 				if token.Type != TokenArg {
 					context.Push(token)
-					return fmt.Errorf("expected argument for flag '%s'", flagToken)
+					return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
 				}
 				context.Next()
 				defaultValue = token.Value
 			}
 
 			context.matchedFlag(flag, defaultValue)
+			return flag, nil
 
 		default:
 			break loop
 		}
 	}
-	return nil
+	return nil, nil
 }
 
 func (f *flagGroup) visibleFlags() int {
