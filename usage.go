@@ -18,7 +18,7 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 	// Find size of first column.
 	s := 0
 	for _, row := range rows {
-		if c := len(row[0]); c > s && c < 20 {
+		if c := len(row[0]); c > s && c < 30 {
 			s = c
 		}
 	}
@@ -31,7 +31,7 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 		doc.ToText(buf, row[1], "", preIndent, width-s-padding-indent)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
 		fmt.Fprintf(w, "%s%-*s%*s", indentStr, s, row[0], padding, "")
-		if len(row[0]) >= 20 {
+		if len(row[0]) >= 30 {
 			fmt.Fprintf(w, "\n%s%s", indentStr, offsetStr)
 		}
 		fmt.Fprintf(w, "%s\n", lines[0])
@@ -73,12 +73,17 @@ func formatCmdUsage(app *ApplicationModel, cmd *CmdModel) string {
 	return strings.Join(s, " ")
 }
 
-func formatFlag(flag *FlagModel) string {
+func formatFlag(haveShort bool, flag *FlagModel) string {
 	flagString := ""
 	if flag.Short != 0 {
-		flagString += fmt.Sprintf("-%c, ", flag.Short)
+		flagString += fmt.Sprintf("-%c, --%s", flag.Short, flag.Name)
+	} else {
+		if haveShort {
+			flagString += fmt.Sprintf("    --%s", flag.Name)
+		} else {
+			flagString += fmt.Sprintf("--%s", flag.Name)
+		}
 	}
-	flagString += fmt.Sprintf("--%s", flag.Name)
 	if !flag.IsBoolFlag() {
 		flagString += fmt.Sprintf("=%s", flag.FormatPlaceHolder())
 	}
@@ -119,9 +124,16 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 		"FormatFlag": formatFlag,
 		"FlagsToTwoColumns": func(f []*FlagModel) [][2]string {
 			rows := [][2]string{}
+			haveShort := false
+			for _, flag := range f {
+				if flag.Short != 0 {
+					haveShort = true
+					break
+				}
+			}
 			for _, flag := range f {
 				if !flag.Hidden {
-					rows = append(rows, [2]string{formatFlag(flag), flag.Help})
+					rows = append(rows, [2]string{formatFlag(haveShort, flag), flag.Help})
 				}
 			}
 			return rows
