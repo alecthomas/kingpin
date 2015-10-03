@@ -21,7 +21,11 @@ func (f *FlagGroupModel) FlagSummary() string {
 		}
 		if flag.Required {
 			if flag.IsBoolFlag() {
-				out = append(out, fmt.Sprintf("--[no-]%s", flag.Name))
+				name := flag.Name
+				if strings.HasPrefix(name, "no-") {
+					name = name[3:]
+				}
+				out = append(out, fmt.Sprintf("--[no-]%s", name))
 			} else {
 				out = append(out, fmt.Sprintf("--%s=%s", flag.Name, flag.FormatPlaceHolder()))
 			}
