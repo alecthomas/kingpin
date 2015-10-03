@@ -68,13 +68,18 @@ loop:
 
 			name := token.Value
 			if token.Type == TokenLong {
-				if strings.HasPrefix(name, "no-") {
-					name = name[3:]
-					invert = true
-				}
 				flag, ok = f.long[name]
 				if !ok {
-					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+					if strings.HasPrefix(name, "no-") {
+						name = name[3:]
+					} else {
+						name = "no-" + name
+					}
+					invert = true
+					flag, ok = f.long[name]
+					if !ok {
+						return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+					}
 				}
 			} else {
 				flag, ok = f.short[name]

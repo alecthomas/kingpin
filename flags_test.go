@@ -38,6 +38,20 @@ func TestNegateNonBool(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestExplicityNoBool(t *testing.T) {
+	app := New("test", "")
+	b := app.Flag("no-something", "").Bool()
+	_, err := app.Parse([]string{"--no-something"})
+	assert.NoError(t, err)
+	assert.True(t, *b)
+	_, err = app.Parse([]string{"--no-no-something"})
+	assert.NoError(t, err)
+	assert.False(t, *b)
+	_, err = app.Parse([]string{"--something"})
+	assert.NoError(t, err)
+	assert.False(t, *b)
+}
+
 func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
 	app := New("test", "")
 	app.Flag("a", "").Default("invalid").Bool()
