@@ -22,7 +22,7 @@ func TestNoBool(t *testing.T) {
 	f := fg.Flag("b", "").Default("true")
 	b := f.Bool()
 	fg.init()
-	tokens := tokenize([]string{"--no-b"})
+	tokens := tokenize([]string{"--no-b"}, false)
 	_, err := fg.parse(tokens)
 	assert.NoError(t, err)
 	assert.False(t, *b)
@@ -33,7 +33,7 @@ func TestNegateNonBool(t *testing.T) {
 	f := fg.Flag("b", "")
 	f.Int()
 	fg.init()
-	tokens := tokenize([]string{"--no-b"})
+	tokens := tokenize([]string{"--no-b"}, false)
 	_, err := fg.parse(tokens)
 	assert.Error(t, err)
 }
