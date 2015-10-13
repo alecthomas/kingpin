@@ -44,7 +44,7 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 // Usage writes application usage to w. It parses args to determine
 // appropriate help context, such as which command to show help for.
 func (a *Application) Usage(args []string) {
-	context, err := a.ParseContext(args)
+	context, err := a.parseContext(true, args)
 	a.FatalIfError(err, "")
 	if err := a.UsageForContextWithTemplate(context, 2, a.usageTemplate); err != nil {
 		panic(err)

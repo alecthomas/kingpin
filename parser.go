@@ -87,6 +87,7 @@ type ParseElement struct {
 // any).
 type ParseContext struct {
 	SelectedCommand *CmdClause
+	ignoreDefault   bool
 	argsOnly        bool
 	peek            []*Token
 	argi            int // Index of current command-line arg we're processing.
@@ -120,11 +121,12 @@ func (p *ParseContext) HasTrailingArgs() bool {
 	return len(p.args) > 0
 }
 
-func tokenize(args []string) *ParseContext {
+func tokenize(args []string, ignoreDefault bool) *ParseContext {
 	return &ParseContext{
-		args:      args,
-		flags:     newFlagGroup(),
-		arguments: newArgGroup(),
+		ignoreDefault: ignoreDefault,
+		args:          args,
+		flags:         newFlagGroup(),
+		arguments:     newArgGroup(),
 	}
 }
 
@@ -282,7 +284,7 @@ func parse(context *ParseContext, app *Application) (err error) {
 	context.mergeArgs(app.argGroup)
 
 	cmds := app.cmdGroup
-	help := false
+	ignoreDefault := context.ignoreDefault
 
 loop:
 	for !context.EOL() {
@@ -291,7 +293,7 @@ loop:
 		switch token.Type {
 		case TokenLong, TokenShort:
 			if flag, err := context.flags.parse(context); err != nil {
-				if !help {
+				if !ignoreDefault {
 					if cmd := cmds.defaultSubcommand(); cmd != nil {
 						context.matchedCmd(cmd)
 						cmds = cmd.cmdGroup
@@ -300,7 +302,7 @@ loop:
 				}
 				return err
 			} else if flag == HelpFlag {
-				help = true
+				ignoreDefault = true
 			}
 
 		case TokenArg:
@@ -308,8 +310,9 @@ loop:
 				selectedDefault := false
 				cmd, ok := cmds.commands[token.String()]
 				if !ok {
-					if !help {
+					if !ignoreDefault {
 						if cmd = cmds.defaultSubcommand(); cmd != nil {
+							fmt.Println("defaulted")
 							selectedDefault = true
 						}
 					}
@@ -318,7 +321,7 @@ loop:
 					}
 				}
 				if cmd == HelpCommand {
-					help = true
+					ignoreDefault = true
 				}
 				context.matchedCmd(cmd)
 				cmds = cmd.cmdGroup
@@ -346,7 +349,7 @@ loop:
 	}
 
 	// Move to innermost default command.
-	for !help {
+	for !ignoreDefault {
 		if cmd := cmds.defaultSubcommand(); cmd != nil {
 			context.matchedCmd(cmd)
 			cmds = cmd.cmdGroup

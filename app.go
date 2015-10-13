@@ -110,10 +110,14 @@ func (a *Application) Validate(validator ApplicationValidator) *Application {
 // ParseContext parses the given command line and returns the fully populated
 // ParseContext.
 func (a *Application) ParseContext(args []string) (*ParseContext, error) {
+	return a.parseContext(false, args)
+}
+
+func (a *Application) parseContext(ignoreDefault bool, args []string) (*ParseContext, error) {
 	if err := a.init(); err != nil {
 		return nil, err
 	}
-	context := tokenize(args)
+	context := tokenize(args, ignoreDefault)
 	err := parse(context, a)
 	return context, err
 }
@@ -127,9 +131,6 @@ func (a *Application) ParseContext(args []string) (*ParseContext, error) {
 func (a *Application) Parse(args []string) (command string, err error) {
 	context, err := a.ParseContext(args)
 	if err != nil {
-		if a.hasHelp(args) {
-			a.writeUsage(context, err)
-		}
 		return "", err
 	}
 	a.maybeHelp(context)
@@ -153,15 +154,6 @@ func (a *Application) writeUsage(context *ParseContext, err error) {
 	a.terminate(1)
 }
 
-func (a *Application) hasHelp(args []string) bool {
-	for _, arg := range args {
-		if arg == "--help" {
-			return true
-		}
-	}
-	return false
-}
-
 func (a *Application) maybeHelp(context *ParseContext) {
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok && flag == HelpFlag {
@@ -175,7 +167,7 @@ func (a *Application) findCommandFromArgs(args []string) (command string, err er
 	if err := a.init(); err != nil {
 		return "", err
 	}
-	context := tokenize(args)
+	context := tokenize(args, false)
 	if _, err := a.parse(context); err != nil {
 		return "", err
 	}
@@ -250,8 +242,8 @@ func (a *Application) init() error {
 	// If we have subcommands, add a help command at the top-level.
 	if a.cmdGroup.have() {
 		var command []string
-		HelpCommand = a.Command("help", "Show help.").Action(func(c *ParseContext) error {
-			a.UsageForContext(c)
+		HelpCommand = a.Command("help", "Show help.").PreAction(func(context *ParseContext) error {
+			a.Usage(command)
 			a.terminate(0)
 			return nil
 		})
