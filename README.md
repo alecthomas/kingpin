@@ -2,7 +2,7 @@
 
 <!-- MarkdownTOC -->
 
-- [Overview](#overview)
+- [verview](#verview)
 - [Features](#features)
 - [User-visible changes between v1 and v2](#user-visible-changes-between-v1-and-v2)
   - [Flags can be used at any point after their definition.](#flags-can-be-used-at-any-point-after-their-definition)
@@ -22,11 +22,12 @@
   - [Default Values](#default-values)
   - [Place-holders in Help](#place-holders-in-help)
   - [Consuming all remaining arguments](#consuming-all-remaining-arguments)
+  - [Supporting -h for help](#supporting--h-for-help)
   - [Custom help](#custom-help)
 
 <!-- /MarkdownTOC -->
 
-## Overview
+## verview
 
 Kingpin is a [fluent-style](http://en.wikipedia.org/wiki/Fluent_interface),
 type-safe command-line parser. It supports flags, nested commands, and
@@ -490,6 +491,10 @@ And use it like so:
 ```go
 ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
 ```
+
+### Supporting -h for help
+
+`kingpin.CommandLine.HelpFlag.Short('-h')`
 
 ### Custom help
 

@@ -20,9 +20,11 @@ type Application struct {
 	*argGroup
 	*cmdGroup
 	actionMixin
-	initialized    bool
-	Name           string
-	Help           string
+	initialized bool
+
+	Name string
+	Help string
+
 	author         string
 	version        string
 	writer         io.Writer // Destination for usage and errors.
@@ -30,16 +32,14 @@ type Application struct {
 	validator      ApplicationValidator
 	terminate      func(status int) // See Terminate()
 	noInterspersed bool             // can flags be interspersed with args (or must they come first)
-}
 
-var (
-	// Global help flag. Exposed for user customisation.
+	// Help flag. Exposed for user customisation.
 	HelpFlag *FlagClause
-	// Top-level help command. Exposed for user customisation. May be nil.
+	// Help command. Exposed for user customisation. May be nil.
 	HelpCommand *CmdClause
-	// Global version flag. Exposed for user customisation. May be nil.
+	// Version flag. Exposed for user customisation. May be nil.
 	VersionFlag *FlagClause
-)
+}
 
 // New creates a new Kingpin application instance.
 func New(name, help string) *Application {
@@ -53,8 +53,8 @@ func New(name, help string) *Application {
 		terminate:     os.Exit,
 	}
 	a.cmdGroup = newCmdGroup(a)
-	HelpFlag = a.Flag("help", "Show context-sensitive help (also try --help-long and --help-man).")
-	HelpFlag.Bool()
+	a.HelpFlag = a.Flag("help", "Show context-sensitive help (also try --help-long and --help-man).")
+	a.HelpFlag.Bool()
 	a.Flag("help-long", "Generate long help.").Hidden().PreAction(a.generateLongHelp).Bool()
 	a.Flag("help-man", "Generate a man page.").Hidden().PreAction(a.generateManPage).Bool()
 	return a
@@ -188,12 +188,12 @@ func (a *Application) findCommandFromContext(context *ParseContext) string {
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
 	a.version = version
-	VersionFlag = a.Flag("version", "Show application version.").PreAction(func(*ParseContext) error {
+	a.VersionFlag = a.Flag("version", "Show application version.").PreAction(func(*ParseContext) error {
 		fmt.Fprintln(a.writer, version)
 		a.terminate(0)
 		return nil
 	})
-	VersionFlag.Bool()
+	a.VersionFlag.Bool()
 	return a
 }
 
@@ -242,12 +242,12 @@ func (a *Application) init() error {
 	// If we have subcommands, add a help command at the top-level.
 	if a.cmdGroup.have() {
 		var command []string
-		HelpCommand = a.Command("help", "Show help.").PreAction(func(context *ParseContext) error {
+		a.HelpCommand = a.Command("help", "Show help.").PreAction(func(context *ParseContext) error {
 			a.Usage(command)
 			a.terminate(0)
 			return nil
 		})
-		HelpCommand.Arg("command", "Show help on command.").StringsVar(&command)
+		a.HelpCommand.Arg("command", "Show help on command.").StringsVar(&command)
 		// Make help first command.
 		l := len(a.commandOrder)
 		a.commandOrder = append(a.commandOrder[l-1:l], a.commandOrder[:l-1]...)
