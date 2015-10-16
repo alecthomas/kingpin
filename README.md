@@ -2,7 +2,7 @@
 
 <!-- MarkdownTOC -->
 
-- [verview](#verview)
+- [Overview](#overview)
 - [Features](#features)
 - [User-visible changes between v1 and v2](#user-visible-changes-between-v1-and-v2)
   - [Flags can be used at any point after their definition.](#flags-can-be-used-at-any-point-after-their-definition)
@@ -27,7 +27,7 @@
 
 <!-- /MarkdownTOC -->
 
-## verview
+## Overview
 
 Kingpin is a [fluent-style](http://en.wikipedia.org/wiki/Fluent_interface),
 type-safe command-line parser. It supports flags, nested commands, and
