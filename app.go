@@ -44,7 +44,6 @@ type Application struct {
 // New creates a new Kingpin application instance.
 func New(name, help string) *Application {
 	a := &Application{
-		flagGroup:     newFlagGroup(),
 		argGroup:      newArgGroup(),
 		Name:          name,
 		Help:          help,
@@ -52,6 +51,7 @@ func New(name, help string) *Application {
 		usageTemplate: DefaultUsageTemplate,
 		terminate:     os.Exit,
 	}
+	a.flagGroup = newFlagGroup(a)
 	a.cmdGroup = newCmdGroup(a)
 	a.HelpFlag = a.Flag("help", "Show context-sensitive help (also try --help-long and --help-man).")
 	a.HelpFlag.Bool()

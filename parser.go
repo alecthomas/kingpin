@@ -125,7 +125,7 @@ func tokenize(args []string, ignoreDefault bool) *ParseContext {
 	return &ParseContext{
 		ignoreDefault: ignoreDefault,
 		args:          args,
-		flags:         newFlagGroup(),
+		flags:         newFlagGroup(nil),
 		arguments:     newArgGroup(),
 	}
 }

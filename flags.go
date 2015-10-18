@@ -7,15 +7,17 @@ import (
 )
 
 type flagGroup struct {
-	short     map[string]*FlagClause
-	long      map[string]*FlagClause
-	flagOrder []*FlagClause
+	application *Application
+	short       map[string]*FlagClause
+	long        map[string]*FlagClause
+	flagOrder   []*FlagClause
 }
 
-func newFlagGroup() *flagGroup {
+func newFlagGroup(a *Application) *flagGroup {
 	return &flagGroup{
-		short: make(map[string]*FlagClause),
-		long:  make(map[string]*FlagClause),
+		application: a,
+		short:       make(map[string]*FlagClause),
+		long:        make(map[string]*FlagClause),
 	}
 }
 
@@ -31,7 +33,7 @@ func (f *flagGroup) merge(o *flagGroup) {
 
 // Flag defines a new flag with the given long name and help.
 func (f *flagGroup) Flag(name, help string) *FlagClause {
-	flag := newFlag(name, help)
+	flag := newFlag(f.application, name, help)
 	f.long[name] = flag
 	f.flagOrder = append(f.flagOrder, flag)
 	return flag
@@ -129,6 +131,7 @@ func (f *flagGroup) visibleFlags() int {
 // FlagClause is a fluid interface used to build flags.
 type FlagClause struct {
 	parserMixin
+	application  *Application
 	actionMixin
 	name         string
 	shorthand    byte
@@ -139,10 +142,11 @@ type FlagClause struct {
 	hidden       bool
 }
 
-func newFlag(name, help string) *FlagClause {
+func newFlag(app *Application, name, help string) *FlagClause {
 	f := &FlagClause{
-		name: name,
-		help: help,
+		application: app,
+		name:        name,
+		help:        help,
 	}
 	return f
 }
@@ -200,6 +204,17 @@ func (f *FlagClause) Default(value string) *FlagClause {
 // environment variable, if available.
 func (f *FlagClause) OverrideDefaultFromEnvar(envar string) *FlagClause {
 	f.envar = envar
+	return f
+}
+
+func envarize(name string) string {
+	return strings.Replace(strings.ToUpper(name), "-", "_", -1)
+}
+
+// OverrideDefaultFromEnv overrides the default value for a flag from an
+// environment variable named after the app and flag name, if available.
+func (f *FlagClause) OverrideDefaultFromEnv() *FlagClause {
+	f.envar = envarize(f.application.Name) + "_" + envarize(f.name)
 	return f
 }
 
