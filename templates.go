@@ -236,9 +236,9 @@ Commands:
 var BashCompletionTemplate = `
 #!/usr/bin/env bash
 
-# bash completion for kingpin programs
+# bash completion for {{.App.Name}}
 
-__kingpin_generate_completion()
+__kingpin_{{.App.Name}}_generate_completion()
 {
   declare current_word
   current_word="${COMP_WORDS[COMP_CWORD]}"
@@ -246,7 +246,7 @@ __kingpin_generate_completion()
   return 0
 }
 
-__kingpin_commands ()
+__kingpin_{{.App.Name}}_commands ()
 {
   declare current_word
   declare command
@@ -271,26 +271,26 @@ __kingpin_commands ()
     else
 
       case "${current_word}" in
-      -*)     __kingpin_options ;;
-      *)      __kingpin_generate_completion "$COMMANDS" ;;
+      -*)     __kingpin_{{.App.Name}}_options ;;
+      *)      __kingpin_{{.App.Name}}_generate_completion "$COMMANDS" ;;
       esac
 
     fi
 }
 
-__kingpin_options ()
+__kingpin_{{.App.Name}}_options ()
 {
   OPTIONS=''
-  __kingpin_generate_completion "$OPTIONS"
+  __kingpin_{{.App.Name}}_generate_completion "$OPTIONS"
 }
 
-__kingpin ()
+__kingpin_{{.App.Name}} ()
 {
   declare previous_word
   previous_word="${COMP_WORDS[COMP_CWORD-1]}"
 
   case "$previous_word" in
-  *)              __kingpin_commands ;;
+  *)              __kingpin_{{.App.Name}}_commands ;;
   esac
 
   return 0
@@ -303,5 +303,5 @@ if [[ -n ${ZSH_VERSION-} ]]; then
 	autoload -U +X bashcompinit && bashcompinit
 fi
 
-complete -o default -o nospace -F __kingpin {{.App.Name}}
+complete -o default -o nospace -F __kingpin_{{.App.Name}} {{.App.Name}}
 `
