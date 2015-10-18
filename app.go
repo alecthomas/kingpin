@@ -57,6 +57,7 @@ func New(name, help string) *Application {
 	a.HelpFlag.Bool()
 	a.Flag("help-long", "Generate long help.").Hidden().PreAction(a.generateLongHelp).Bool()
 	a.Flag("help-man", "Generate a man page.").Hidden().PreAction(a.generateManPage).Bool()
+	a.Flag("help-bash-completion", "Generate bash completion.").Hidden().PreAction(a.generateBashCompletion).Bool()
 	return a
 }
 
@@ -72,6 +73,15 @@ func (a *Application) generateLongHelp(c *ParseContext) error {
 func (a *Application) generateManPage(c *ParseContext) error {
 	a.Writer(os.Stdout)
 	if err := a.UsageForContextWithTemplate(c, 2, ManPageTemplate); err != nil {
+		return err
+	}
+	a.terminate(0)
+	return nil
+}
+
+func (a *Application) generateBashCompletion(c *ParseContext) error {
+	a.Writer(os.Stdout)
+	if err := a.UsageForContextWithTemplate(c, 2, BashCompletionTemplate); err != nil {
 		return err
 	}
 	a.terminate(0)
