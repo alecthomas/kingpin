@@ -18,7 +18,7 @@ func TestBool(t *testing.T) {
 }
 
 func TestNoBool(t *testing.T) {
-	fg := newFlagGroup()
+	fg := newFlagGroup(nil)
 	f := fg.Flag("b", "").Default("true")
 	b := f.Bool()
 	fg.init()
@@ -29,7 +29,7 @@ func TestNoBool(t *testing.T) {
 }
 
 func TestNegateNonBool(t *testing.T) {
-	fg := newFlagGroup()
+	fg := newFlagGroup(nil)
 	f := fg.Flag("b", "")
 	f.Int()
 	fg.init()

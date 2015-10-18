@@ -92,13 +92,13 @@ type CmdClause struct {
 
 func newCommand(app *Application, name, help string) *CmdClause {
 	c := &CmdClause{
-		flagGroup: newFlagGroup(),
-		argGroup:  newArgGroup(),
-		cmdGroup:  newCmdGroup(app),
-		app:       app,
-		name:      name,
-		help:      help,
+		argGroup: newArgGroup(),
+		cmdGroup: newCmdGroup(app),
+		app:      app,
+		name:     name,
+		help:     help,
 	}
+	c.flagGroup = newFlagGroup(app)
 	return c
 }
 
