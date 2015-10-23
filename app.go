@@ -156,7 +156,7 @@ func (a *Application) writeUsage(context *ParseContext, err error) {
 
 func (a *Application) maybeHelp(context *ParseContext) {
 	for _, element := range context.Elements {
-		if flag, ok := element.Clause.(*FlagClause); ok && flag == HelpFlag {
+		if flag, ok := element.Clause.(*FlagClause); ok && flag == a.HelpFlag {
 			a.writeUsage(context, nil)
 		}
 	}
