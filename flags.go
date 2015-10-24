@@ -37,8 +37,11 @@ func (f *flagGroup) Flag(name, help string) *FlagClause {
 	return flag
 }
 
-func (f *flagGroup) init() error {
+func (f *flagGroup) init(defaultEnvarPrefix string) error {
 	for _, flag := range f.long {
+		if defaultEnvarPrefix != "" && !flag.noEnvar && flag.envar == "" {
+			flag.envar = envarTransform(defaultEnvarPrefix + "_" + flag.name)
+		}
 		if err := flag.init(); err != nil {
 			return err
 		}
@@ -134,6 +137,7 @@ type FlagClause struct {
 	shorthand    byte
 	help         string
 	envar        string
+	noEnvar      bool
 	defaultValue string
 	placeholder  string
 	hidden       bool
@@ -171,7 +175,7 @@ func (f *FlagClause) init() error {
 	if f.value == nil {
 		return fmt.Errorf("no type defined for --%s (eg. .String())", f.name)
 	}
-	if f.envar != "" {
+	if !f.noEnvar && f.envar != "" {
 		if v := os.Getenv(f.envar); v != "" {
 			f.defaultValue = v
 		}
@@ -196,10 +200,24 @@ func (f *FlagClause) Default(value string) *FlagClause {
 	return f
 }
 
-// OverrideDefaultFromEnvar overrides the default value for a flag from an
-// environment variable, if available.
+// DEPRECATED: Use Envar(name) instead.
 func (f *FlagClause) OverrideDefaultFromEnvar(envar string) *FlagClause {
-	f.envar = envar
+	return f.Envar(envar)
+}
+
+// Envar overrides the default value for a flag from an environment variable,
+// if it is set.
+func (f *FlagClause) Envar(name string) *FlagClause {
+	f.envar = name
+	f.noEnvar = false
+	return f
+}
+
+// NoEnvar forces environment variable defaults to be disabled for this flag.
+// Most useful in conjunction with app.DefaultEnvars().
+func (f *FlagClause) NoEnvar() *FlagClause {
+	f.envar = ""
+	f.noEnvar = true
 	return f
 }
 

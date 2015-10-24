@@ -195,3 +195,15 @@ func TestInterspersedTrue(t *testing.T) {
 		assert.Equal(t, "flag", *f1)
 	}
 }
+
+func TestDefaultEnvars(t *testing.T) {
+	a := New("some-app", "").DefaultEnvars()
+	f0 := a.Flag("some-flag", "")
+	f0.Bool()
+	f1 := a.Flag("some-other-flag", "").NoEnvar()
+	f1.Bool()
+	_, err := a.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "SOME_APP_SOME_FLAG", f0.envar)
+	assert.Equal(t, "", f1.envar)
+}

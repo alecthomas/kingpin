@@ -140,7 +140,7 @@ func (c *CmdClause) PreAction(action Action) *CmdClause {
 }
 
 func (c *CmdClause) init() error {
-	if err := c.flagGroup.init(); err != nil {
+	if err := c.flagGroup.init(c.app.defaultEnvarPrefix()); err != nil {
 		return err
 	}
 	if c.argGroup.have() && c.cmdGroup.have() {

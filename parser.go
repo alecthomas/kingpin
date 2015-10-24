@@ -312,7 +312,6 @@ loop:
 				if !ok {
 					if !ignoreDefault {
 						if cmd = cmds.defaultSubcommand(); cmd != nil {
-							fmt.Println("defaulted")
 							selectedDefault = true
 						}
 					}

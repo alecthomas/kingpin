@@ -4,11 +4,16 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 )
 
 var (
 	ErrCommandNotSpecified = fmt.Errorf("command not specified")
+)
+
+var (
+	envarTransformRegexp = regexp.MustCompile(`[^a-zA-Z_]+`)
 )
 
 type ApplicationValidator func(*Application) error
@@ -32,6 +37,7 @@ type Application struct {
 	validator      ApplicationValidator
 	terminate      func(status int) // See Terminate()
 	noInterspersed bool             // can flags be interspersed with args (or must they come first)
+	defaultEnvars  bool
 
 	// Help flag. Exposed for user customisation.
 	HelpFlag *FlagClause
@@ -76,6 +82,16 @@ func (a *Application) generateManPage(c *ParseContext) error {
 	}
 	a.terminate(0)
 	return nil
+}
+
+// DefaultEnvars configures all flags (that do not already have an associated
+// envar) to use a default environment variable in the form "<app>_<flag>".
+//
+// For example, if the application is named "foo" and a flag is named "bar-
+// waz" the environment variable: "FOO_BAR_WAZ".
+func (a *Application) DefaultEnvars() *Application {
+	a.defaultEnvars = true
+	return a
 }
 
 // Terminate specifies the termination handler. Defaults to os.Exit(status).
@@ -231,6 +247,13 @@ func (a *Application) Interspersed(interspersed bool) *Application {
 	return a
 }
 
+func (a *Application) defaultEnvarPrefix() string {
+	if a.defaultEnvars {
+		return a.Name
+	}
+	return ""
+}
+
 func (a *Application) init() error {
 	if a.initialized {
 		return nil
@@ -253,7 +276,7 @@ func (a *Application) init() error {
 		a.commandOrder = append(a.commandOrder[l-1:l], a.commandOrder[:l-1]...)
 	}
 
-	if err := a.flagGroup.init(); err != nil {
+	if err := a.flagGroup.init(a.defaultEnvarPrefix()); err != nil {
 		return err
 	}
 	if err := a.cmdGroup.init(); err != nil {
@@ -533,4 +556,8 @@ func (a *Application) FatalIfError(err error, format string, args ...interface{}
 		a.Errorf(prefix+"%s", err)
 		a.terminate(1)
 	}
+}
+
+func envarTransform(name string) string {
+	return strings.ToUpper(envarTransformRegexp.ReplaceAllString(name, "_"))
 }
