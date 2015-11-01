@@ -118,7 +118,7 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 		"Wrap": func(indent int, s string) string {
 			buf := bytes.NewBuffer(nil)
 			indentText := strings.Repeat(" ", indent)
-			doc.ToText(buf, s, indentText, indentText, width)
+			doc.ToText(buf, s, indentText, indentText, width-indent)
 			return buf.String()
 		},
 		"FormatFlag": formatFlag,
