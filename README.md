@@ -494,7 +494,7 @@ ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
 
 ### Supporting -h for help
 
-`kingpin.CommandLine.HelpFlag.Short('-h')`
+`kingpin.CommandLine.HelpFlag.Short('h')`
 
 ### Custom help
 
