@@ -116,6 +116,7 @@ func (c *CmdGroupModel) FlattenedCommands() (out []*CmdModel) {
 
 type CmdModel struct {
 	Name        string
+	Aliases     []string
 	Help        string
 	FullCommand string
 	Depth       int
@@ -207,6 +208,7 @@ func (c *CmdClause) Model() *CmdModel {
 	}
 	return &CmdModel{
 		Name:           c.name,
+		Aliases:        c.aliases,
 		Help:           c.help,
 		Depth:          depth,
 		Hidden:         c.hidden,

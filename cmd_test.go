@@ -110,7 +110,7 @@ func TestNestedCommandWithArgAndMergedFlags(t *testing.T) {
 }
 
 func TestDefaultSubcommandEOL(t *testing.T) {
-	app := New("app", "").Terminate(nil)
+	app := newTestApp()
 	c0 := app.Command("c0", "").Default()
 	c0.Command("c01", "").Default()
 	c0.Command("c02", "")
@@ -121,7 +121,7 @@ func TestDefaultSubcommandEOL(t *testing.T) {
 }
 
 func TestDefaultSubcommandWithArg(t *testing.T) {
-	app := New("app", "").Terminate(nil)
+	app := newTestApp()
 	c0 := app.Command("c0", "").Default()
 	c01 := c0.Command("c01", "").Default()
 	c012 := c01.Command("c012", "").Default()
@@ -135,7 +135,7 @@ func TestDefaultSubcommandWithArg(t *testing.T) {
 }
 
 func TestDefaultSubcommandWithFlags(t *testing.T) {
-	app := New("app", "").Terminate(nil)
+	app := newTestApp()
 	c0 := app.Command("c0", "").Default()
 	_ = c0.Flag("f0", "").Int()
 	c0c1 := c0.Command("c1", "").Default()
@@ -149,9 +149,28 @@ func TestDefaultSubcommandWithFlags(t *testing.T) {
 }
 
 func TestMultipleDefaultCommands(t *testing.T) {
-	app := New("app", "").Terminate(nil)
+	app := newTestApp()
 	app.Command("c0", "").Default()
 	app.Command("c1", "").Default()
 	_, err := app.Parse([]string{})
+	assert.Error(t, err)
+}
+
+func TestAliasedCommand(t *testing.T) {
+	app := newTestApp()
+	app.Command("one", "").Alias("two")
+	selected, _ := app.Parse([]string{"one"})
+	assert.Equal(t, "one", selected)
+	selected, _ = app.Parse([]string{"two"})
+	assert.Equal(t, "one", selected)
+	// 2 due to "help" and "one"
+	assert.Equal(t, 2, len(app.Model().FlattenedCommands()))
+}
+
+func TestDuplicateAlias(t *testing.T) {
+	app := newTestApp()
+	app.Command("one", "")
+	app.Command("two", "").Alias("one")
+	_, err := app.Parse([]string{"one"})
 	assert.Error(t, err)
 }

@@ -9,8 +9,12 @@ import (
 	"time"
 )
 
+func newTestApp() *Application {
+	return New("test", "").Terminate(nil)
+}
+
 func TestCommander(t *testing.T) {
-	c := New("test", "test")
+	c := newTestApp()
 	ping := c.Command("ping", "Ping an IP address.")
 	pingTTL := ping.Flag("ttl", "TTL for ICMP packets").Short('t').Default("5s").Duration()
 
@@ -26,7 +30,7 @@ func TestCommander(t *testing.T) {
 }
 
 func TestRequiredFlags(t *testing.T) {
-	c := New("test", "test")
+	c := newTestApp()
 	c.Flag("a", "a").String()
 	c.Flag("b", "b").Required().String()
 
@@ -37,14 +41,14 @@ func TestRequiredFlags(t *testing.T) {
 }
 
 func TestInvalidDefaultFlagValueErrors(t *testing.T) {
-	c := New("test", "test")
+	c := newTestApp()
 	c.Flag("foo", "foo").Default("a").Int()
 	_, err := c.Parse([]string{})
 	assert.Error(t, err)
 }
 
 func TestInvalidDefaultArgValueErrors(t *testing.T) {
-	c := New("test", "test")
+	c := newTestApp()
 	cmd := c.Command("cmd", "cmd")
 	cmd.Arg("arg", "arg").Default("one").Int()
 	_, err := c.Parse([]string{"cmd"})
@@ -52,7 +56,7 @@ func TestInvalidDefaultArgValueErrors(t *testing.T) {
 }
 
 func TestArgsRequiredAfterNonRequiredErrors(t *testing.T) {
-	c := New("test", "test")
+	c := newTestApp()
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").String()
 	cmd.Arg("b", "b").Required().String()
@@ -61,7 +65,7 @@ func TestArgsRequiredAfterNonRequiredErrors(t *testing.T) {
 }
 
 func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
-	c := New("test", "test").Terminate(nil).Writer(ioutil.Discard)
+	c := newTestApp().Writer(ioutil.Discard)
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").Required().String()
 	cmd.Arg("b", "b").Required().String()
@@ -87,7 +91,7 @@ func TestDispatchCallbackIsCalled(t *testing.T) {
 }
 
 func TestTopLevelArgWorks(t *testing.T) {
-	c := New("test", "test")
+	c := newTestApp()
 	s := c.Arg("arg", "help").String()
 	_, err := c.Parse([]string{"foo"})
 	assert.NoError(t, err)
@@ -95,7 +99,7 @@ func TestTopLevelArgWorks(t *testing.T) {
 }
 
 func TestTopLevelArgCantBeUsedWithCommands(t *testing.T) {
-	c := New("test", "test")
+	c := newTestApp()
 	c.Arg("arg", "help").String()
 	c.Command("cmd", "help")
 	_, err := c.Parse([]string{})
@@ -103,14 +107,14 @@ func TestTopLevelArgCantBeUsedWithCommands(t *testing.T) {
 }
 
 func TestTooManyArgs(t *testing.T) {
-	a := New("test", "test")
+	a := newTestApp()
 	a.Arg("a", "").String()
 	_, err := a.Parse([]string{"a", "b"})
 	assert.Error(t, err)
 }
 
 func TestTooManyArgsAfterCommand(t *testing.T) {
-	a := New("test", "test")
+	a := newTestApp()
 	a.Command("a", "")
 	assert.NoError(t, a.init())
 	_, err := a.Parse([]string{"a", "b"})

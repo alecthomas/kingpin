@@ -59,6 +59,12 @@ func (c *cmdGroup) init() error {
 			return fmt.Errorf("duplicate command %q", cmd.name)
 		}
 		seen[cmd.name] = true
+		for _, alias := range cmd.aliases {
+			if seen[alias] {
+				return fmt.Errorf("alias duplicates existing command %q", alias)
+			}
+			c.commands[alias] = cmd
+		}
 		if err := cmd.init(); err != nil {
 			return err
 		}
@@ -84,6 +90,7 @@ type CmdClause struct {
 	*cmdGroup
 	app       *Application
 	name      string
+	aliases   []string
 	help      string
 	isDefault bool
 	validator CmdClauseValidator
@@ -99,6 +106,12 @@ func newCommand(app *Application, name, help string) *CmdClause {
 		name:      name,
 		help:      help,
 	}
+	return c
+}
+
+// Add an Alias for this command.
+func (c *CmdClause) Alias(name string) *CmdClause {
+	c.aliases = append(c.aliases, name)
 	return c
 }
 
