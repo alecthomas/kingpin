@@ -44,3 +44,11 @@ func TestEnumVar(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "one", a)
 }
+
+func TestCounter(t *testing.T) {
+	app := New("", "")
+	c := app.Flag("f", "").Counter()
+	_, err := app.Parse([]string{"--f", "--f", "--f"})
+	assert.NoError(t, err)
+	assert.Equal(t, 3, *c)
+}

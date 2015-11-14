@@ -199,3 +199,14 @@ func (p *parserMixin) Enums(options ...string) (target *[]string) {
 func (p *parserMixin) EnumsVar(target *[]string, options ...string) {
 	p.SetValue(newEnumsFlag(target, options...))
 }
+
+// A Counter increments a number each time it is encountered.
+func (p *parserMixin) Counter() (target *int) {
+	target = new(int)
+	p.CounterVar(target)
+	return
+}
+
+func (p *parserMixin) CounterVar(target *int) {
+	p.SetValue(newCounterValue(target))
+}

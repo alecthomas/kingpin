@@ -422,3 +422,18 @@ func newExistingDirValue(target *string) *fileStatValue {
 func newExistingFileOrDirValue(target *string) *fileStatValue {
 	return newFileStatValue(target, func(s os.FileInfo) error { return nil })
 }
+
+type counterValue int
+
+func newCounterValue(n *int) *counterValue {
+	return (*counterValue)(n)
+}
+
+func (c *counterValue) Set(s string) error {
+	*c++
+	return nil
+}
+
+func (c *counterValue) Get() interface{} { return (int)(*c) }
+func (c *counterValue) IsBoolFlag() bool { return true }
+func (c *counterValue) String() string   { return fmt.Sprintf("%d", *c) }
