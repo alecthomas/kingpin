@@ -3,6 +3,7 @@ package kingpin
 import (
 	"fmt"
 	"net"
+	"regexp"
 	"strconv"
 	"time"
 )
@@ -619,4 +620,15 @@ func (p *parserMixin) ExistingFilesOrDirs() (target *[]string) {
 
 func (p *parserMixin) ExistingFilesOrDirsVar(target *[]string) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newExistingFileOrDirValue(v.(*string)) }))
+}
+
+// RegexpList accumulates *regexp.Regexp values into a slice.
+func (p *parserMixin) RegexpList() (target *[]*regexp.Regexp) {
+	target = new([]*regexp.Regexp)
+	p.RegexpListVar(target)
+	return
+}
+
+func (p *parserMixin) RegexpListVar(target *[]*regexp.Regexp) {
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newRegexpValue(v.(**regexp.Regexp)) }))
 }
