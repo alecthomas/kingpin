@@ -107,3 +107,14 @@ func TestRequiredWithEnvar(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 123, *flag)
 }
+
+func TestRegexp(t *testing.T) {
+	app := New("test", "")
+	flag := app.Flag("reg", "").Regexp()
+	_, err := app.Parse([]string{"--reg", "^abc$"})
+	assert.NoError(t, err)
+	assert.NotNil(t, *flag)
+	assert.Equal(t, "^abc$", (*flag).String())
+	assert.Regexp(t, *flag, "abc")
+	assert.NotRegexp(t, *flag, "abcd")
+}
