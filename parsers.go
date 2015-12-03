@@ -4,7 +4,6 @@ import (
 	"net"
 	"net/url"
 	"os"
-	"regexp"
 	"time"
 
 	"github.com/alecthomas/units"
@@ -210,16 +209,4 @@ func (p *parserMixin) Counter() (target *int) {
 
 func (p *parserMixin) CounterVar(target *int) {
 	p.SetValue(newCounterValue(target))
-}
-
-// Regexp
-func (p *parserMixin) Regexp() (target **regexp.Regexp) {
-	target = new(*regexp.Regexp)
-	p.RegexpVar(target)
-	return
-}
-
-// Regexp
-func (p *parserMixin) RegexpVar(target **regexp.Regexp) {
-	p.SetValue(newRegexpValue(target))
 }

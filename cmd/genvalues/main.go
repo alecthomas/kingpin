@@ -17,21 +17,23 @@ const (
 {{range .}}
 {{if not .NoValueParser}}
 // -- {{.Type}} Value
-type {{.Type}}Value {{.Type}}
+type {{.|ValueName}} struct { v *{{.Type}} }
 
-func new{{.|Name}}Value(p *{{.Type}}) *{{.Type}}Value {
-	return (*{{.Type}}Value)(p)
+func new{{.|Name}}Value(p *{{.Type}}) *{{.|ValueName}} {
+	return &{{.|ValueName}}{p}
 }
 
-func (f *{{.Type}}Value) Set(s string) error {
+func (f *{{.|ValueName}}) Set(s string) error {
 	v, err := {{.Parser}}
-	*f = {{.Type}}Value(v)
+	if err == nil {
+		*f.v = ({{.Type}})(v)
+	}
 	return err
 }
 
-func (f *{{.Type}}Value) Get() interface{} { return {{.Type}}(*f) }
+func (f *{{.|ValueName}}) Get() interface{} { return ({{.Type}})(*f.v) }
 
-func (f *{{.Type}}Value) String() string { return {{.|Format}} }
+func (f *{{.|ValueName}}) String() string { return {{.|Format}} }
 
 // {{.|Name}} parses the next command-line value as {{.Type}}.
 func (p *parserMixin) {{.|Name}}() (target *{{.Type}}) {
@@ -53,7 +55,9 @@ func (p *parserMixin) {{.|Plural}}() (target *[]{{.Type}}) {
 }
 
 func (p *parserMixin) {{.|Plural}}Var(target *[]{{.Type}}) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value { return new{{.|Name}}Value(v.(*{{.Type}})) }))
+	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+		return new{{.|Name}}Value(v.(*{{.Type}}))
+	}))
 }
 
 {{end}}
@@ -98,6 +102,10 @@ func main() {
 				return v.Format
 			}
 			return "fmt.Sprintf(\"%v\", *f)"
+		},
+		"ValueName": func(v *Value) string {
+			name := valueName(v)
+			return strings.ToLower(name[0:1]) + name[1:] + "Value"
 		},
 		"Name": valueName,
 		"Plural": func(v *Value) string {

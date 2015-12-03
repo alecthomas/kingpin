@@ -445,32 +445,3 @@ func (c *counterValue) Set(s string) error {
 func (c *counterValue) Get() interface{} { return (int)(*c) }
 func (c *counterValue) IsBoolFlag() bool { return true }
 func (c *counterValue) String() string   { return fmt.Sprintf("%d", *c) }
-
-// -- regexp.Regexp value
-type regexpValue struct {
-	r **regexp.Regexp
-}
-
-func newRegexpValue(r **regexp.Regexp) *regexpValue {
-	return &regexpValue{r}
-}
-
-func (r *regexpValue) Set(value string) error {
-	if re, err := regexp.Compile(value); err != nil {
-		return err
-	} else {
-		*r.r = re
-		return nil
-	}
-}
-
-func (r *regexpValue) Get() interface{} {
-	return (*regexp.Regexp)(*r.r)
-}
-
-func (r *regexpValue) String() string {
-	if *r.r == nil {
-		return "<nil>"
-	}
-	return (*r.r).String()
-}

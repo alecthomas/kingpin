@@ -3,7 +3,7 @@ package kingpin
 import (
 	"io/ioutil"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/alecthomas/assert"
 
 	"testing"
 	"time"
