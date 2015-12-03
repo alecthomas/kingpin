@@ -223,3 +223,15 @@ func (p *parserMixin) Regexp() (target **regexp.Regexp) {
 func (p *parserMixin) RegexpVar(target **regexp.Regexp) {
 	p.SetValue(newRegexpValue(target))
 }
+
+// NetAddr
+func (p *parserMixin) NetAddr() (target *net.IP) {
+	target = new(net.IP)
+	p.NetAddrVar(target)
+	return
+}
+
+// NetAddr
+func (p *parserMixin) NetAddrVar(target *net.IP) {
+	p.SetValue(newNetAddrValue(target))
+}

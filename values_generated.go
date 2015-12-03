@@ -632,3 +632,14 @@ func (p *parserMixin) RegexpList() (target *[]*regexp.Regexp) {
 func (p *parserMixin) RegexpListVar(target *[]*regexp.Regexp) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newRegexpValue(v.(**regexp.Regexp)) }))
 }
+
+// NetAddrs accumulates net.IP values into a slice.
+func (p *parserMixin) NetAddrs() (target *[]net.IP) {
+	target = new([]net.IP)
+	p.NetAddrsVar(target)
+	return
+}
+
+func (p *parserMixin) NetAddrsVar(target *[]net.IP) {
+	p.SetValue(newAccumulator(target, func(v interface{}) Value { return newNetAddrValue(v.(*net.IP)) }))
+}

@@ -19,5 +19,6 @@
   {"name": "ExistingFile", "Type": "string", "plural": "ExistingFiles", "no_value_parser": true},
   {"name": "ExistingDir", "Type": "string", "plural": "ExistingDirs", "no_value_parser": true},
   {"name": "ExistingFileOrDir", "Type": "string", "plural": "ExistingFilesOrDirs", "no_value_parser": true},
-  {"name": "Regexp", "Type": "*regexp.Regexp", "plural": "RegexpList", "no_value_parser": true}
+  {"name": "Regexp", "Type": "*regexp.Regexp", "plural": "RegexpList", "no_value_parser": true},
+  {"name": "NetAddr", "Type": "net.IP", "plural": "NetAddrs", "no_value_parser": true}
 ]

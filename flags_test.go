@@ -2,6 +2,7 @@ package kingpin
 
 import (
 	"io/ioutil"
+	"net"
 	"os"
 
 	"github.com/stretchr/testify/assert"
@@ -117,4 +118,22 @@ func TestRegexp(t *testing.T) {
 	assert.Equal(t, "^abc$", (*flag).String())
 	assert.Regexp(t, *flag, "abc")
 	assert.NotRegexp(t, *flag, "abcd")
+}
+
+func TestIPv4Addr(t *testing.T) {
+	app := New("test", "")
+	flag := app.Flag("addr", "").NetAddr()
+	_, err := app.Parse([]string{"--addr", net.IPv4(1, 2, 3, 4).String()})
+	assert.NoError(t, err)
+	assert.NotNil(t, *flag)
+	assert.Equal(t, net.IPv4(1, 2, 3, 4), *flag)
+}
+
+func TestIPv6Addr(t *testing.T) {
+	app := New("test", "")
+	flag := app.Flag("addr", "").NetAddr()
+	_, err := app.Parse([]string{"--addr", net.IPv6interfacelocalallnodes.String()})
+	assert.NoError(t, err)
+	assert.NotNil(t, *flag)
+	assert.Equal(t, net.IPv6interfacelocalallnodes, *flag)
 }

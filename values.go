@@ -474,3 +474,36 @@ func (r *regexpValue) String() string {
 	}
 	return (*r.r).String()
 }
+
+// -- DNS-resolved net.IP value
+type netAddrValue struct {
+	r *net.IP
+}
+
+func newNetAddrValue(r *net.IP) *netAddrValue {
+	return &netAddrValue{r}
+}
+
+func (a *netAddrValue) Set(value string) error {
+	if ip := net.ParseIP(value); ip != nil {
+		*a.r = ip
+	} else {
+		if addr, err := net.ResolveIPAddr("ip", value); err != nil {
+			return err
+		} else {
+			*a.r = addr.IP
+		}
+	}
+	return nil
+}
+
+func (a *netAddrValue) Get() interface{} {
+	return (net.IP)(*a.r)
+}
+
+func (a *netAddrValue) String() string {
+	if *a.r == nil {
+		return "<nil>"
+	}
+	return (*a.r).String()
+}
