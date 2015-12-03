@@ -445,3 +445,15 @@ func (c *counterValue) Set(s string) error {
 func (c *counterValue) Get() interface{} { return (int)(*c) }
 func (c *counterValue) IsBoolFlag() bool { return true }
 func (c *counterValue) String() string   { return fmt.Sprintf("%d", *c) }
+
+func resolveHost(value string) (net.IP, error) {
+	if ip := net.ParseIP(value); ip != nil {
+		return ip, nil
+	} else {
+		if addr, err := net.ResolveIPAddr("ip", value); err != nil {
+			return nil, err
+		} else {
+			return addr.IP, nil
+		}
+	}
+}

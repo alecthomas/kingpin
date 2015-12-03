@@ -2,11 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"os"
 	"os/exec"
 	"strings"
-	"text/template"
 
-	"os"
+	"github.com/alecthomas/template"
 )
 
 const (
@@ -35,7 +35,11 @@ func (f *{{.|ValueName}}) Get() interface{} { return ({{.Type}})(*f.v) }
 
 func (f *{{.|ValueName}}) String() string { return {{.|Format}} }
 
+{{if .Help}}
+// {{.Help}}
+{{else}}\
 // {{.|Name}} parses the next command-line value as {{.Type}}.
+{{end}}\
 func (p *parserMixin) {{.|Name}}() (target *{{.Type}}) {
 	target = new({{.Type}})
 	p.{{.|Name}}Var(target)
@@ -71,6 +75,7 @@ type Value struct {
 	Parser        string `json:"parser"`
 	Format        string `json:"format"`
 	Plural        string `json:"plural"`
+	Help          string `json:"help"`
 }
 
 func fatalIfError(err error) {

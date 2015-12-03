@@ -732,3 +732,46 @@ func (p *parserMixin) RegexpListVar(target *[]*regexp.Regexp) {
 		return newRegexpValue(v.(**regexp.Regexp))
 	}))
 }
+
+// -- net.IP Value
+type resolvedIPValue struct{ v *net.IP }
+
+func newResolvedIPValue(p *net.IP) *resolvedIPValue {
+	return &resolvedIPValue{p}
+}
+
+func (f *resolvedIPValue) Set(s string) error {
+	v, err := resolveHost(s)
+	if err == nil {
+		*f.v = (net.IP)(v)
+	}
+	return err
+}
+
+func (f *resolvedIPValue) Get() interface{} { return (net.IP)(*f.v) }
+
+func (f *resolvedIPValue) String() string { return fmt.Sprintf("%v", *f) }
+
+// Resolve a hostname or IP to an IP.
+func (p *parserMixin) ResolvedIP() (target *net.IP) {
+	target = new(net.IP)
+	p.ResolvedIPVar(target)
+	return
+}
+
+func (p *parserMixin) ResolvedIPVar(target *net.IP) {
+	p.SetValue(newResolvedIPValue(target))
+}
+
+// ResolvedIPList accumulates net.IP values into a slice.
+func (p *parserMixin) ResolvedIPList() (target *[]net.IP) {
+	target = new([]net.IP)
+	p.ResolvedIPListVar(target)
+	return
+}
+
+func (p *parserMixin) ResolvedIPListVar(target *[]net.IP) {
+	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+		return newResolvedIPValue(v.(*net.IP))
+	}))
+}
