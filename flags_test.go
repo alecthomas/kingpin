@@ -10,7 +10,7 @@ import (
 )
 
 func TestBool(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	b := app.Flag("b", "").Bool()
 	_, err := app.Parse([]string{"--b"})
 	assert.NoError(t, err)
@@ -39,14 +39,14 @@ func TestNegateNonBool(t *testing.T) {
 }
 
 func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	app.Flag("a", "").Default("invalid").Bool()
 	_, err := app.Parse([]string{})
 	assert.Error(t, err)
 }
 
 func TestRequiredFlag(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	app.Version("0.0.0").Writer(ioutil.Discard)
 	exits := 0
 	app.Terminate(func(int) { exits++ })
@@ -60,7 +60,7 @@ func TestRequiredFlag(t *testing.T) {
 }
 
 func TestShortFlag(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	f := app.Flag("long", "").Short('s').Bool()
 	_, err := app.Parse([]string{"-s"})
 	assert.NoError(t, err)
@@ -68,7 +68,7 @@ func TestShortFlag(t *testing.T) {
 }
 
 func TestCombinedShortFlags(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	a := app.Flag("short0", "").Short('0').Bool()
 	b := app.Flag("short1", "").Short('1').Bool()
 	c := app.Flag("short2", "").Short('2').Bool()
@@ -80,7 +80,7 @@ func TestCombinedShortFlags(t *testing.T) {
 }
 
 func TestCombinedShortFlagArg(t *testing.T) {
-	a := New("test", "")
+	a := newTestApp()
 	n := a.Flag("short", "").Short('s').Int()
 	_, err := a.Parse([]string{"-s10"})
 	assert.NoError(t, err)
@@ -88,12 +88,12 @@ func TestCombinedShortFlagArg(t *testing.T) {
 }
 
 func TestEmptyShortFlagIsAnError(t *testing.T) {
-	_, err := New("test", "").Parse([]string{"-"})
+	_, err := newTestApp().Parse([]string{"-"})
 	assert.Error(t, err)
 }
 
 func TestRequiredWithEnvarMissingErrors(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	app.Flag("t", "").OverrideDefaultFromEnvar("TEST_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
 	assert.Error(t, err)
@@ -101,15 +101,25 @@ func TestRequiredWithEnvarMissingErrors(t *testing.T) {
 
 func TestRequiredWithEnvar(t *testing.T) {
 	os.Setenv("TEST_ENVAR", "123")
-	app := New("test", "")
+	app := newTestApp()
 	flag := app.Flag("t", "").Envar("TEST_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
 	assert.NoError(t, err)
 	assert.Equal(t, 123, *flag)
 }
 
+func TestSubcommandFlagRequiredWithEnvar(t *testing.T) {
+	os.Setenv("TEST_ENVAR", "123")
+	app := newTestApp()
+	cmd := app.Command("command", "")
+	flag := cmd.Flag("t", "").Envar("TEST_ENVAR").Required().Int()
+	_, err := app.Parse([]string{"command"})
+	assert.NoError(t, err)
+	assert.Equal(t, 123, *flag)
+}
+
 func TestRegexp(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	flag := app.Flag("reg", "").Regexp()
 	_, err := app.Parse([]string{"--reg", "^abc$"})
 	assert.NoError(t, err)

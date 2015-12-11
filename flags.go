@@ -151,8 +151,24 @@ func newFlag(name, help string) *FlagClause {
 	return f
 }
 
+func (f *FlagClause) setDefault() error {
+	// Set defaults, if any.
+	if f.defaultValue != "" {
+		return f.value.Set(f.defaultValue)
+	}
+
+	if !f.noEnvar && f.envar != "" {
+		if v := os.Getenv(f.envar); v != "" {
+			return f.value.Set(v)
+		}
+	}
+	return nil
+}
+
 func (f *FlagClause) needsValue() bool {
-	return f.required && f.defaultValue == ""
+	haveDefault := f.defaultValue != ""
+	haveEnvar := !f.noEnvar && f.envar != "" && os.Getenv(f.envar) != ""
+	return f.required && !(haveDefault || haveEnvar)
 }
 
 func (f *FlagClause) formatPlaceHolder() string {
@@ -174,11 +190,6 @@ func (f *FlagClause) init() error {
 	}
 	if f.value == nil {
 		return fmt.Errorf("no type defined for --%s (eg. .String())", f.name)
-	}
-	if !f.noEnvar && f.envar != "" {
-		if v := os.Getenv(f.envar); v != "" {
-			f.defaultValue = v
-		}
 	}
 	return nil
 }

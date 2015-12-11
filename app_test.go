@@ -79,7 +79,7 @@ func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
 
 func TestDispatchCallbackIsCalled(t *testing.T) {
 	dispatched := false
-	c := New("test", "")
+	c := newTestApp()
 	c.Command("cmd", "").Action(func(*ParseContext) error {
 		dispatched = true
 		return nil
@@ -122,14 +122,14 @@ func TestTooManyArgsAfterCommand(t *testing.T) {
 }
 
 func TestArgsLooksLikeFlagsWithConsumeRemainder(t *testing.T) {
-	a := New("test", "")
+	a := newTestApp()
 	a.Arg("opts", "").Required().Strings()
 	_, err := a.Parse([]string{"hello", "-world"})
 	assert.Error(t, err)
 }
 
 func TestCommandParseDoesNotResetFlagsToDefault(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	flag := app.Flag("flag", "").Default("default").String()
 	app.Command("cmd", "")
 
@@ -139,7 +139,7 @@ func TestCommandParseDoesNotResetFlagsToDefault(t *testing.T) {
 }
 
 func TestCommandParseDoesNotFailRequired(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	flag := app.Flag("flag", "").Required().String()
 	app.Command("cmd", "")
 
@@ -149,7 +149,7 @@ func TestCommandParseDoesNotFailRequired(t *testing.T) {
 }
 
 func TestSelectedCommand(t *testing.T) {
-	app := New("test", "help")
+	app := newTestApp()
 	c0 := app.Command("c0", "")
 	c0.Command("c1", "")
 	s, err := app.Parse([]string{"c0", "c1"})
@@ -158,7 +158,7 @@ func TestSelectedCommand(t *testing.T) {
 }
 
 func TestSubCommandRequired(t *testing.T) {
-	app := New("test", "help")
+	app := newTestApp()
 	c0 := app.Command("c0", "")
 	c0.Command("c1", "")
 	_, err := app.Parse([]string{"c0"})
@@ -166,7 +166,7 @@ func TestSubCommandRequired(t *testing.T) {
 }
 
 func TestInterspersedFalse(t *testing.T) {
-	app := New("test", "help").Interspersed(false)
+	app := newTestApp().Interspersed(false)
 	a1 := app.Arg("a1", "").String()
 	a2 := app.Arg("a2", "").String()
 	f1 := app.Flag("flag", "").String()
@@ -181,7 +181,7 @@ func TestInterspersedFalse(t *testing.T) {
 func TestInterspersedTrue(t *testing.T) {
 	// test once with the default value and once with explicit true
 	for i := 0; i < 2; i++ {
-		app := New("test", "help")
+		app := newTestApp()
 		if i != 0 {
 			t.Log("Setting explicit")
 			app.Interspersed(true)
@@ -201,7 +201,7 @@ func TestInterspersedTrue(t *testing.T) {
 }
 
 func TestDefaultEnvars(t *testing.T) {
-	a := New("some-app", "").DefaultEnvars()
+	a := New("some-app", "").Terminate(nil).DefaultEnvars()
 	f0 := a.Flag("some-flag", "")
 	f0.Bool()
 	f1 := a.Flag("some-other-flag", "").NoEnvar()

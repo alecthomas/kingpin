@@ -379,11 +379,8 @@ func (a *Application) setDefaults(context *ParseContext) error {
 	// Check required flags and set defaults.
 	for _, flag := range context.flags.long {
 		if flagElements[flag.name] == nil {
-			// Set defaults, if any.
-			if flag.defaultValue != "" {
-				if err := flag.value.Set(flag.defaultValue); err != nil {
-					return err
-				}
+			if err := flag.setDefault(); err != nil {
+				return err
 			}
 		}
 	}
