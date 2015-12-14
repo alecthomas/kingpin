@@ -14,18 +14,8 @@ type flagGroup struct {
 
 func newFlagGroup() *flagGroup {
 	return &flagGroup{
-		short: make(map[string]*FlagClause),
-		long:  make(map[string]*FlagClause),
-	}
-}
-
-func (f *flagGroup) merge(o *flagGroup) {
-	for _, flag := range o.flagOrder {
-		if flag.shorthand != 0 {
-			f.short[string(flag.shorthand)] = flag
-		}
-		f.long[flag.name] = flag
-		f.flagOrder = append(f.flagOrder, flag)
+		short: map[string]*FlagClause{},
+		long:  map[string]*FlagClause{},
 	}
 }
 
@@ -38,6 +28,9 @@ func (f *flagGroup) Flag(name, help string) *FlagClause {
 }
 
 func (f *flagGroup) init(defaultEnvarPrefix string) error {
+	if err := f.checkDuplicates(); err != nil {
+		return err
+	}
 	for _, flag := range f.long {
 		if defaultEnvarPrefix != "" && !flag.noEnvar && flag.envar == "" {
 			flag.envar = envarTransform(defaultEnvarPrefix + "_" + flag.name)
@@ -48,6 +41,24 @@ func (f *flagGroup) init(defaultEnvarPrefix string) error {
 		if flag.shorthand != 0 {
 			f.short[string(flag.shorthand)] = flag
 		}
+	}
+	return nil
+}
+
+func (f *flagGroup) checkDuplicates() error {
+	seenShort := map[byte]bool{}
+	seenLong := map[string]bool{}
+	for _, flag := range f.flagOrder {
+		if flag.shorthand != 0 {
+			if _, ok := seenShort[flag.shorthand]; ok {
+				return fmt.Errorf("duplicate short flag -%c", flag.shorthand)
+			}
+			seenShort[flag.shorthand] = true
+		}
+		if _, ok := seenLong[flag.name]; ok {
+			return fmt.Errorf("duplicate long flag --%s", flag.name)
+		}
+		seenLong[flag.name] = true
 	}
 	return nil
 }

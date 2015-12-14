@@ -128,3 +128,19 @@ func TestRegexp(t *testing.T) {
 	assert.Regexp(t, *flag, "abc")
 	assert.NotRegexp(t, *flag, "abcd")
 }
+
+func TestDuplicateShortFlag(t *testing.T) {
+	app := newTestApp()
+	app.Flag("a", "").Short('a').String()
+	app.Flag("b", "").Short('a').String()
+	_, err := app.Parse([]string{})
+	assert.Error(t, err)
+}
+
+func TestDuplicateLongFlag(t *testing.T) {
+	app := newTestApp()
+	app.Flag("a", "").String()
+	app.Flag("a", "").String()
+	_, err := app.Parse([]string{})
+	assert.Error(t, err)
+}
