@@ -37,8 +37,8 @@ Args:
 {{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
 {{end}}\
 {{if .Context.SelectedCommand}}\
-Subcommands:
 {{if .Context.SelectedCommand.Commands}}\
+Subcommands:
 {{template "FormatCommands" .Context.SelectedCommand}}
 {{end}}\
 {{else if .App.Commands}}\
