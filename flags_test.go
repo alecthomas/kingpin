@@ -207,3 +207,113 @@ func TestFlagMultipleValuesDefaultEnvarNonRepeatable(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "123\n456", *a)
 }
+
+func TestFlagHintAction(t *testing.T) {
+	c := newTestApp()
+
+	action := func() []string {
+		return []string{"opt1", "opt2"}
+	}
+
+	a := c.Flag("foo", "foo").HintAction(action)
+	args := a.resolveCompletions()
+	assert.Equal(t, []string{"opt1", "opt2"}, args)
+}
+
+func TestFlagHintOptions(t *testing.T) {
+	c := newTestApp()
+
+	a := c.Flag("foo", "foo").HintOptions("opt1", "opt2")
+	args := a.resolveCompletions()
+	assert.Equal(t, []string{"opt1", "opt2"}, args)
+}
+
+func TestFlagEnumVar(t *testing.T) {
+	c := newTestApp()
+	var bar string
+
+	a := c.Flag("foo", "foo")
+	a.Enum("opt1", "opt2")
+	b := c.Flag("bar", "bar")
+	b.EnumVar(&bar, "opt3", "opt4")
+
+	args := a.resolveCompletions()
+	assert.Equal(t, []string{"opt1", "opt2"}, args)
+
+	args = b.resolveCompletions()
+	assert.Equal(t, []string{"opt3", "opt4"}, args)
+}
+
+func TestMultiHintOptions(t *testing.T) {
+	c := newTestApp()
+
+	a := c.Flag("foo", "foo").HintOptions("opt1").HintOptions("opt2")
+	args := a.resolveCompletions()
+	assert.Equal(t, []string{"opt1", "opt2"}, args)
+}
+func TestMultiHintActions(t *testing.T) {
+	c := newTestApp()
+
+	a := c.Flag("foo", "foo").
+		HintAction(func() []string {
+		return []string{"opt1"}
+	}).
+		HintAction(func() []string {
+		return []string{"opt2"}
+	})
+	args := a.resolveCompletions()
+	assert.Equal(t, []string{"opt1", "opt2"}, args)
+}
+
+func TestCombinationHintActionsOptions(t *testing.T) {
+	c := newTestApp()
+
+	a := c.Flag("foo", "foo").HintAction(func() []string {
+		return []string{"opt1"}
+	}).HintOptions("opt2")
+	args := a.resolveCompletions()
+	assert.Equal(t, []string{"opt1", "opt2"}, args)
+}
+
+func TestCombinationEnumActions(t *testing.T) {
+	c := newTestApp()
+	var foo string
+
+	a := c.Flag("foo", "foo").
+		HintAction(func() []string {
+		return []string{"opt1", "opt2"}
+	})
+	a.Enum("opt3", "opt4")
+
+	b := c.Flag("bar", "bar").
+		HintAction(func() []string {
+		return []string{"opt5", "opt6"}
+	})
+	b.EnumVar(&foo, "opt3", "opt4")
+
+	// Provided HintActions should override automatically generated Enum options.
+	args := a.resolveCompletions()
+	assert.Equal(t, []string{"opt1", "opt2"}, args)
+
+	args = b.resolveCompletions()
+	assert.Equal(t, []string{"opt5", "opt6"}, args)
+}
+
+func TestCombinationEnumOptions(t *testing.T) {
+	c := newTestApp()
+	var foo string
+
+	a := c.Flag("foo", "foo").HintOptions("opt1", "opt2")
+	a.Enum("opt3", "opt4")
+
+	b := c.Flag("bar", "bar").HintOptions("opt5", "opt6")
+	b.EnumVar(&foo, "opt3", "opt4")
+
+	// Provided HintOptions should override automatically generated Enum options.
+	args := a.resolveCompletions()
+	assert.Equal(t, []string{"opt1", "opt2"}, args)
+
+	args = b.resolveCompletions()
+	assert.Equal(t, []string{"opt5", "opt6"}, args)
+
+}

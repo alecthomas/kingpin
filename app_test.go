@@ -5,6 +5,8 @@ import (
 
 	"github.com/alecthomas/assert"
 
+	"sort"
+	"strings"
 	"testing"
 	"time"
 )
@@ -220,4 +222,128 @@ func TestDefaultEnvars(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "SOME_APP_SOME_FLAG", f0.envar)
 	assert.Equal(t, "", f1.envar)
+}
+
+func TestBashCompletionOptionsWithEmptyApp(t *testing.T) {
+	a := newTestApp()
+	context, err := a.ParseContext([]string{"--completion-bash"})
+	if err != nil {
+		t.Errorf("Unexpected error whilst parsing context: [%v]", err)
+	}
+	args := a.completionOptions(context)
+	assert.Equal(t, []string(nil), args)
+}
+
+func TestBashCompletionOptions(t *testing.T) {
+	a := newTestApp()
+	a.Command("one", "")
+	a.Flag("flag-0", "").String()
+	a.Flag("flag-1", "").HintOptions("opt1", "opt2", "opt3").String()
+
+	two := a.Command("two", "")
+	two.Flag("flag-2", "").String()
+	two.Flag("flag-3", "").HintOptions("opt4", "opt5", "opt6").String()
+
+	cases := []struct {
+		Args            string
+		ExpectedOptions []string
+	}{
+		{
+			Args:            "--completion-bash",
+			ExpectedOptions: []string{"help", "one", "two"},
+		},
+		{
+			Args:            "--completion-bash --",
+			ExpectedOptions: []string{"--flag-0", "--flag-1", "--help"},
+		},
+		{
+			Args:            "--completion-bash --fla",
+			ExpectedOptions: []string{"--flag-0", "--flag-1", "--help"},
+		},
+		{
+			// No options available for flag-0, return to cmd completion
+			Args:            "--completion-bash --flag-0",
+			ExpectedOptions: []string{"help", "one", "two"},
+		},
+		{
+			Args:            "--completion-bash --flag-0 --",
+			ExpectedOptions: []string{"--flag-0", "--flag-1", "--help"},
+		},
+		{
+			Args:            "--completion-bash --flag-1",
+			ExpectedOptions: []string{"opt1", "opt2", "opt3"},
+		},
+		{
+			Args:            "--completion-bash --flag-1 opt",
+			ExpectedOptions: []string{"opt1", "opt2", "opt3"},
+		},
+		{
+			Args:            "--completion-bash --flag-1 opt1",
+			ExpectedOptions: []string{"help", "one", "two"},
+		},
+		{
+			Args:            "--completion-bash --flag-1 opt1 --",
+			ExpectedOptions: []string{"--flag-0", "--flag-1", "--help"},
+		},
+
+		// Try Subcommand
+		{
+			Args:            "--completion-bash two",
+			ExpectedOptions: []string(nil),
+		},
+		{
+			Args:            "--completion-bash two --",
+			ExpectedOptions: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
+		},
+		{
+			Args:            "--completion-bash two --flag",
+			ExpectedOptions: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
+		},
+		{
+			Args:            "--completion-bash two --flag-2",
+			ExpectedOptions: []string(nil),
+		},
+		{
+			// Top level flags carry downwards
+			Args:            "--completion-bash two --flag-1",
+			ExpectedOptions: []string{"opt1", "opt2", "opt3"},
+		},
+		{
+			// Top level flags carry downwards
+			Args:            "--completion-bash two --flag-1 opt",
+			ExpectedOptions: []string{"opt1", "opt2", "opt3"},
+		},
+		{
+			// Top level flags carry downwards
+			Args:            "--completion-bash two --flag-1 opt1",
+			ExpectedOptions: []string(nil),
+		},
+		{
+			Args:            "--completion-bash two --flag-3",
+			ExpectedOptions: []string{"opt4", "opt5", "opt6"},
+		},
+		{
+			Args:            "--completion-bash two --flag-3 opt",
+			ExpectedOptions: []string{"opt4", "opt5", "opt6"},
+		},
+		{
+			Args:            "--completion-bash two --flag-3 opt4",
+			ExpectedOptions: []string(nil),
+		},
+		{
+			Args:            "--completion-bash two --flag-3 opt4 --",
+			ExpectedOptions: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
+		},
+	}
+
+	for _, c := range cases {
+		context, _ := a.ParseContext(strings.Split(c.Args, " "))
+		args := a.completionOptions(context)
+
+		sort.Strings(args)
+		sort.Strings(c.ExpectedOptions)
+
+		assert.Equal(t, c.ExpectedOptions, args, "Expected != Actual: [%v] != [%v]. \nInput was: [%v]", c.ExpectedOptions, args, c.Args)
+	}
+
 }

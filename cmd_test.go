@@ -12,7 +12,13 @@ func parseAndExecute(app *Application, context *ParseContext) (string, error) {
 	if err := parse(context, app); err != nil {
 		return "", err
 	}
-	return app.execute(context)
+
+	selected, err := app.setValues(context)
+	if err != nil {
+		return "", err
+	}
+
+	return app.execute(context, selected)
 }
 
 func TestNestedCommands(t *testing.T) {
@@ -173,4 +179,98 @@ func TestDuplicateAlias(t *testing.T) {
 	app.Command("two", "").Alias("one")
 	_, err := app.Parse([]string{"one"})
 	assert.Error(t, err)
+}
+
+func TestFlagCompletion(t *testing.T) {
+	app := newTestApp()
+	app.Command("one", "")
+	two := app.Command("two", "")
+	two.Flag("flag-1", "")
+	two.Flag("flag-2", "").HintOptions("opt1", "opt2", "opt3")
+	two.Flag("flag-3", "")
+
+	cases := []struct {
+		target              cmdMixin
+		flagName            string
+		flagValue           string
+		expectedFlagMatch   bool
+		expectedOptionMatch bool
+		expectedFlags       []string
+	}{
+		{
+			// Test top level flags
+			target:              app.cmdMixin,
+			flagName:            "",
+			flagValue:           "",
+			expectedFlagMatch:   false,
+			expectedOptionMatch: false,
+			expectedFlags:       []string{"--help"},
+		},
+		{
+			// Test no flag passed
+			target:              two.cmdMixin,
+			flagName:            "",
+			flagValue:           "",
+			expectedFlagMatch:   false,
+			expectedOptionMatch: false,
+			expectedFlags:       []string{"--flag-1", "--flag-2", "--flag-3"},
+		},
+		{
+			// Test an incomplete flag. Should still give all options as if the flag wasn't given at all.
+			target:              two.cmdMixin,
+			flagName:            "flag-",
+			flagValue:           "",
+			expectedFlagMatch:   false,
+			expectedOptionMatch: false,
+			expectedFlags:       []string{"--flag-1", "--flag-2", "--flag-3"},
+		},
+		{
+			// Test with a complete flag. Should show available choices for the flag
+			// This flag has no options. No options should be produced.
+			// Should also report an option was matched
+			target:              two.cmdMixin,
+			flagName:            "flag-1",
+			flagValue:           "",
+			expectedFlagMatch:   true,
+			expectedOptionMatch: true,
+			expectedFlags:       []string(nil),
+		},
+		{
+			// Test with a complete flag. Should show available choices for the flag
+			target:              two.cmdMixin,
+			flagName:            "flag-2",
+			flagValue:           "",
+			expectedFlagMatch:   true,
+			expectedOptionMatch: false,
+			expectedFlags:       []string{"opt1", "opt2", "opt3"},
+		},
+		{
+			// Test with a complete flag and complete option for that flag.
+			target:              two.cmdMixin,
+			flagName:            "flag-2",
+			flagValue:           "opt1",
+			expectedFlagMatch:   true,
+			expectedOptionMatch: true,
+			expectedFlags:       []string{"opt1", "opt2", "opt3"},
+		},
+	}
+
+	for i, c := range cases {
+		choices, flagMatch, optionMatch := c.target.FlagCompletion(c.flagName, c.flagValue)
+		assert.Equal(t, c.expectedFlags, choices, "Test case %d: expectedFlags != actual flags", i+1)
+		assert.Equal(t, c.expectedFlagMatch, flagMatch, "Test case %d: expectedFlagMatch != flagMatch", i+1)
+		assert.Equal(t, c.expectedOptionMatch, optionMatch, "Test case %d: expectedOptionMatch != optionMatch", i+1)
+	}
+
+}
+
+func TestCmdCompletion(t *testing.T) {
+	app := newTestApp()
+	app.Command("one", "")
+	two := app.Command("two", "")
+	two.Command("sub1", "")
+	two.Command("sub2", "")
+
+	assert.Equal(t, []string{"one", "two"}, app.CmdCompletion())
+	assert.Equal(t, []string{"sub1", "sub2"}, two.CmdCompletion())
 }
