@@ -19,6 +19,14 @@ func newFlagGroup() *flagGroup {
 	}
 }
 
+// GetFlag a flag definition.
+//
+// This allows existing flags to be modified after definition but before parsing. Useful for
+// modular applications.
+func (f *flagGroup) GetFlag(name string) *FlagClause {
+	return f.long[name]
+}
+
 // Flag defines a new flag with the given long name and help.
 func (f *flagGroup) Flag(name, help string) *FlagClause {
 	flag := newFlag(name, help)

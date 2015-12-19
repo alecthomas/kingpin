@@ -14,6 +14,19 @@ func (a *argGroup) have() bool {
 	return len(a.args) > 0
 }
 
+// GetArg gets an argument definition.
+//
+// This allows existing arguments to be modified after definition but before parsing. Useful for
+// modular applications.
+func (a *argGroup) GetArg(name string) *ArgClause {
+	for _, arg := range a.args {
+		if arg.name == name {
+			return arg
+		}
+	}
+	return nil
+}
+
 func (a *argGroup) Arg(name, help string) *ArgClause {
 	arg := newArg(name, help)
 	a.args = append(a.args, arg)

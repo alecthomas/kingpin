@@ -144,3 +144,15 @@ func TestDuplicateLongFlag(t *testing.T) {
 	_, err := app.Parse([]string{})
 	assert.Error(t, err)
 }
+
+func TestGetFlagAndOverrideDefault(t *testing.T) {
+	app := newTestApp()
+	a := app.Flag("a", "").Default("default").String()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "default", *a)
+	app.GetFlag("a").Default("new")
+	_, err = app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "new", *a)
+}
