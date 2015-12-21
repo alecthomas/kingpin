@@ -1,4 +1,4 @@
-# Kingpin - A Go (golang) command line and flag parser [![Build Status](https://travis-ci.org/alecthomas/kingpin.png)](https://travis-ci.org/alecthomas/kingpin)
+# Kingpin - A Go (golang) command line and flag parser [![](https://godoc.org/github.com/alecthomas/kingpin?status.svg)](http://godoc.org/github.com/alecthomas/kingpin) [![Build Status](https://travis-ci.org/alecthomas/kingpin.png)](https://travis-ci.org/alecthomas/kingpin)
 
 <!-- MarkdownTOC -->
 
@@ -19,6 +19,7 @@
   - [Displaying errors and usage information](#displaying-errors-and-usage-information)
   - [Sub-commands](#sub-commands)
   - [Custom Parsers](#custom-parsers)
+  - [Boolean values](#boolean-values)
   - [Default Values](#default-values)
   - [Place-holders in Help](#place-holders-in-help)
   - [Consuming all remaining arguments](#consuming-all-remaining-arguments)
@@ -420,6 +421,11 @@ You would use it like so:
 ```go
 headers = HTTPHeader(kingpin.Flag("header", "Add a HTTP header to the request.").Short('H'))
 ```
+
+### Boolean values
+
+Boolean values are uniquely managed by Kingpin. Each boolean flag will have a negative complement:
+`--<name>` and `--no-<name>`.
 
 ### Default Values
 

@@ -19,7 +19,7 @@ func newFlagGroup() *flagGroup {
 	}
 }
 
-// GetFlag a flag definition.
+// GetFlag gets a flag definition.
 //
 // This allows existing flags to be modified after definition but before parsing. Useful for
 // modular applications.
