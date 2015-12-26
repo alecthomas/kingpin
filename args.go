@@ -64,10 +64,10 @@ func (a *argGroup) init() error {
 type ArgClause struct {
 	actionMixin
 	parserMixin
-	name         string
-	help         string
-	defaultValue string
-	required     bool
+	name          string
+	help          string
+	defaultValues []string
+	required      bool
 }
 
 func newArg(name, help string) *ArgClause {
@@ -91,9 +91,9 @@ func (a *ArgClause) Required() *ArgClause {
 	return a
 }
 
-// Default value for this argument. It *must* be parseable by the value of the argument.
-func (a *ArgClause) Default(value string) *ArgClause {
-	a.defaultValue = value
+// Default values for this argument. They *must* be parseable by the value of the argument.
+func (a *ArgClause) Default(values ...string) *ArgClause {
+	a.defaultValues = values
 	return a
 }
 
@@ -108,7 +108,7 @@ func (a *ArgClause) PreAction(action Action) *ArgClause {
 }
 
 func (a *ArgClause) init() error {
-	if a.required && a.defaultValue != "" {
+	if a.required && len(a.defaultValues) > 0 {
 		return fmt.Errorf("required argument '%s' with unusable default value", a.name)
 	}
 	if a.value == nil {

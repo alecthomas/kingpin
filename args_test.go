@@ -47,3 +47,11 @@ func TestInvalidArgsDefaultCanBeOverridden(t *testing.T) {
 	_, err := app.Parse([]string{})
 	assert.Error(t, err)
 }
+
+func TesArgtMultipleValuesDefault(t *testing.T) {
+	app := New("test", "")
+	a := app.Arg("a", "").Default("default1", "default2").Strings()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"default1", "default2"}, *a)
+}

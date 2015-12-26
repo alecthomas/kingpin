@@ -156,3 +156,11 @@ func TestGetFlagAndOverrideDefault(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "new", *a)
 }
+
+func TestMultipleValuesDefault(t *testing.T) {
+	app := newTestApp()
+	a := app.Flag("a", "").Default("default1", "default2").Strings()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"default1", "default2"}, *a)
+}

@@ -152,14 +152,14 @@ func (f *flagGroup) visibleFlags() int {
 type FlagClause struct {
 	parserMixin
 	actionMixin
-	name         string
-	shorthand    byte
-	help         string
-	envar        string
-	noEnvar      bool
-	defaultValue string
-	placeholder  string
-	hidden       bool
+	name          string
+	shorthand     byte
+	help          string
+	envar         string
+	noEnvar       bool
+	defaultValues []string
+	placeholder   string
+	hidden        bool
 }
 
 func newFlag(name, help string) *FlagClause {
@@ -172,8 +172,13 @@ func newFlag(name, help string) *FlagClause {
 
 func (f *FlagClause) setDefault() error {
 	// Set defaults, if any.
-	if f.defaultValue != "" {
-		return f.value.Set(f.defaultValue)
+	if len(f.defaultValues) > 0 {
+		for _, defaultValue := range f.defaultValues {
+			if err := f.value.Set(defaultValue); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	if !f.noEnvar && f.envar != "" {
@@ -185,7 +190,7 @@ func (f *FlagClause) setDefault() error {
 }
 
 func (f *FlagClause) needsValue() bool {
-	haveDefault := f.defaultValue != ""
+	haveDefault := len(f.defaultValues) > 0
 	haveEnvar := !f.noEnvar && f.envar != "" && os.Getenv(f.envar) != ""
 	return f.required && !(haveDefault || haveEnvar)
 }
@@ -194,17 +199,21 @@ func (f *FlagClause) formatPlaceHolder() string {
 	if f.placeholder != "" {
 		return f.placeholder
 	}
-	if f.defaultValue != "" {
-		if _, ok := f.value.(*stringValue); ok {
-			return fmt.Sprintf("%q", f.defaultValue)
+	if len(f.defaultValues) > 0 {
+		ellipsis := ""
+		if len(f.defaultValues) > 1 {
+			ellipsis = "..."
 		}
-		return f.defaultValue
+		if _, ok := f.value.(*stringValue); ok {
+			return fmt.Sprintf("%q"+ellipsis, f.defaultValues[0])
+		}
+		return f.defaultValues[0] + ellipsis
 	}
 	return strings.ToUpper(f.name)
 }
 
 func (f *FlagClause) init() error {
-	if f.required && f.defaultValue != "" {
+	if f.required && len(f.defaultValues) > 0 {
 		return fmt.Errorf("required flag '--%s' with default value that will never be used", f.name)
 	}
 	if f.value == nil {
@@ -224,9 +233,9 @@ func (f *FlagClause) PreAction(action Action) *FlagClause {
 	return f
 }
 
-// Default value for this flag. It *must* be parseable by the value of the flag.
-func (f *FlagClause) Default(value string) *FlagClause {
-	f.defaultValue = value
+// Default values for this flag. They *must* be parseable by the value of the flag.
+func (f *FlagClause) Default(values ...string) *FlagClause {
+	f.defaultValues = values
 	return f
 }
 
