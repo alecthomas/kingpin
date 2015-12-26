@@ -430,9 +430,9 @@ Boolean values are uniquely managed by Kingpin. Each boolean flag will have a ne
 ### Default Values
 
 The default value is the zero value for a type. This can be overridden with
-the `Default(value)` function on flags and arguments. This function accepts a
-string, which is parsed by the value itself, so it *must* be compliant with
-the format expected.
+the `Default(value...)` function on flags and arguments. This function accepts
+one or several strings, which are parsed by the value itself, so they *must*
+be compliant with the format expected.
 
 ### Place-holders in Help
 

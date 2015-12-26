@@ -388,8 +388,8 @@ func (a *Application) setDefaults(context *ParseContext) error {
 	for _, arg := range context.arguments.args {
 		if argElements[arg.name] == nil {
 			// Set defaults, if any.
-			if arg.defaultValue != "" {
-				if err := arg.value.Set(arg.defaultValue); err != nil {
+			for _, defaultValue := range arg.defaultValues {
+				if err := arg.value.Set(defaultValue); err != nil {
 					return err
 				}
 			}

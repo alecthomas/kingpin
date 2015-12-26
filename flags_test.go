@@ -156,3 +156,29 @@ func TestGetFlagAndOverrideDefault(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, "new", *a)
 }
+
+func TestFlagMultipleValuesDefault(t *testing.T) {
+	app := newTestApp()
+	a := app.Flag("a", "").Default("default1", "default2").Strings()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"default1", "default2"}, *a)
+}
+
+func TestFlagMultipleValuesDefaultEnvarUnix(t *testing.T) {
+	app := newTestApp()
+	a := app.Flag("a", "").Envar("TEST_MULTIPLE_VALUES").Strings()
+	os.Setenv("TEST_MULTIPLE_VALUES", "123\n456\n")
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"123", "456"}, *a)
+}
+
+func TestFlagMultipleValuesDefaultEnvarWindows(t *testing.T) {
+	app := newTestApp()
+	a := app.Flag("a", "").Envar("TEST_MULTIPLE_VALUES").Strings()
+	os.Setenv("TEST_MULTIPLE_VALUES", "123\r\n456\r\n")
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"123", "456"}, *a)
+}
