@@ -180,8 +180,8 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 		"FormatAppUsage":     formatAppUsage,
 		"FormatCommandUsage": formatCmdUsage,
 		"IsCumulative": func(value Value) bool {
-			_, ok := value.(remainderArg)
-			return ok
+			r, ok := value.(remainderArg)
+			return ok && r.IsCumulative()
 		},
 		"Char": func(c rune) string {
 			return string(c)
