@@ -40,6 +40,16 @@ func TestRequiredFlags(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestRepeatableFlags(t *testing.T) {
+	c := newTestApp()
+	c.Flag("a", "a").String()
+	c.Flag("b", "b").Strings()
+	_, err := c.Parse([]string{"--a=foo", "--a=bar"})
+	assert.Error(t, err)
+	_, err = c.Parse([]string{"--b=foo", "--b=bar"})
+	assert.NoError(t, err)
+}
+
 func TestInvalidDefaultFlagValueErrors(t *testing.T) {
 	c := newTestApp()
 	c.Flag("foo", "foo").Default("a").Int()

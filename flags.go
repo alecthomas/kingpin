@@ -189,14 +189,20 @@ func (f *FlagClause) setDefault() error {
 	}
 
 	if !f.noEnvar && f.envar != "" {
-		if values := os.Getenv(f.envar); values != "" {
-			trimmed := envVarValuesTrimmer.ReplaceAllString(values, "")
-			for _, value := range envVarValuesSplitter.Split(trimmed, -1) {
-				if err := f.value.Set(value); err != nil {
-					return err
+		if envarValue := os.Getenv(f.envar); envarValue != "" {
+			if v, ok := f.value.(repeatableFlag); !ok || !v.IsCumulative() {
+				// Use the value as-is
+				return f.value.Set(envarValue)
+			} else {
+				// Split by new line to extract multiple values, if any.
+				trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
+				for _, value := range envVarValuesSplitter.Split(trimmed, -1) {
+					if err := f.value.Set(value); err != nil {
+						return err
+					}
 				}
+				return nil
 			}
-			return nil
 		}
 	}
 	return nil
@@ -231,6 +237,9 @@ func (f *FlagClause) init() error {
 	}
 	if f.value == nil {
 		return fmt.Errorf("no type defined for --%s (eg. .String())", f.name)
+	}
+	if v, ok := f.value.(repeatableFlag); (!ok || !v.IsCumulative()) && len(f.defaultValues) > 1 {
+		return fmt.Errorf("invalid default for '--%s', expecting single value", f.name)
 	}
 	return nil
 }
