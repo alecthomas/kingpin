@@ -436,13 +436,22 @@ func (a *Application) validateRequired(context *ParseContext) error {
 
 func (a *Application) setValues(context *ParseContext) (selected []string, err error) {
 	// Set all arg and flag values.
-	var lastCmd *CmdClause
+	var (
+		lastCmd *CmdClause
+		flagSet = map[string]struct{}{}
+	)
 	for _, element := range context.Elements {
 		switch clause := element.Clause.(type) {
 		case *FlagClause:
+			if _, ok := flagSet[clause.name]; ok {
+				if v, ok := clause.value.(repeatableFlag); !ok || !v.IsCumulative() {
+					return nil, fmt.Errorf("flag '%s' cannot be repeated", clause.name)
+				}
+			}
 			if err = clause.value.Set(*element.Value); err != nil {
 				return
 			}
+			flagSet[clause.name] = struct{}{}
 
 		case *ArgClause:
 			if err = clause.value.Set(*element.Value); err != nil {

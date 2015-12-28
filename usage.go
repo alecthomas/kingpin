@@ -87,6 +87,9 @@ func formatFlag(haveShort bool, flag *FlagModel) string {
 	if !flag.IsBoolFlag() {
 		flagString += fmt.Sprintf("=%s", flag.FormatPlaceHolder())
 	}
+	if v, ok := flag.Value.(repeatableFlag); ok && v.IsCumulative() {
+		flagString += " ..."
+	}
 	return flagString
 }
 

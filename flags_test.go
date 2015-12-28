@@ -165,6 +165,13 @@ func TestFlagMultipleValuesDefault(t *testing.T) {
 	assert.Equal(t, []string{"default1", "default2"}, *a)
 }
 
+func TestFlagMultipleValuesDefaultNonRepeatable(t *testing.T) {
+	c := newTestApp()
+	c.Flag("foo", "foo").Default("a", "b").String()
+	_, err := c.Parse([]string{})
+	assert.Error(t, err)
+}
+
 func TestFlagMultipleValuesDefaultEnvarUnix(t *testing.T) {
 	app := newTestApp()
 	a := app.Flag("a", "").Envar("TEST_MULTIPLE_VALUES").Strings()
@@ -181,4 +188,13 @@ func TestFlagMultipleValuesDefaultEnvarWindows(t *testing.T) {
 	_, err := app.Parse([]string{})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"123", "456"}, *a)
+}
+
+func TestFlagMultipleValuesDefaultEnvarNonRepeatable(t *testing.T) {
+	c := newTestApp()
+	a := c.Flag("foo", "foo").Envar("TEST_MULTIPLE_VALUES_NON_REPEATABLE").String()
+	os.Setenv("TEST_MULTIPLE_VALUES_NON_REPEATABLE", "123\n456")
+	_, err := c.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "123\n456", *a)
 }
