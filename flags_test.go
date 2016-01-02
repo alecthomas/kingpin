@@ -157,6 +157,15 @@ func TestGetFlagAndOverrideDefault(t *testing.T) {
 	assert.Equal(t, "new", *a)
 }
 
+func TestEnvarOverrideDefault(t *testing.T) {
+	os.Setenv("TEST_ENVAR", "123")
+	app := newTestApp()
+	flag := app.Flag("t", "").Default("default").Envar("TEST_ENVAR").String()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "123", *flag)
+}
+
 func TestFlagMultipleValuesDefault(t *testing.T) {
 	app := newTestApp()
 	a := app.Flag("a", "").Default("default1", "default2").Strings()
