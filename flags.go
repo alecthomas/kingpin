@@ -178,16 +178,6 @@ func newFlag(name, help string) *FlagClause {
 }
 
 func (f *FlagClause) setDefault() error {
-	// Set defaults, if any.
-	if len(f.defaultValues) > 0 {
-		for _, defaultValue := range f.defaultValues {
-			if err := f.value.Set(defaultValue); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
 	if !f.noEnvar && f.envar != "" {
 		if envarValue := os.Getenv(f.envar); envarValue != "" {
 			if v, ok := f.value.(repeatableFlag); !ok || !v.IsCumulative() {
@@ -205,6 +195,16 @@ func (f *FlagClause) setDefault() error {
 			}
 		}
 	}
+
+	if len(f.defaultValues) > 0 {
+		for _, defaultValue := range f.defaultValues {
+			if err := f.value.Set(defaultValue); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
 	return nil
 }
 
