@@ -56,7 +56,7 @@ func TestCounter(t *testing.T) {
 }
 
 func TestIPv4Addr(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	flag := app.Flag("addr", "").ResolvedIP()
 	_, err := app.Parse([]string{"--addr", net.IPv4(1, 2, 3, 4).String()})
 	assert.NoError(t, err)
@@ -65,17 +65,25 @@ func TestIPv4Addr(t *testing.T) {
 }
 
 func TestInvalidIPv4Addr(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	app.Flag("addr", "").ResolvedIP()
 	_, err := app.Parse([]string{"--addr", "1.2.3.256"})
 	assert.Error(t, err)
 }
 
 func TestIPv6Addr(t *testing.T) {
-	app := New("test", "")
+	app := newTestApp()
 	flag := app.Flag("addr", "").ResolvedIP()
 	_, err := app.Parse([]string{"--addr", net.IPv6interfacelocalallnodes.String()})
 	assert.NoError(t, err)
 	assert.NotNil(t, *flag)
 	assert.Equal(t, net.IPv6interfacelocalallnodes, *flag)
+}
+
+func TestHexBytes(t *testing.T) {
+	app := newTestApp()
+	actual := app.Arg("bytes", "").HexBytes()
+	_, err := app.Parse([]string{"01020aff"})
+	assert.NoError(t, err)
+	assert.Equal(t, []byte{0x01, 0x02, 0x0a, 0xff}, *actual)
 }
