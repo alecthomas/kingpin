@@ -231,3 +231,32 @@ Commands:
 {{template "FormatCommands" .App}}
 {{end}}\
 `
+
+var BashCompletionTemplate = `
+_{{.App.Name}}_bash_autocomplete() {
+    local cur prev opts base
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts=$( ${COMP_WORDS[0]} --completion-bash ${COMP_WORDS[@]:1:$COMP_CWORD} )
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    return 0
+}
+complete -F _{{.App.Name}}_bash_autocomplete {{.App.Name}}
+
+`
+
+var ZshCompletionTemplate = `
+#compdef {{.App.Name}}
+autoload -U compinit && compinit
+autoload -U bashcompinit && bashcompinit
+
+_{{.App.Name}}_bash_autocomplete() {
+    local cur prev opts base
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    opts=$( ${COMP_WORDS[0]} --completion-bash ${COMP_WORDS[@]:1:$COMP_CWORD} )
+    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    return 0
+}
+complete -F _{{.App.Name}}_bash_autocomplete {{.App.Name}}
+`
