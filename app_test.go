@@ -244,13 +244,21 @@ func TestBashCompletionOptions(t *testing.T) {
 	two.Flag("flag-2", "").String()
 	two.Flag("flag-3", "").HintOptions("opt4", "opt5", "opt6").String()
 
+	three := a.Command("three", "")
+	three.Flag("flag-4", "").String()
+	three.Arg("arg-1", "").String()
+	three.Arg("arg-2", "").HintOptions("arg-2-opt-1", "arg-2-opt-2").String()
+	three.Arg("arg-3", "").HintAction(func() []string {
+		return []string{"arg-3-opt-1", "arg-3-opt-2"}
+	}).String()
+
 	cases := []struct {
 		Args            string
 		ExpectedOptions []string
 	}{
 		{
 			Args:            "--completion-bash",
-			ExpectedOptions: []string{"help", "one", "two"},
+			ExpectedOptions: []string{"help", "one", "three", "two"},
 		},
 		{
 			Args:            "--completion-bash --",
@@ -263,7 +271,7 @@ func TestBashCompletionOptions(t *testing.T) {
 		{
 			// No options available for flag-0, return to cmd completion
 			Args:            "--completion-bash --flag-0",
-			ExpectedOptions: []string{"help", "one", "two"},
+			ExpectedOptions: []string{"help", "one", "three", "two"},
 		},
 		{
 			Args:            "--completion-bash --flag-0 --",
@@ -279,7 +287,7 @@ func TestBashCompletionOptions(t *testing.T) {
 		},
 		{
 			Args:            "--completion-bash --flag-1 opt1",
-			ExpectedOptions: []string{"help", "one", "two"},
+			ExpectedOptions: []string{"help", "one", "three", "two"},
 		},
 		{
 			Args:            "--completion-bash --flag-1 opt1 --",
@@ -333,6 +341,28 @@ func TestBashCompletionOptions(t *testing.T) {
 		{
 			Args:            "--completion-bash two --flag-3 opt4 --",
 			ExpectedOptions: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
+		},
+
+		// Args complete
+		{
+			// After a command with arg options
+			Args:            "--completion-bash three ",
+			ExpectedOptions: []string{"arg-2-opt-1", "arg-2-opt-2", "arg-3-opt-1", "arg-3-opt-2"},
+		},
+		{
+			// But not after flag start
+			Args:            "--completion-bash three --",
+			ExpectedOptions: []string{"--flag-0", "--flag-1", "--flag-4", "--help"},
+		},
+		{
+			// Completes args after one already listed
+			Args:            "--completion-bash three firstArg ",
+			ExpectedOptions: []string{"arg-2-opt-1", "arg-2-opt-2", "arg-3-opt-1", "arg-3-opt-2"},
+		},
+		{
+			// Completes args after a flag
+			Args:            "--completion-bash three firstArg --flag-4 ",
+			ExpectedOptions: []string{"arg-2-opt-1", "arg-2-opt-2", "arg-3-opt-1", "arg-3-opt-2"},
 		},
 	}
 

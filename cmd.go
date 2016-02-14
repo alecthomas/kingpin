@@ -13,17 +13,18 @@ type cmdMixin struct {
 }
 
 func (c *cmdMixin) CmdCompletion() []string {
-	rv := []string{}
-	if len(c.cmdGroup.commandOrder) > 0 {
-		// This command has subcommands. We should
-		// show these to the user.
-		for _, option := range c.cmdGroup.commandOrder {
-			rv = append(rv, option.name)
-		}
-	} else {
-		// No subcommands
-		rv = nil
+	var rv []string
+
+	// If this command has subcommands, we should show these to the user.
+	for _, option := range c.cmdGroup.commandOrder {
+		rv = append(rv, option.name)
 	}
+
+	// Add any completions from args as well
+	for _, arg := range c.argGroup.args {
+		rv = append(rv, arg.resolveCompletions()...)
+	}
+
 	return rv
 }
 

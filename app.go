@@ -670,10 +670,10 @@ func (a *Application) completionOptions(context *ParseContext) []string {
 			}
 		}
 		return options
-	} else {
-		// Perform completion for sub commands.
-		return target.CmdCompletion()
 	}
+
+	// Perform completion for sub commands and arguments.
+	return target.CmdCompletion()
 }
 
 func (a *Application) generateBashCompletion(context *ParseContext) {
