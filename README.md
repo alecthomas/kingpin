@@ -74,7 +74,7 @@ contextual help if `--help` is encountered at any point in the command line
 - POSIX-style short flag combining (`-a -b` -> `-ab`).
 - Short-flag+parameter combining (`-a parm` -> `-aparm`).
 - Read command-line from files (`@<file>`).
-- Automatically generate man pages (`--man-page`).
+- Automatically generate man pages (`--help-man`).
 
 ## User-visible changes between v1 and v2
 
