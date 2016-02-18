@@ -12,20 +12,27 @@ type cmdMixin struct {
 	actionMixin
 }
 
-func (c *cmdMixin) CmdCompletion() []string {
-	var rv []string
-
-	// If this command has subcommands, we should show these to the user.
-	for _, option := range c.cmdGroup.commandOrder {
-		rv = append(rv, option.name)
+// CmdCompletion returns completion options for arguments, if that's where
+// parsing left off, or commands if there aren't any unsatisfied args.
+func (c *cmdMixin) CmdCompletion(context *ParseContext) []string {
+	// Count args already satisfied - we won't complete those
+	argsSatisfied := 0
+	for _, parsed := range context.Elements {
+		if _, ok := parsed.Clause.(*ArgClause); ok && parsed.Value != nil && *parsed.Value != "" {
+			argsSatisfied++
+		}
 	}
 
-	// Add any completions from args as well
-	for _, arg := range c.argGroup.args {
-		rv = append(rv, arg.resolveCompletions()...)
+	if argsSatisfied < len(c.argGroup.args) {
+		return c.argGroup.args[argsSatisfied].resolveCompletions()
 	}
 
-	return rv
+	// All args have been listed already, so complete (sub-)commands
+	var options []string
+	for _, cmd := range c.cmdGroup.commandOrder {
+		options = append(options, cmd.name)
+	}
+	return options
 }
 
 func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (choices []string, flagMatch bool, optionMatch bool) {

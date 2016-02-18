@@ -271,6 +271,8 @@ func TestCmdCompletion(t *testing.T) {
 	two.Command("sub1", "")
 	two.Command("sub2", "")
 
-	assert.Equal(t, []string{"one", "two"}, app.CmdCompletion())
-	assert.Equal(t, []string{"sub1", "sub2"}, two.CmdCompletion())
+	context, _ := app.ParseContext([]string{})
+
+	assert.Equal(t, []string{"help", "one", "two"}, app.CmdCompletion(context))
+	assert.Equal(t, []string{"sub1", "sub2"}, two.CmdCompletion(context))
 }

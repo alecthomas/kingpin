@@ -248,8 +248,9 @@ func TestBashCompletionOptions(t *testing.T) {
 	three.Flag("flag-4", "").String()
 	three.Arg("arg-1", "").String()
 	three.Arg("arg-2", "").HintOptions("arg-2-opt-1", "arg-2-opt-2").String()
-	three.Arg("arg-3", "").HintAction(func() []string {
-		return []string{"arg-3-opt-1", "arg-3-opt-2"}
+	three.Arg("arg-3", "").String()
+	three.Arg("arg-4", "").HintAction(func() []string {
+		return []string{"arg-4-opt-1", "arg-4-opt-2"}
 	}).String()
 
 	cases := []struct {
@@ -345,24 +346,45 @@ func TestBashCompletionOptions(t *testing.T) {
 
 		// Args complete
 		{
-			// After a command with arg options
+			// After a command with an arg with no options, nothing should be
+			// shown
 			Args:            "--completion-bash three ",
-			ExpectedOptions: []string{"arg-2-opt-1", "arg-2-opt-2", "arg-3-opt-1", "arg-3-opt-2"},
+			ExpectedOptions: []string(nil),
 		},
 		{
-			// But not after flag start
+			// After a command with an arg, explicitly starting a flag should
+			// complete flags
 			Args:            "--completion-bash three --",
 			ExpectedOptions: []string{"--flag-0", "--flag-1", "--flag-4", "--help"},
 		},
 		{
-			// Completes args after one already listed
-			Args:            "--completion-bash three firstArg ",
-			ExpectedOptions: []string{"arg-2-opt-1", "arg-2-opt-2", "arg-3-opt-1", "arg-3-opt-2"},
+			// After a command with an arg that does have completions, they
+			// should be shown
+			Args:            "--completion-bash three arg1 ",
+			ExpectedOptions: []string{"arg-2-opt-1", "arg-2-opt-2"},
 		},
 		{
-			// Completes args after a flag
-			Args:            "--completion-bash three firstArg --flag-4 ",
-			ExpectedOptions: []string{"arg-2-opt-1", "arg-2-opt-2", "arg-3-opt-1", "arg-3-opt-2"},
+			// After a command with an arg that does have completions, but a
+			// flag is started, flag options should be completed
+			Args:            "--completion-bash three arg1 --",
+			ExpectedOptions: []string{"--flag-0", "--flag-1", "--flag-4", "--help"},
+		},
+		{
+			// After a command with an arg that has no completions, and isn't first,
+			// nothing should be shown
+			Args:            "--completion-bash three arg1 arg2 ",
+			ExpectedOptions: []string(nil),
+		},
+		{
+			// After a command with a different arg that also has completions,
+			// those different options should be shown
+			Args:            "--completion-bash three arg1 arg2 arg3 ",
+			ExpectedOptions: []string{"arg-4-opt-1", "arg-4-opt-2"},
+		},
+		{
+			// After a command with all args listed, nothing should complete
+			Args:            "--completion-bash three arg1 arg2 arg3 arg4",
+			ExpectedOptions: []string(nil),
 		},
 	}
 
