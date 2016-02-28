@@ -54,7 +54,7 @@ func main() {
 }
 ```
 
-More [examples](https://github.com/alecthomas/kingpin/tree/master/examples) are available.
+More [examples](https://github.com/alecthomas/kingpin/tree/master/_examples) are available.
 
 Second to parsing, providing the user with useful help is probably the most
 important thing a command-line parser does. Kingpin tries to provide detailed
