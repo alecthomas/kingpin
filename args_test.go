@@ -57,22 +57,27 @@ func TestArgMultipleValuesDefault(t *testing.T) {
 	assert.Equal(t, []string{"default1", "default2"}, *a)
 }
 
-func TestArgRequiredWithEnvar(t *testing.T) {
-	os.Setenv("TEST_ENVAR", "123")
-	defer os.Unsetenv("TEST_ENVAR")
+func TestRequiredArgWithEnvarMissingErrors(t *testing.T) {
 	app := newTestApp()
-	flag := app.Arg("t", "").Envar("TEST_ENVAR").Required().Int()
+	app.Arg("t", "").Envar("TEST_ARG_ENVAR").Required().Int()
+	_, err := app.Parse([]string{})
+	assert.Error(t, err)
+}
+
+func TestArgRequiredWithEnvar(t *testing.T) {
+	os.Setenv("TEST_ARG_ENVAR", "123")
+	app := newTestApp()
+	flag := app.Arg("t", "").Envar("TEST_ARG_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
 	assert.NoError(t, err)
 	assert.Equal(t, 123, *flag)
 }
 
 func TestSubcommandArgRequiredWithEnvar(t *testing.T) {
-	os.Setenv("TEST_ENVAR", "123")
-	defer os.Unsetenv("TEST_ENVAR")
+	os.Setenv("TEST_ARG_ENVAR", "123")
 	app := newTestApp()
 	cmd := app.Command("command", "")
-	flag := cmd.Arg("t", "").Envar("TEST_ENVAR").Required().Int()
+	flag := cmd.Arg("t", "").Envar("TEST_ARG_ENVAR").Required().Int()
 	_, err := app.Parse([]string{"command"})
 	assert.NoError(t, err)
 	assert.Equal(t, 123, *flag)
