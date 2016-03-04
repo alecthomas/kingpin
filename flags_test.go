@@ -101,6 +101,7 @@ func TestRequiredWithEnvarMissingErrors(t *testing.T) {
 
 func TestRequiredWithEnvar(t *testing.T) {
 	os.Setenv("TEST_ENVAR", "123")
+	defer os.Unsetenv("TEST_ENVAR")
 	app := newTestApp()
 	flag := app.Flag("t", "").Envar("TEST_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
@@ -110,6 +111,7 @@ func TestRequiredWithEnvar(t *testing.T) {
 
 func TestSubcommandFlagRequiredWithEnvar(t *testing.T) {
 	os.Setenv("TEST_ENVAR", "123")
+	defer os.Unsetenv("TEST_ENVAR")
 	app := newTestApp()
 	cmd := app.Command("command", "")
 	flag := cmd.Flag("t", "").Envar("TEST_ENVAR").Required().Int()

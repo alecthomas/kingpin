@@ -3,6 +3,7 @@ package kingpin
 import (
 	"io/ioutil"
 	"testing"
+	"os"
 
 	"github.com/alecthomas/assert"
 )
@@ -54,4 +55,25 @@ func TestArgMultipleValuesDefault(t *testing.T) {
 	_, err := app.Parse([]string{})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"default1", "default2"}, *a)
+}
+
+func TestArgRequiredWithEnvar(t *testing.T) {
+	os.Setenv("TEST_ENVAR", "123")
+	defer os.Unsetenv("TEST_ENVAR")
+	app := newTestApp()
+	flag := app.Arg("t", "").Envar("TEST_ENVAR").Required().Int()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, 123, *flag)
+}
+
+func TestSubcommandArgRequiredWithEnvar(t *testing.T) {
+	os.Setenv("TEST_ENVAR", "123")
+	defer os.Unsetenv("TEST_ENVAR")
+	app := newTestApp()
+	cmd := app.Command("command", "")
+	flag := cmd.Arg("t", "").Envar("TEST_ENVAR").Required().Int()
+	_, err := app.Parse([]string{"command"})
+	assert.NoError(t, err)
+	assert.Equal(t, 123, *flag)
 }

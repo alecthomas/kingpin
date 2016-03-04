@@ -1,6 +1,9 @@
 package kingpin
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 type argGroup struct {
 	args []*ArgClause
@@ -67,6 +70,8 @@ type ArgClause struct {
 	completionsMixin
 	name          string
 	help          string
+	envar         string
+	noEnvar       bool
 	defaultValues []string
 	required      bool
 }
@@ -77,6 +82,43 @@ func newArg(name, help string) *ArgClause {
 		help: help,
 	}
 	return a
+}
+
+func (a *ArgClause) setDefault() error {
+	if !a.noEnvar && a.envar != "" {
+		if envarValue := os.Getenv(a.envar); envarValue != "" {
+			if v, ok := a.value.(remainderArg); !ok || !v.IsCumulative() {
+				// Use the value as-is
+				return a.value.Set(envarValue)
+			} else {
+				// Split by new line to extract multiple values, if any.
+				trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
+				for _, value := range envVarValuesSplitter.Split(trimmed, -1) {
+					if err := a.value.Set(value); err != nil {
+						return err
+					}
+				}
+				return nil
+			}
+		}
+	}
+
+	if len(a.defaultValues) > 0 {
+		for _, defaultValue := range a.defaultValues {
+			if err := a.value.Set(defaultValue); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	return nil
+}
+
+func (a *ArgClause) needsValue() bool {
+	haveDefault := len(a.defaultValues) > 0
+	haveEnvar := !a.noEnvar && a.envar != "" && os.Getenv(a.envar) != ""
+	return a.required && !(haveDefault || haveEnvar)
 }
 
 func (a *ArgClause) consumesRemainder() bool {
@@ -95,6 +137,23 @@ func (a *ArgClause) Required() *ArgClause {
 // Default values for this argument. They *must* be parseable by the value of the argument.
 func (a *ArgClause) Default(values ...string) *ArgClause {
 	a.defaultValues = values
+	return a
+}
+
+// Envar overrides the default value(s) for a flag from an environment variable,
+// if it is set. Several default values can be provided by using new lines to
+// separate them.
+func (a *ArgClause) Envar(name string) *ArgClause {
+	a.envar = name
+	a.noEnvar = false
+	return a
+}
+
+// NoEnvar forces environment variable defaults to be disabled for this flag.
+// Most useful in conjunction with app.DefaultEnvars().
+func (a *ArgClause) NoEnvar() *ArgClause {
+	a.envar = ""
+	a.noEnvar = true
 	return a
 }
 
