@@ -609,7 +609,7 @@ You can see an in depth example of the completion API within
 
 ### Custom help
 
-Kingpin v2 supports templatised help using the text/template library (actually, [a fork](https://github.com/alecthomas/template)).
+Kingpin v2 supports templatised help using the text/template library.
 
 You can specify the template to use with the [Application.UsageTemplate()](http://godoc.org/gopkg.in/alecthomas/kingpin.v2#Application.UsageTemplate) function.
 
