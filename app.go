@@ -229,29 +229,6 @@ func (a *Application) maybeHelp(context *ParseContext) {
 	}
 }
 
-// findCommandFromArgs finds a command (if any) from the given command line arguments.
-func (a *Application) findCommandFromArgs(args []string) (command string, err error) {
-	if err := a.init(); err != nil {
-		return "", err
-	}
-	context := tokenize(args, false)
-	if _, err := a.parse(context); err != nil {
-		return "", err
-	}
-	return a.findCommandFromContext(context), nil
-}
-
-// findCommandFromContext finds a command (if any) from a parsed context.
-func (a *Application) findCommandFromContext(context *ParseContext) string {
-	commands := []string{}
-	for _, element := range context.Elements {
-		if c, ok := element.Clause.(*CmdClause); ok {
-			commands = append(commands, c.name)
-		}
-	}
-	return strings.Join(commands, " ")
-}
-
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
 	a.version = version

@@ -145,16 +145,6 @@ loop:
 	return nil, nil
 }
 
-func (f *flagGroup) visibleFlags() int {
-	count := 0
-	for _, flag := range f.long {
-		if !flag.hidden {
-			count++
-		}
-	}
-	return count
-}
-
 // FlagClause is a fluid interface used to build flags.
 type FlagClause struct {
 	parserMixin
