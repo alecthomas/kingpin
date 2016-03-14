@@ -64,6 +64,7 @@ func (a *argGroup) init() error {
 type ArgClause struct {
 	actionMixin
 	parserMixin
+	completionsMixin
 	name          string
 	help          string
 	defaultValues []string
@@ -104,6 +105,20 @@ func (a *ArgClause) Action(action Action) *ArgClause {
 
 func (a *ArgClause) PreAction(action Action) *ArgClause {
 	a.addPreAction(action)
+	return a
+}
+
+// HintAction registers a HintAction (function) for the arg to provide completions
+func (a *ArgClause) HintAction(action HintAction) *ArgClause {
+	a.addHintAction(action)
+	return a
+}
+
+// HintOptions registers any number of options for the flag to provide completions
+func (a *ArgClause) HintOptions(options ...string) *ArgClause {
+	a.addHintAction(func() []string {
+		return options
+	})
 	return a
 }
 

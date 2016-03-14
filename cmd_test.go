@@ -1,6 +1,7 @@
 package kingpin
 
 import (
+	"sort"
 	"strings"
 
 	"github.com/alecthomas/assert"
@@ -19,6 +20,19 @@ func parseAndExecute(app *Application, context *ParseContext) (string, error) {
 	}
 
 	return app.execute(context, selected)
+}
+
+func complete(t *testing.T, app *Application, args ...string) []string {
+	context, err := app.ParseContext(args)
+	assert.NoError(t, err)
+	if err != nil {
+		return nil
+	}
+
+	completions := app.completionOptions(context)
+	sort.Strings(completions)
+
+	return completions
 }
 
 func TestNestedCommands(t *testing.T) {
@@ -271,6 +285,63 @@ func TestCmdCompletion(t *testing.T) {
 	two.Command("sub1", "")
 	two.Command("sub2", "")
 
-	assert.Equal(t, []string{"one", "two"}, app.CmdCompletion())
-	assert.Equal(t, []string{"sub1", "sub2"}, two.CmdCompletion())
+	assert.Equal(t, []string{"help", "one", "two"}, complete(t, app))
+	assert.Equal(t, []string{"sub1", "sub2"}, complete(t, app, "two"))
+}
+
+func TestDefaultCmdCompletion(t *testing.T) {
+	app := newTestApp()
+
+	cmd1 := app.Command("cmd1", "")
+
+	cmd1Sub1 := cmd1.Command("cmd1-sub1", "")
+	cmd1Sub1.Arg("cmd1-sub1-arg1", "").HintOptions("cmd1-arg1").String()
+
+	cmd2 := app.Command("cmd2", "").Default()
+
+	cmd2.Command("cmd2-sub1", "")
+
+	cmd2Sub2 := cmd2.Command("cmd2-sub2", "").Default()
+
+	cmd2Sub2Sub1 := cmd2Sub2.Command("cmd2-sub2-sub1", "").Default()
+	cmd2Sub2Sub1.Arg("cmd2-sub2-sub1-arg1", "").HintOptions("cmd2-sub2-sub1-arg1").String()
+	cmd2Sub2Sub1.Arg("cmd2-sub2-sub1-arg2", "").HintOptions("cmd2-sub2-sub1-arg2").String()
+
+	// Without args, should get:
+	//   - root cmds (incuding implicit "help")
+	//   - thread of default cmds
+	//   - first arg hints for the final default cmd
+	assert.Equal(t, []string{"cmd1", "cmd2", "cmd2-sub1", "cmd2-sub2", "cmd2-sub2-sub1", "cmd2-sub2-sub1-arg1", "help"}, complete(t, app))
+
+	// With a non-default cmd already listed, should get:
+	//   - sub cmds of that arg
+	assert.Equal(t, []string{"cmd1-sub1"}, complete(t, app, "cmd1"))
+
+	// With an explicit default cmd listed, should get:
+	//   - default child-cmds
+	//   - first arg hints for the final default cmd
+	assert.Equal(t, []string{"cmd2-sub1", "cmd2-sub2", "cmd2-sub2-sub1", "cmd2-sub2-sub1-arg1"}, complete(t, app, "cmd2"))
+
+	// Args should be completed when all preceding cmds are explicit, and when
+	// any of them are implicit (not listed). Check this by trying all possible
+	// combinations of choosing/excluding the three levels of cmds. This tests
+	// root-level default, middle default, and end default.
+	for i := 0; i < 8; i++ {
+		var cmdline []string
+
+		if i&1 != 0 {
+			cmdline = append(cmdline, "cmd2")
+		}
+		if i&2 != 0 {
+			cmdline = append(cmdline, "cmd2-sub2")
+		}
+		if i&4 != 0 {
+			cmdline = append(cmdline, "cmd2-sub2-sub1")
+		}
+
+		assert.Contains(t, complete(t, app, cmdline...), "cmd2-sub2-sub1-arg1", "with cmdline: %v", cmdline)
+	}
+
+	// With both args of a default sub cmd, should get no completions
+	assert.Empty(t, complete(t, app, "arg1", "arg2"))
 }
