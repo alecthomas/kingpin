@@ -401,11 +401,8 @@ func (a *Application) setDefaults(context *ParseContext) error {
 
 	for _, arg := range context.arguments.args {
 		if argElements[arg.name] == nil {
-			// Set defaults, if any.
-			for _, defaultValue := range arg.defaultValues {
-				if err := arg.value.Set(defaultValue); err != nil {
-					return err
-				}
+			if err := arg.setDefault(); err != nil {
+				return err
 			}
 		}
 	}
@@ -440,7 +437,7 @@ func (a *Application) validateRequired(context *ParseContext) error {
 
 	for _, arg := range context.arguments.args {
 		if argElements[arg.name] == nil {
-			if arg.required {
+			if arg.needsValue() {
 				return fmt.Errorf("required argument '%s' not provided", arg.name)
 			}
 		}
