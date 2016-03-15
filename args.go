@@ -2,7 +2,6 @@ package kingpin
 
 import (
 	"fmt"
-	"os"
 )
 
 type argGroup struct {
@@ -68,10 +67,9 @@ type ArgClause struct {
 	actionMixin
 	parserMixin
 	completionsMixin
+	envarMixin
 	name          string
 	help          string
-	envar         string
-	noEnvar       bool
 	defaultValues []string
 	required      bool
 }
@@ -85,21 +83,17 @@ func newArg(name, help string) *ArgClause {
 }
 
 func (a *ArgClause) setDefault() error {
-	if !a.noEnvar && a.envar != "" {
-		if envarValue := os.Getenv(a.envar); envarValue != "" {
-			if v, ok := a.value.(remainderArg); !ok || !v.IsCumulative() {
-				// Use the value as-is
-				return a.value.Set(envarValue)
-			} else {
-				// Split by new line to extract multiple values, if any.
-				trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
-				for _, value := range envVarValuesSplitter.Split(trimmed, -1) {
-					if err := a.value.Set(value); err != nil {
-						return err
-					}
+	if a.HasEnvarValue() {
+		if v, ok := a.value.(remainderArg); !ok || !v.IsCumulative() {
+			// Use the value as-is
+			return a.value.Set(a.GetEnvarValue())
+		} else {
+			for _, value := range a.GetSplitEnvarValue() {
+				if err := a.value.Set(value); err != nil {
+					return err
 				}
-				return nil
 			}
+			return nil
 		}
 	}
 
@@ -117,8 +111,7 @@ func (a *ArgClause) setDefault() error {
 
 func (a *ArgClause) needsValue() bool {
 	haveDefault := len(a.defaultValues) > 0
-	haveEnvar := !a.noEnvar && a.envar != "" && os.Getenv(a.envar) != ""
-	return a.required && !(haveDefault || haveEnvar)
+	return a.required && !(haveDefault || a.HasEnvarValue())
 }
 
 func (a *ArgClause) consumesRemainder() bool {

@@ -2,15 +2,7 @@ package kingpin
 
 import (
 	"fmt"
-	"os"
-	"regexp"
 	"strings"
-)
-
-var (
-	envVarValuesSeparator = "\r?\n"
-	envVarValuesTrimmer   = regexp.MustCompile(envVarValuesSeparator + "$")
-	envVarValuesSplitter  = regexp.MustCompile(envVarValuesSeparator)
 )
 
 type flagGroup struct {
@@ -150,11 +142,10 @@ type FlagClause struct {
 	parserMixin
 	actionMixin
 	completionsMixin
+	envarMixin
 	name          string
 	shorthand     byte
 	help          string
-	envar         string
-	noEnvar       bool
 	defaultValues []string
 	placeholder   string
 	hidden        bool
@@ -169,21 +160,17 @@ func newFlag(name, help string) *FlagClause {
 }
 
 func (f *FlagClause) setDefault() error {
-	if !f.noEnvar && f.envar != "" {
-		if envarValue := os.Getenv(f.envar); envarValue != "" {
-			if v, ok := f.value.(repeatableFlag); !ok || !v.IsCumulative() {
-				// Use the value as-is
-				return f.value.Set(envarValue)
-			} else {
-				// Split by new line to extract multiple values, if any.
-				trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
-				for _, value := range envVarValuesSplitter.Split(trimmed, -1) {
-					if err := f.value.Set(value); err != nil {
-						return err
-					}
+	if f.HasEnvarValue() {
+		if v, ok := f.value.(repeatableFlag); !ok || !v.IsCumulative() {
+			// Use the value as-is
+			return f.value.Set(f.GetEnvarValue())
+		} else {
+			for _, value := range f.GetSplitEnvarValue() {
+				if err := f.value.Set(value); err != nil {
+					return err
 				}
-				return nil
 			}
+			return nil
 		}
 	}
 
@@ -201,8 +188,7 @@ func (f *FlagClause) setDefault() error {
 
 func (f *FlagClause) needsValue() bool {
 	haveDefault := len(f.defaultValues) > 0
-	haveEnvar := !f.noEnvar && f.envar != "" && os.Getenv(f.envar) != ""
-	return f.required && !(haveDefault || haveEnvar)
+	return f.required && !(haveDefault || f.HasEnvarValue())
 }
 
 func (f *FlagClause) init() error {
