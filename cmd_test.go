@@ -289,6 +289,33 @@ func TestCmdCompletion(t *testing.T) {
 	assert.Equal(t, []string{"sub1", "sub2"}, complete(t, app, "two"))
 }
 
+func TestHiddenCmdCompletion(t *testing.T) {
+	app := newTestApp()
+
+	// top level visible & hidden cmds, with no sub-cmds
+	app.Command("visible1", "")
+	app.Command("hidden1", "").Hidden()
+
+	// visible cmd with visible & hidden sub-cmds
+	visible2 := app.Command("visible2", "")
+	visible2.Command("visible2-visible", "")
+	visible2.Command("visible2-hidden", "").Hidden()
+
+	// hidden cmd with visible & hidden sub-cmds
+	hidden2 := app.Command("hidden2", "").Hidden()
+	hidden2.Command("hidden2-visible", "")
+	hidden2.Command("hidden2-hidden", "").Hidden()
+
+	// Only top level visible cmds should show
+	assert.Equal(t, []string{"help", "visible1", "visible2"}, complete(t, app))
+
+	// Only visible sub-cmds should show
+	assert.Equal(t, []string{"visible2-visible"}, complete(t, app, "visible2"))
+
+	// Hidden commands should still complete visible sub-cmds
+	assert.Equal(t, []string{"hidden2-visible"}, complete(t, app, "hidden2"))
+}
+
 func TestDefaultCmdCompletion(t *testing.T) {
 	app := newTestApp()
 
