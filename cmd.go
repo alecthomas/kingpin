@@ -39,7 +39,9 @@ func (c *cmdMixin) CmdCompletion(context *ParseContext) []string {
 	} else {
 		// If all args are satisfied, then go back to completing commands
 		for _, cmd := range c.cmdGroup.commandOrder {
-			options = append(options, cmd.name)
+			if !cmd.hidden {
+				options = append(options, cmd.name)
+			}
 		}
 	}
 
