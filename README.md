@@ -178,7 +178,7 @@ $ go get gopkg.in/alecthomas/kingpin.v1
       Allows for values that look like flags to be processed.
     - Allow `--help` to be used with commands.
     - Support `Hidden()` flags.
-    - Parser for [units.Base2Bytes](https://github.com/alecthomas/units)
+    - Parser for [sizes in bytes with SI prefixes](https://godoc.org/github.com/dustin/go-humanize#ParseBytes)
       type. Allows for flags like `--ram=512MB` or `--ram=1GB`.
     - Add an `Enum()` value, allowing only one of a set of values
       to be selected. eg. `Flag(...).Enum("debug", "info", "warning")`.
