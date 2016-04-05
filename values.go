@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alecthomas/units"
+	"github.com/dustin/go-humanize"
 )
 
 // NOTE: Most of the base type values were lifted from:
@@ -398,22 +398,21 @@ func (s *enumsValue) IsCumulative() bool {
 	return true
 }
 
-// -- units.Base2Bytes Value
-type bytesValue units.Base2Bytes
+type SIBytesValue uint64
 
-func newBytesValue(p *units.Base2Bytes) *bytesValue {
-	return (*bytesValue)(p)
+func newSIBytesValue(p *uint64) *SIBytesValue {
+	return (*SIBytesValue)(p)
 }
 
-func (d *bytesValue) Set(s string) error {
-	v, err := units.ParseBase2Bytes(s)
-	*d = bytesValue(v)
+func (d *SIBytesValue) Set(s string) error {
+	v, err := humanize.ParseBytes(s)
+	*d = SIBytesValue(v)
 	return err
 }
 
-func (d *bytesValue) Get() interface{} { return units.Base2Bytes(*d) }
+func (d *SIBytesValue) Get() interface{} { return uint64(*d) }
 
-func (d *bytesValue) String() string { return (*units.Base2Bytes)(d).String() }
+func (d *SIBytesValue) String() string { return humanize.Bytes(uint64(*d)) }
 
 func newExistingFileValue(target *string) *fileStatValue {
 	return newFileStatValue(target, func(s os.FileInfo) error {
