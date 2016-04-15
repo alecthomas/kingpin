@@ -138,7 +138,7 @@ $ go get gopkg.in/alecthomas/kingpin.v1
 - *2015-09-19* -- Stable v2.1.0 release.
     - Added `command.Default()` to specify a default command to use if no other
       command matches. This allows for convenient user shortcuts.
-    - Exposed `HelpFlag` and `VersionFlag` for further cusomisation.
+    - Exposed `HelpFlag` and `VersionFlag` for further customisation.
     - `Action()` and `PreAction()` added and both now support an arbitrary
       number of callbacks.
     - `kingpin.SeparateOptionalFlagsUsageTemplate`.
