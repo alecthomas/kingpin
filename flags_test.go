@@ -38,6 +38,17 @@ func TestNegateNonBool(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestNegativePrefixLongFlag(t *testing.T) {
+	fg := newFlagGroup()
+	f := fg.Flag("no-comment", "")
+	b := f.Bool()
+	fg.init("")
+	tokens := tokenize([]string{"--no-comment"}, false)
+	_, err := fg.parse(tokens)
+	assert.NoError(t, err)
+	assert.False(t, *b)
+}
+
 func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
 	app := newTestApp()
 	app.Flag("a", "").Default("invalid").Bool()
