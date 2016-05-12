@@ -224,6 +224,8 @@ func (a *Application) writeUsage(context *ParseContext, err error) {
 func (a *Application) maybeHelp(context *ParseContext) {
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok && flag == a.HelpFlag {
+			// Re-parse the command-line ignoring defaults, so that help works correctly.
+			context, _ = a.parseContext(true, context.rawArgs)
 			a.writeUsage(context, nil)
 		}
 	}
