@@ -113,7 +113,7 @@ be separated by a space. That is no longer the case.
 
 ## Versions
 
-Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin) for versioning.
+Kingpin uses [gopkg.in](https://gopkg.in) for versioning.
 
 The current stable version is [gopkg.in/alecthomas/kingpin.v2](https://gopkg.in/alecthomas/kingpin.v2). The previous version, [gopkg.in/alecthomas/kingpin.v1](https://gopkg.in/alecthomas/kingpin.v1), is deprecated and in maintenance mode.
 
