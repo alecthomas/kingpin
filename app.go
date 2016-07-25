@@ -236,6 +236,8 @@ func (a *Application) writeUsage(context *ParseContext, err error) {
 	}
 	if err != nil {
 		a.terminate(1)
+	} else {
+		a.terminate(0)
 	}
 }
 
