@@ -96,6 +96,8 @@ loop:
 						invert = true
 					}
 					flag, ok = f.long[name]
+				} else if strings.HasPrefix(name, "no-") {
+					invert = true
 				}
 				if !ok {
 					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
@@ -109,8 +111,7 @@ loop:
 
 			context.Next()
 
-			fb, ok := flag.value.(boolFlag)
-			if ok && fb.IsBoolFlag() {
+			if fb, ok := flag.value.(boolFlag); ok && fb.IsBoolFlag() {
 				if invert {
 					defaultValue = "false"
 				} else {
@@ -145,13 +146,11 @@ type FlagClause struct {
 	parserMixin
 	actionMixin
 	completionsMixin
-	envarMixin
-	name          string
-	shorthand     byte
-	help          string
-	defaultValues []string
-	placeholder   string
-	hidden        bool
+	name        string
+	shorthand   byte
+	help        string
+	placeholder string
+	hidden      bool
 }
 
 func newFlag(name, help string) *FlagClause {
@@ -162,38 +161,6 @@ func newFlag(name, help string) *FlagClause {
 	return f
 }
 
-func (f *FlagClause) setDefault() error {
-	if f.HasEnvarValue() {
-		if v, ok := f.value.(repeatableFlag); !ok || !v.IsCumulative() {
-			// Use the value as-is
-			return f.value.Set(f.GetEnvarValue())
-		} else {
-			for _, value := range f.GetSplitEnvarValue() {
-				if err := f.value.Set(value); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}
-
-	if len(f.defaultValues) > 0 {
-		for _, defaultValue := range f.defaultValues {
-			if err := f.value.Set(defaultValue); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	return nil
-}
-
-func (f *FlagClause) needsValue() bool {
-	haveDefault := len(f.defaultValues) > 0
-	return f.required && !(haveDefault || f.HasEnvarValue())
-}
-
 func (f *FlagClause) init() error {
 	if f.required && len(f.defaultValues) > 0 {
 		return fmt.Errorf("required flag '--%s' with default value that will never be used", f.name)
@@ -201,7 +168,7 @@ func (f *FlagClause) init() error {
 	if f.value == nil {
 		return fmt.Errorf("no type defined for --%s (eg. .String())", f.name)
 	}
-	if v, ok := f.value.(repeatableFlag); (!ok || !v.IsCumulative()) && len(f.defaultValues) > 1 {
+	if v, ok := f.value.(cumulativeValue); (!ok || !v.IsCumulative()) && len(f.defaultValues) > 1 {
 		return fmt.Errorf("invalid default for '--%s', expecting single value", f.name)
 	}
 	return nil

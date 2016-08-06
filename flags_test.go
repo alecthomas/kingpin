@@ -18,33 +18,33 @@ func TestBool(t *testing.T) {
 }
 
 func TestNoBool(t *testing.T) {
-	fg := newFlagGroup()
-	f := fg.Flag("b", "").Default("true")
+	app := newTestApp()
+	f := app.Flag("b", "").Default("true")
 	b := f.Bool()
-	fg.init("")
-	tokens := tokenize([]string{"--no-b"}, false)
-	_, err := fg.parse(tokens)
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.True(t, *b)
+	_, err = app.Parse([]string{"--no-b"})
 	assert.NoError(t, err)
 	assert.False(t, *b)
 }
 
 func TestNegateNonBool(t *testing.T) {
-	fg := newFlagGroup()
-	f := fg.Flag("b", "")
+	app := newTestApp()
+	f := app.Flag("b", "")
 	f.Int()
-	fg.init("")
-	tokens := tokenize([]string{"--no-b"}, false)
-	_, err := fg.parse(tokens)
+	_, err := app.Parse([]string{"--no-b"})
 	assert.Error(t, err)
 }
 
 func TestNegativePrefixLongFlag(t *testing.T) {
-	fg := newFlagGroup()
-	f := fg.Flag("no-comment", "")
+	app := newTestApp()
+	f := app.Flag("no-comment", "")
 	b := f.Bool()
-	fg.init("")
-	tokens := tokenize([]string{"--no-comment"}, false)
-	_, err := fg.parse(tokens)
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.False(t, *b)
+	_, err = app.Parse([]string{"--no-comment"})
 	assert.NoError(t, err)
 	assert.False(t, *b)
 }
@@ -267,11 +267,11 @@ func TestMultiHintActions(t *testing.T) {
 
 	a := c.Flag("foo", "foo").
 		HintAction(func() []string {
-		return []string{"opt1"}
-	}).
+			return []string{"opt1"}
+		}).
 		HintAction(func() []string {
-		return []string{"opt2"}
-	})
+			return []string{"opt2"}
+		})
 	args := a.resolveCompletions()
 	assert.Equal(t, []string{"opt1", "opt2"}, args)
 }
@@ -292,14 +292,14 @@ func TestCombinationEnumActions(t *testing.T) {
 
 	a := c.Flag("foo", "foo").
 		HintAction(func() []string {
-		return []string{"opt1", "opt2"}
-	})
+			return []string{"opt1", "opt2"}
+		})
 	a.Enum("opt3", "opt4")
 
 	b := c.Flag("bar", "bar").
 		HintAction(func() []string {
-		return []string{"opt5", "opt6"}
-	})
+			return []string{"opt5", "opt6"}
+		})
 	b.EnumVar(&foo, "opt3", "opt4")
 
 	// Provided HintActions should override automatically generated Enum options.

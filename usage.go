@@ -86,7 +86,7 @@ func formatFlag(haveShort bool, flag *FlagModel) string {
 	if !flag.IsBoolFlag() {
 		flagString += fmt.Sprintf("=%s", flag.FormatPlaceHolder())
 	}
-	if v, ok := flag.Value.(repeatableFlag); ok && v.IsCumulative() {
+	if v, ok := flag.Value.(cumulativeValue); ok && v.IsCumulative() {
 		flagString += " ..."
 	}
 	return flagString
@@ -182,7 +182,7 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 		"FormatAppUsage":     formatAppUsage,
 		"FormatCommandUsage": formatCmdUsage,
 		"IsCumulative": func(value Value) bool {
-			r, ok := value.(remainderArg)
+			r, ok := value.(cumulativeValue)
 			return ok && r.IsCumulative()
 		},
 		"Char": func(c rune) string {

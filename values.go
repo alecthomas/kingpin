@@ -46,16 +46,11 @@ type boolFlag interface {
 	IsBoolFlag() bool
 }
 
-// Optional interface for arguments that cumulatively consume all remaining
+// Optional interface for values that cumulatively consume all remaining
 // input.
-type remainderArg interface {
+type cumulativeValue interface {
 	Value
-	IsCumulative() bool
-}
-
-// Optional interface for flags that can be repeated.
-type repeatableFlag interface {
-	Value
+	Reset()
 	IsCumulative() bool
 }
 
@@ -110,6 +105,14 @@ func (a *accumulator) IsCumulative() bool {
 	return true
 }
 
+func (a *accumulator) Reset() {
+	if a.slice.Kind() == reflect.Ptr {
+		a.slice.Elem().Set(reflect.MakeSlice(a.slice.Type().Elem(), 0, 0))
+	} else {
+		a.slice.Set(reflect.MakeSlice(a.slice.Type(), 0, 0))
+	}
+}
+
 func (b *boolValue) IsBoolFlag() bool { return true }
 
 // -- time.Duration Value
@@ -157,6 +160,10 @@ func (s *stringMapValue) String() string {
 
 func (s *stringMapValue) IsCumulative() bool {
 	return true
+}
+
+func (s *stringMapValue) Reset() {
+	*s = map[string]string{}
 }
 
 // -- net.IP Value
@@ -376,26 +383,30 @@ func newEnumsFlag(target *[]string, options ...string) *enumsValue {
 	}
 }
 
-func (s *enumsValue) Set(value string) error {
-	for _, v := range s.options {
+func (e *enumsValue) Set(value string) error {
+	for _, v := range e.options {
 		if v == value {
-			*s.value = append(*s.value, value)
+			*e.value = append(*e.value, value)
 			return nil
 		}
 	}
-	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(s.options, ","), value)
+	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(e.options, ","), value)
 }
 
 func (e *enumsValue) Get() interface{} {
 	return ([]string)(*e.value)
 }
 
-func (s *enumsValue) String() string {
-	return strings.Join(*s.value, ",")
+func (e *enumsValue) String() string {
+	return strings.Join(*e.value, ",")
 }
 
-func (s *enumsValue) IsCumulative() bool {
+func (e *enumsValue) IsCumulative() bool {
 	return true
+}
+
+func (e *enumsValue) Reset() {
+	*e.value = []string{}
 }
 
 // -- units.Base2Bytes Value
@@ -452,6 +463,7 @@ func (c *counterValue) Get() interface{}   { return (int)(*c) }
 func (c *counterValue) IsBoolFlag() bool   { return true }
 func (c *counterValue) String() string     { return fmt.Sprintf("%d", *c) }
 func (c *counterValue) IsCumulative() bool { return true }
+func (c *counterValue) Reset()             { *c = 0 }
 
 func resolveHost(value string) (net.IP, error) {
 	if ip := net.ParseIP(value); ip != nil {

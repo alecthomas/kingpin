@@ -398,6 +398,8 @@ func (a *Application) setDefaults(context *ParseContext) error {
 			if err := flag.setDefault(); err != nil {
 				return err
 			}
+		} else {
+			flag.reset()
 		}
 	}
 
@@ -406,6 +408,8 @@ func (a *Application) setDefaults(context *ParseContext) error {
 			if err := arg.setDefault(); err != nil {
 				return err
 			}
+		} else {
+			arg.reset()
 		}
 	}
 
@@ -457,7 +461,7 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 		switch clause := element.Clause.(type) {
 		case *FlagClause:
 			if _, ok := flagSet[clause.name]; ok {
-				if v, ok := clause.value.(repeatableFlag); !ok || !v.IsCumulative() {
+				if v, ok := clause.value.(cumulativeValue); !ok || !v.IsCumulative() {
 					return nil, fmt.Errorf("flag '%s' cannot be repeated", clause.name)
 				}
 			}

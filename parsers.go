@@ -4,9 +4,16 @@ import (
 	"net"
 	"net/url"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/alecthomas/units"
+)
+
+var (
+	envVarValuesSeparator = "\r?\n"
+	envVarValuesTrimmer   = regexp.MustCompile(envVarValuesSeparator + "$")
+	envVarValuesSplitter  = regexp.MustCompile(envVarValuesSeparator)
 )
 
 type Settings interface {
@@ -14,12 +21,83 @@ type Settings interface {
 }
 
 type parserMixin struct {
-	value    Value
-	required bool
+	defaultValues []string
+	value         Value
+	required      bool
+	envar         string
+	noEnvar       bool
+}
+
+func (p *parserMixin) needsValue() bool {
+	haveDefault := len(p.defaultValues) > 0
+	return p.required && !(haveDefault || p.HasEnvarValue())
+}
+
+func (p *parserMixin) reset() {
+	if c, ok := p.value.(cumulativeValue); ok {
+		c.Reset()
+	}
+}
+
+func (p *parserMixin) setDefault() error {
+	p.reset()
+	if p.HasEnvarValue() {
+		if v, ok := p.value.(cumulativeValue); !ok || !v.IsCumulative() {
+			// Use the value as-is
+			return p.value.Set(p.GetEnvarValue())
+		} else {
+			for _, value := range p.GetSplitEnvarValue() {
+				if err := p.value.Set(value); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}
+
+	if len(p.defaultValues) > 0 {
+		for _, defaultValue := range p.defaultValues {
+			if err := p.value.Set(defaultValue); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	return nil
+}
+
+func (p *parserMixin) HasEnvarValue() bool {
+	return p.GetEnvarValue() != ""
+}
+
+func (p *parserMixin) GetEnvarValue() string {
+	if p.noEnvar || p.envar == "" {
+		return ""
+	}
+	return os.Getenv(p.envar)
+}
+
+func (p *parserMixin) GetSplitEnvarValue() []string {
+	values := make([]string, 0)
+
+	envarValue := p.GetEnvarValue()
+	if envarValue == "" {
+		return values
+	}
+
+	// Split by new line to extract multiple values, if any.
+	trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
+	for _, value := range envVarValuesSplitter.Split(trimmed, -1) {
+		values = append(values, value)
+	}
+
+	return values
 }
 
 func (p *parserMixin) SetValue(value Value) {
 	p.value = value
+	p.setDefault()
 }
 
 // StringMap provides key=value parsing into a map.

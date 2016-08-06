@@ -67,11 +67,8 @@ type ArgClause struct {
 	actionMixin
 	parserMixin
 	completionsMixin
-	envarMixin
-	name          string
-	help          string
-	defaultValues []string
-	required      bool
+	name string
+	help string
 }
 
 func newArg(name, help string) *ArgClause {
@@ -82,40 +79,8 @@ func newArg(name, help string) *ArgClause {
 	return a
 }
 
-func (a *ArgClause) setDefault() error {
-	if a.HasEnvarValue() {
-		if v, ok := a.value.(remainderArg); !ok || !v.IsCumulative() {
-			// Use the value as-is
-			return a.value.Set(a.GetEnvarValue())
-		} else {
-			for _, value := range a.GetSplitEnvarValue() {
-				if err := a.value.Set(value); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}
-
-	if len(a.defaultValues) > 0 {
-		for _, defaultValue := range a.defaultValues {
-			if err := a.value.Set(defaultValue); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-
-	return nil
-}
-
-func (a *ArgClause) needsValue() bool {
-	haveDefault := len(a.defaultValues) > 0
-	return a.required && !(haveDefault || a.HasEnvarValue())
-}
-
 func (a *ArgClause) consumesRemainder() bool {
-	if r, ok := a.value.(remainderArg); ok {
+	if r, ok := a.value.(cumulativeValue); ok {
 		return r.IsCumulative()
 	}
 	return false
