@@ -5,7 +5,7 @@ import (
 	"testing"
 	"os"
 
-	"github.com/alecthomas/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestArgRemainder(t *testing.T) {
