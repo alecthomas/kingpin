@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -370,4 +371,16 @@ func TestFlagsStruct(t *testing.T) {
 	_, err = a.Parse([]string{"--flag"})
 	assert.NoError(t, err)
 	assert.Equal(t, &RequiredFlag{Flag: true}, rflags)
+
+	type DurationFlag struct {
+		Elapsed time.Duration `help:"Elapsed time."`
+	}
+
+	a = newTestApp()
+	dflag := &DurationFlag{}
+	err = a.FlagsStruct(dflag)
+	assert.NoError(t, err)
+	_, err = a.Parse([]string{"--elapsed=5s"})
+	assert.NoError(t, err)
+	assert.Equal(t, 5*time.Second, dflag.Elapsed)
 }
