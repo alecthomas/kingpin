@@ -520,10 +520,11 @@ type MyFlags struct {
   URL string `help:"URL to connect to." default:"localhost:80"`
 }
 
-
 flags := &MyFlags{}
-kingpin.Struct(flags)
+kingpin.FlagsStruct(flags)
 ```
+
+The `help` tag must be present for a flag to be defined.
 
 ### Bash/ZSH Shell Completion
 

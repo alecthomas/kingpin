@@ -328,7 +328,7 @@ func TestCombinationEnumOptions(t *testing.T) {
 
 }
 
-func TestStruct(t *testing.T) {
+func TestFlagsStruct(t *testing.T) {
 	type MyFlags struct {
 		Debug bool     `help:"Enable debug mode."`
 		URL   string   `help:"URL to connect to." default:"localhost:80"`
@@ -336,7 +336,7 @@ func TestStruct(t *testing.T) {
 	}
 	a := newTestApp()
 	actual := &MyFlags{}
-	err := a.Struct(actual)
+	err := a.FlagsStruct(actual)
 	assert.NoError(t, err)
 	assert.NotNil(t, a.flagGroup.long["debug"])
 	assert.NotNil(t, a.flagGroup.long["url"])
@@ -358,12 +358,12 @@ func TestStruct(t *testing.T) {
 	assert.Equal(t, &MyFlags{URL: "localhost:80", Names: []string{"alec", "bob"}}, actual)
 
 	type RequiredFlag struct {
-		Flag bool `required:"true"`
+		Flag bool `help:"A flag." required:"true"`
 	}
 
 	a = newTestApp()
 	rflags := &RequiredFlag{}
-	err = a.Struct(rflags)
+	err = a.FlagsStruct(rflags)
 	assert.NoError(t, err)
 	_, err = a.Parse([]string{})
 	assert.Error(t, err)

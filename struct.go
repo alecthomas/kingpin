@@ -21,7 +21,7 @@ import (
 // and slices of same.
 //
 // For compatibility, also supports the tags used by https://github.com/jessevdk/go-flags
-func (f *flagGroup) Struct(v interface{}) error {
+func (f *flagGroup) FlagsStruct(v interface{}) error {
 	rv := reflect.Indirect(reflect.ValueOf(v))
 	if rv.Kind() != reflect.Struct {
 		return fmt.Errorf("not a struct")
