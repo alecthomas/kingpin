@@ -24,7 +24,7 @@ import (
 func (f *flagGroup) FlagsStruct(v interface{}) error {
 	rv := reflect.Indirect(reflect.ValueOf(v))
 	if rv.Kind() != reflect.Struct {
-		return fmt.Errorf("not a struct")
+		return fmt.Errorf("expected a struct but received " + reflect.TypeOf(v).String())
 	}
 	for i := 0; i < rv.NumField(); i++ {
 		// Parse out tags
