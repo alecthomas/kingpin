@@ -3,7 +3,6 @@ package kingpin
 import (
 	"encoding/hex"
 	"fmt"
-	"net"
 	"regexp"
 	"strconv"
 	"time"
@@ -31,24 +30,24 @@ func (f *boolValue) Get() interface{} { return (bool)(*f.v) }
 func (f *boolValue) String() string { return fmt.Sprintf("%v", *f) }
 
 // Bool parses the next command-line value as bool.
-func (p *parserMixin) Bool() (target *bool) {
+func (p *Clause) Bool() (target *bool) {
 	target = new(bool)
 	p.BoolVar(target)
 	return
 }
 
-func (p *parserMixin) BoolVar(target *bool) {
+func (p *Clause) BoolVar(target *bool) {
 	p.SetValue(newBoolValue(target))
 }
 
 // BoolList accumulates bool values into a slice.
-func (p *parserMixin) BoolList() (target *[]bool) {
+func (p *Clause) BoolList() (target *[]bool) {
 	target = new([]bool)
 	p.BoolListVar(target)
 	return
 }
 
-func (p *parserMixin) BoolListVar(target *[]bool) {
+func (p *Clause) BoolListVar(target *[]bool) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newBoolValue(v.(*bool))
 	}))
@@ -74,24 +73,24 @@ func (f *stringValue) Get() interface{} { return (string)(*f.v) }
 func (f *stringValue) String() string { return string(*f.v) }
 
 // String parses the next command-line value as string.
-func (p *parserMixin) String() (target *string) {
+func (p *Clause) String() (target *string) {
 	target = new(string)
 	p.StringVar(target)
 	return
 }
 
-func (p *parserMixin) StringVar(target *string) {
+func (p *Clause) StringVar(target *string) {
 	p.SetValue(newStringValue(target))
 }
 
 // Strings accumulates string values into a slice.
-func (p *parserMixin) Strings() (target *[]string) {
+func (p *Clause) Strings() (target *[]string) {
 	target = new([]string)
 	p.StringsVar(target)
 	return
 }
 
-func (p *parserMixin) StringsVar(target *[]string) {
+func (p *Clause) StringsVar(target *[]string) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newStringValue(v.(*string))
 	}))
@@ -117,24 +116,24 @@ func (f *uintValue) Get() interface{} { return (uint)(*f.v) }
 func (f *uintValue) String() string { return fmt.Sprintf("%v", *f) }
 
 // Uint parses the next command-line value as uint.
-func (p *parserMixin) Uint() (target *uint) {
+func (p *Clause) Uint() (target *uint) {
 	target = new(uint)
 	p.UintVar(target)
 	return
 }
 
-func (p *parserMixin) UintVar(target *uint) {
+func (p *Clause) UintVar(target *uint) {
 	p.SetValue(newUintValue(target))
 }
 
 // Uints accumulates uint values into a slice.
-func (p *parserMixin) Uints() (target *[]uint) {
+func (p *Clause) Uints() (target *[]uint) {
 	target = new([]uint)
 	p.UintsVar(target)
 	return
 }
 
-func (p *parserMixin) UintsVar(target *[]uint) {
+func (p *Clause) UintsVar(target *[]uint) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newUintValue(v.(*uint))
 	}))
@@ -160,24 +159,24 @@ func (f *uint8Value) Get() interface{} { return (uint8)(*f.v) }
 func (f *uint8Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Uint8 parses the next command-line value as uint8.
-func (p *parserMixin) Uint8() (target *uint8) {
+func (p *Clause) Uint8() (target *uint8) {
 	target = new(uint8)
 	p.Uint8Var(target)
 	return
 }
 
-func (p *parserMixin) Uint8Var(target *uint8) {
+func (p *Clause) Uint8Var(target *uint8) {
 	p.SetValue(newUint8Value(target))
 }
 
 // Uint8List accumulates uint8 values into a slice.
-func (p *parserMixin) Uint8List() (target *[]uint8) {
+func (p *Clause) Uint8List() (target *[]uint8) {
 	target = new([]uint8)
 	p.Uint8ListVar(target)
 	return
 }
 
-func (p *parserMixin) Uint8ListVar(target *[]uint8) {
+func (p *Clause) Uint8ListVar(target *[]uint8) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newUint8Value(v.(*uint8))
 	}))
@@ -203,24 +202,24 @@ func (f *uint16Value) Get() interface{} { return (uint16)(*f.v) }
 func (f *uint16Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Uint16 parses the next command-line value as uint16.
-func (p *parserMixin) Uint16() (target *uint16) {
+func (p *Clause) Uint16() (target *uint16) {
 	target = new(uint16)
 	p.Uint16Var(target)
 	return
 }
 
-func (p *parserMixin) Uint16Var(target *uint16) {
+func (p *Clause) Uint16Var(target *uint16) {
 	p.SetValue(newUint16Value(target))
 }
 
 // Uint16List accumulates uint16 values into a slice.
-func (p *parserMixin) Uint16List() (target *[]uint16) {
+func (p *Clause) Uint16List() (target *[]uint16) {
 	target = new([]uint16)
 	p.Uint16ListVar(target)
 	return
 }
 
-func (p *parserMixin) Uint16ListVar(target *[]uint16) {
+func (p *Clause) Uint16ListVar(target *[]uint16) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newUint16Value(v.(*uint16))
 	}))
@@ -246,24 +245,24 @@ func (f *uint32Value) Get() interface{} { return (uint32)(*f.v) }
 func (f *uint32Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Uint32 parses the next command-line value as uint32.
-func (p *parserMixin) Uint32() (target *uint32) {
+func (p *Clause) Uint32() (target *uint32) {
 	target = new(uint32)
 	p.Uint32Var(target)
 	return
 }
 
-func (p *parserMixin) Uint32Var(target *uint32) {
+func (p *Clause) Uint32Var(target *uint32) {
 	p.SetValue(newUint32Value(target))
 }
 
 // Uint32List accumulates uint32 values into a slice.
-func (p *parserMixin) Uint32List() (target *[]uint32) {
+func (p *Clause) Uint32List() (target *[]uint32) {
 	target = new([]uint32)
 	p.Uint32ListVar(target)
 	return
 }
 
-func (p *parserMixin) Uint32ListVar(target *[]uint32) {
+func (p *Clause) Uint32ListVar(target *[]uint32) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newUint32Value(v.(*uint32))
 	}))
@@ -289,24 +288,24 @@ func (f *uint64Value) Get() interface{} { return (uint64)(*f.v) }
 func (f *uint64Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Uint64 parses the next command-line value as uint64.
-func (p *parserMixin) Uint64() (target *uint64) {
+func (p *Clause) Uint64() (target *uint64) {
 	target = new(uint64)
 	p.Uint64Var(target)
 	return
 }
 
-func (p *parserMixin) Uint64Var(target *uint64) {
+func (p *Clause) Uint64Var(target *uint64) {
 	p.SetValue(newUint64Value(target))
 }
 
 // Uint64List accumulates uint64 values into a slice.
-func (p *parserMixin) Uint64List() (target *[]uint64) {
+func (p *Clause) Uint64List() (target *[]uint64) {
 	target = new([]uint64)
 	p.Uint64ListVar(target)
 	return
 }
 
-func (p *parserMixin) Uint64ListVar(target *[]uint64) {
+func (p *Clause) Uint64ListVar(target *[]uint64) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newUint64Value(v.(*uint64))
 	}))
@@ -332,24 +331,24 @@ func (f *intValue) Get() interface{} { return (int)(*f.v) }
 func (f *intValue) String() string { return fmt.Sprintf("%v", *f) }
 
 // Int parses the next command-line value as int.
-func (p *parserMixin) Int() (target *int) {
+func (p *Clause) Int() (target *int) {
 	target = new(int)
 	p.IntVar(target)
 	return
 }
 
-func (p *parserMixin) IntVar(target *int) {
+func (p *Clause) IntVar(target *int) {
 	p.SetValue(newIntValue(target))
 }
 
 // Ints accumulates int values into a slice.
-func (p *parserMixin) Ints() (target *[]int) {
+func (p *Clause) Ints() (target *[]int) {
 	target = new([]int)
 	p.IntsVar(target)
 	return
 }
 
-func (p *parserMixin) IntsVar(target *[]int) {
+func (p *Clause) IntsVar(target *[]int) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newIntValue(v.(*int))
 	}))
@@ -375,24 +374,24 @@ func (f *int8Value) Get() interface{} { return (int8)(*f.v) }
 func (f *int8Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Int8 parses the next command-line value as int8.
-func (p *parserMixin) Int8() (target *int8) {
+func (p *Clause) Int8() (target *int8) {
 	target = new(int8)
 	p.Int8Var(target)
 	return
 }
 
-func (p *parserMixin) Int8Var(target *int8) {
+func (p *Clause) Int8Var(target *int8) {
 	p.SetValue(newInt8Value(target))
 }
 
 // Int8List accumulates int8 values into a slice.
-func (p *parserMixin) Int8List() (target *[]int8) {
+func (p *Clause) Int8List() (target *[]int8) {
 	target = new([]int8)
 	p.Int8ListVar(target)
 	return
 }
 
-func (p *parserMixin) Int8ListVar(target *[]int8) {
+func (p *Clause) Int8ListVar(target *[]int8) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newInt8Value(v.(*int8))
 	}))
@@ -418,24 +417,24 @@ func (f *int16Value) Get() interface{} { return (int16)(*f.v) }
 func (f *int16Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Int16 parses the next command-line value as int16.
-func (p *parserMixin) Int16() (target *int16) {
+func (p *Clause) Int16() (target *int16) {
 	target = new(int16)
 	p.Int16Var(target)
 	return
 }
 
-func (p *parserMixin) Int16Var(target *int16) {
+func (p *Clause) Int16Var(target *int16) {
 	p.SetValue(newInt16Value(target))
 }
 
 // Int16List accumulates int16 values into a slice.
-func (p *parserMixin) Int16List() (target *[]int16) {
+func (p *Clause) Int16List() (target *[]int16) {
 	target = new([]int16)
 	p.Int16ListVar(target)
 	return
 }
 
-func (p *parserMixin) Int16ListVar(target *[]int16) {
+func (p *Clause) Int16ListVar(target *[]int16) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newInt16Value(v.(*int16))
 	}))
@@ -461,24 +460,24 @@ func (f *int32Value) Get() interface{} { return (int32)(*f.v) }
 func (f *int32Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Int32 parses the next command-line value as int32.
-func (p *parserMixin) Int32() (target *int32) {
+func (p *Clause) Int32() (target *int32) {
 	target = new(int32)
 	p.Int32Var(target)
 	return
 }
 
-func (p *parserMixin) Int32Var(target *int32) {
+func (p *Clause) Int32Var(target *int32) {
 	p.SetValue(newInt32Value(target))
 }
 
 // Int32List accumulates int32 values into a slice.
-func (p *parserMixin) Int32List() (target *[]int32) {
+func (p *Clause) Int32List() (target *[]int32) {
 	target = new([]int32)
 	p.Int32ListVar(target)
 	return
 }
 
-func (p *parserMixin) Int32ListVar(target *[]int32) {
+func (p *Clause) Int32ListVar(target *[]int32) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newInt32Value(v.(*int32))
 	}))
@@ -504,24 +503,24 @@ func (f *int64Value) Get() interface{} { return (int64)(*f.v) }
 func (f *int64Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Int64 parses the next command-line value as int64.
-func (p *parserMixin) Int64() (target *int64) {
+func (p *Clause) Int64() (target *int64) {
 	target = new(int64)
 	p.Int64Var(target)
 	return
 }
 
-func (p *parserMixin) Int64Var(target *int64) {
+func (p *Clause) Int64Var(target *int64) {
 	p.SetValue(newInt64Value(target))
 }
 
 // Int64List accumulates int64 values into a slice.
-func (p *parserMixin) Int64List() (target *[]int64) {
+func (p *Clause) Int64List() (target *[]int64) {
 	target = new([]int64)
 	p.Int64ListVar(target)
 	return
 }
 
-func (p *parserMixin) Int64ListVar(target *[]int64) {
+func (p *Clause) Int64ListVar(target *[]int64) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newInt64Value(v.(*int64))
 	}))
@@ -547,24 +546,24 @@ func (f *float64Value) Get() interface{} { return (float64)(*f.v) }
 func (f *float64Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Float64 parses the next command-line value as float64.
-func (p *parserMixin) Float64() (target *float64) {
+func (p *Clause) Float64() (target *float64) {
 	target = new(float64)
 	p.Float64Var(target)
 	return
 }
 
-func (p *parserMixin) Float64Var(target *float64) {
+func (p *Clause) Float64Var(target *float64) {
 	p.SetValue(newFloat64Value(target))
 }
 
 // Float64List accumulates float64 values into a slice.
-func (p *parserMixin) Float64List() (target *[]float64) {
+func (p *Clause) Float64List() (target *[]float64) {
 	target = new([]float64)
 	p.Float64ListVar(target)
 	return
 }
 
-func (p *parserMixin) Float64ListVar(target *[]float64) {
+func (p *Clause) Float64ListVar(target *[]float64) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newFloat64Value(v.(*float64))
 	}))
@@ -590,102 +589,63 @@ func (f *float32Value) Get() interface{} { return (float32)(*f.v) }
 func (f *float32Value) String() string { return fmt.Sprintf("%v", *f) }
 
 // Float32 parses the next command-line value as float32.
-func (p *parserMixin) Float32() (target *float32) {
+func (p *Clause) Float32() (target *float32) {
 	target = new(float32)
 	p.Float32Var(target)
 	return
 }
 
-func (p *parserMixin) Float32Var(target *float32) {
+func (p *Clause) Float32Var(target *float32) {
 	p.SetValue(newFloat32Value(target))
 }
 
 // Float32List accumulates float32 values into a slice.
-func (p *parserMixin) Float32List() (target *[]float32) {
+func (p *Clause) Float32List() (target *[]float32) {
 	target = new([]float32)
 	p.Float32ListVar(target)
 	return
 }
 
-func (p *parserMixin) Float32ListVar(target *[]float32) {
+func (p *Clause) Float32ListVar(target *[]float32) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newFloat32Value(v.(*float32))
 	}))
 }
 
-// DurationList accumulates time.Duration values into a slice.
-func (p *parserMixin) DurationList() (target *[]time.Duration) {
-	target = new([]time.Duration)
-	p.DurationListVar(target)
-	return
-}
-
-func (p *parserMixin) DurationListVar(target *[]time.Duration) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
-		return newDurationValue(v.(*time.Duration))
-	}))
-}
-
-// IPList accumulates net.IP values into a slice.
-func (p *parserMixin) IPList() (target *[]net.IP) {
-	target = new([]net.IP)
-	p.IPListVar(target)
-	return
-}
-
-func (p *parserMixin) IPListVar(target *[]net.IP) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
-		return newIPValue(v.(*net.IP))
-	}))
-}
-
-// TCPList accumulates *net.TCPAddr values into a slice.
-func (p *parserMixin) TCPList() (target *[]*net.TCPAddr) {
-	target = new([]*net.TCPAddr)
-	p.TCPListVar(target)
-	return
-}
-
-func (p *parserMixin) TCPListVar(target *[]*net.TCPAddr) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
-		return newTCPAddrValue(v.(**net.TCPAddr))
-	}))
-}
-
 // ExistingFiles accumulates string values into a slice.
-func (p *parserMixin) ExistingFiles() (target *[]string) {
+func (p *Clause) ExistingFiles() (target *[]string) {
 	target = new([]string)
 	p.ExistingFilesVar(target)
 	return
 }
 
-func (p *parserMixin) ExistingFilesVar(target *[]string) {
+func (p *Clause) ExistingFilesVar(target *[]string) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newExistingFileValue(v.(*string))
 	}))
 }
 
 // ExistingDirs accumulates string values into a slice.
-func (p *parserMixin) ExistingDirs() (target *[]string) {
+func (p *Clause) ExistingDirs() (target *[]string) {
 	target = new([]string)
 	p.ExistingDirsVar(target)
 	return
 }
 
-func (p *parserMixin) ExistingDirsVar(target *[]string) {
+func (p *Clause) ExistingDirsVar(target *[]string) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newExistingDirValue(v.(*string))
 	}))
 }
 
 // ExistingFilesOrDirs accumulates string values into a slice.
-func (p *parserMixin) ExistingFilesOrDirs() (target *[]string) {
+func (p *Clause) ExistingFilesOrDirs() (target *[]string) {
 	target = new([]string)
 	p.ExistingFilesOrDirsVar(target)
 	return
 }
 
-func (p *parserMixin) ExistingFilesOrDirsVar(target *[]string) {
+func (p *Clause) ExistingFilesOrDirsVar(target *[]string) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newExistingFileOrDirValue(v.(*string))
 	}))
@@ -711,69 +671,26 @@ func (f *regexpValue) Get() interface{} { return (*regexp.Regexp)(*f.v) }
 func (f *regexpValue) String() string { return fmt.Sprintf("%v", *f) }
 
 // Regexp parses the next command-line value as *regexp.Regexp.
-func (p *parserMixin) Regexp() (target **regexp.Regexp) {
+func (p *Clause) Regexp() (target **regexp.Regexp) {
 	target = new(*regexp.Regexp)
 	p.RegexpVar(target)
 	return
 }
 
-func (p *parserMixin) RegexpVar(target **regexp.Regexp) {
+func (p *Clause) RegexpVar(target **regexp.Regexp) {
 	p.SetValue(newRegexpValue(target))
 }
 
 // RegexpList accumulates *regexp.Regexp values into a slice.
-func (p *parserMixin) RegexpList() (target *[]*regexp.Regexp) {
+func (p *Clause) RegexpList() (target *[]*regexp.Regexp) {
 	target = new([]*regexp.Regexp)
 	p.RegexpListVar(target)
 	return
 }
 
-func (p *parserMixin) RegexpListVar(target *[]*regexp.Regexp) {
+func (p *Clause) RegexpListVar(target *[]*regexp.Regexp) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newRegexpValue(v.(**regexp.Regexp))
-	}))
-}
-
-// -- net.IP Value
-type resolvedIPValue struct{ v *net.IP }
-
-func newResolvedIPValue(p *net.IP) *resolvedIPValue {
-	return &resolvedIPValue{p}
-}
-
-func (f *resolvedIPValue) Set(s string) error {
-	v, err := resolveHost(s)
-	if err == nil {
-		*f.v = (net.IP)(v)
-	}
-	return err
-}
-
-func (f *resolvedIPValue) Get() interface{} { return (net.IP)(*f.v) }
-
-func (f *resolvedIPValue) String() string { return fmt.Sprintf("%v", *f) }
-
-// Resolve a hostname or IP to an IP.
-func (p *parserMixin) ResolvedIP() (target *net.IP) {
-	target = new(net.IP)
-	p.ResolvedIPVar(target)
-	return
-}
-
-func (p *parserMixin) ResolvedIPVar(target *net.IP) {
-	p.SetValue(newResolvedIPValue(target))
-}
-
-// ResolvedIPList accumulates net.IP values into a slice.
-func (p *parserMixin) ResolvedIPList() (target *[]net.IP) {
-	target = new([]net.IP)
-	p.ResolvedIPListVar(target)
-	return
-}
-
-func (p *parserMixin) ResolvedIPListVar(target *[]net.IP) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
-		return newResolvedIPValue(v.(*net.IP))
 	}))
 }
 
@@ -797,25 +714,68 @@ func (f *hexBytesValue) Get() interface{} { return ([]byte)(*f.v) }
 func (f *hexBytesValue) String() string { return fmt.Sprintf("%v", *f) }
 
 // Bytes as a hex string.
-func (p *parserMixin) HexBytes() (target *[]byte) {
+func (p *Clause) HexBytes() (target *[]byte) {
 	target = new([]byte)
 	p.HexBytesVar(target)
 	return
 }
 
-func (p *parserMixin) HexBytesVar(target *[]byte) {
+func (p *Clause) HexBytesVar(target *[]byte) {
 	p.SetValue(newHexBytesValue(target))
 }
 
 // HexBytesList accumulates []byte values into a slice.
-func (p *parserMixin) HexBytesList() (target *[][]byte) {
+func (p *Clause) HexBytesList() (target *[][]byte) {
 	target = new([][]byte)
 	p.HexBytesListVar(target)
 	return
 }
 
-func (p *parserMixin) HexBytesListVar(target *[][]byte) {
+func (p *Clause) HexBytesListVar(target *[][]byte) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return newHexBytesValue(v.(*[]byte))
+	}))
+}
+
+// -- time.Duration Value
+type durationValue struct{ v *time.Duration }
+
+func newDurationValue(p *time.Duration) *durationValue {
+	return &durationValue{p}
+}
+
+func (f *durationValue) Set(s string) error {
+	v, err := time.ParseDuration(s)
+	if err == nil {
+		*f.v = (time.Duration)(v)
+	}
+	return err
+}
+
+func (f *durationValue) Get() interface{} { return (time.Duration)(*f.v) }
+
+func (f *durationValue) String() string { return fmt.Sprintf("%v", *f) }
+
+// Time duration.
+func (p *Clause) Duration() (target *time.Duration) {
+	target = new(time.Duration)
+	p.DurationVar(target)
+	return
+}
+
+func (p *Clause) DurationVar(target *time.Duration) {
+	p.SetValue(newDurationValue(target))
+}
+
+// DurationList accumulates time.Duration values into a slice.
+func (p *Clause) DurationList() (target *[]time.Duration) {
+	target = new([]time.Duration)
+	p.DurationListVar(target)
+	return
+}
+
+func (p *Clause) DurationListVar(target *[]time.Duration) {
+	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+		return newDurationValue(v.(*time.Duration))
 	}))
 }

@@ -39,25 +39,25 @@ func (f *{{.|ValueName}}) String() string { return {{.|Format}} }
 {{else -}}
 // {{.|Name}} parses the next command-line value as {{.Type}}.
 {{end -}}
-func (p *parserMixin) {{.|Name}}() (target *{{.Type}}) {
+func (p *Clause) {{.|Name}}() (target *{{.Type}}) {
 	target = new({{.Type}})
 	p.{{.|Name}}Var(target)
 	return
 }
 
-func (p *parserMixin) {{.|Name}}Var(target *{{.Type}}) {
+func (p *Clause) {{.|Name}}Var(target *{{.Type}}) {
 	p.SetValue(new{{.|Name}}Value(target))
 }
 
 {{end}}
 // {{.|Plural}} accumulates {{.Type}} values into a slice.
-func (p *parserMixin) {{.|Plural}}() (target *[]{{.Type}}) {
+func (p *Clause) {{.|Plural}}() (target *[]{{.Type}}) {
 	target = new([]{{.Type}})
 	p.{{.|Plural}}Var(target)
 	return
 }
 
-func (p *parserMixin) {{.|Plural}}Var(target *[]{{.Type}}) {
+func (p *Clause) {{.|Plural}}Var(target *[]{{.Type}}) {
 	p.SetValue(newAccumulator(target, func(v interface{}) Value {
 		return new{{.|Name}}Value(v.(*{{.Type}}))
 	}))

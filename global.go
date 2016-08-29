@@ -8,12 +8,6 @@ import (
 var (
 	// CommandLine is the default Kingpin parser.
 	CommandLine = New(filepath.Base(os.Args[0]), "")
-	// Global help flag. Exposed for user customisation.
-	HelpFlag = CommandLine.HelpFlag
-	// Top-level help command. Exposed for user customisation. May be nil.
-	HelpCommand = CommandLine.HelpCommand
-	// Global version flag. Exposed for user customisation. May be nil.
-	VersionFlag = CommandLine.VersionFlag
 )
 
 // Command adds a new command to the default parser.
@@ -22,12 +16,12 @@ func Command(name, help string) *CmdClause {
 }
 
 // Flag adds a new flag to the default parser.
-func Flag(name, help string) *FlagClause {
+func Flag(name, help string) *Clause {
 	return CommandLine.Flag(name, help)
 }
 
 // Arg adds a new argument to the top-level of the default parser.
-func Arg(name, help string) *ArgClause {
+func Arg(name, help string) *Clause {
 	return CommandLine.Arg(name, help)
 }
 

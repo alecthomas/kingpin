@@ -66,7 +66,8 @@ func TestRequiredFlag(t *testing.T) {
 	assert.NoError(t, err)
 	_, err = app.Parse([]string{})
 	assert.Error(t, err)
-	_, err = app.Parse([]string{"--version"})
+	// This will error because the Terminate() function doesn't actually terminate.
+	_, _ = app.Parse([]string{"--version"})
 	assert.Equal(t, 1, exits)
 }
 
@@ -105,7 +106,7 @@ func TestEmptyShortFlagIsAnError(t *testing.T) {
 
 func TestRequiredWithEnvarMissingErrors(t *testing.T) {
 	app := newTestApp()
-	app.Flag("t", "").OverrideDefaultFromEnvar("TEST_ENVAR").Required().Int()
+	app.Flag("t", "").Envar("TEST_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
 	assert.Error(t, err)
 }
@@ -337,7 +338,7 @@ func TestFlagsStruct(t *testing.T) {
 	}
 	a := newTestApp()
 	actual := &MyFlags{}
-	err := a.FlagsStruct(actual)
+	err := a.Struct(actual)
 	assert.NoError(t, err)
 	assert.NotNil(t, a.flagGroup.long["debug"])
 	assert.NotNil(t, a.flagGroup.long["url"])
@@ -364,7 +365,7 @@ func TestFlagsStruct(t *testing.T) {
 
 	a = newTestApp()
 	rflags := &RequiredFlag{}
-	err = a.FlagsStruct(rflags)
+	err = a.Struct(rflags)
 	assert.NoError(t, err)
 	_, err = a.Parse([]string{})
 	assert.Error(t, err)
@@ -378,7 +379,7 @@ func TestFlagsStruct(t *testing.T) {
 
 	a = newTestApp()
 	dflag := &DurationFlag{}
-	err = a.FlagsStruct(dflag)
+	err = a.Struct(dflag)
 	assert.NoError(t, err)
 	_, err = a.Parse([]string{"--elapsed=5s"})
 	assert.NoError(t, err)

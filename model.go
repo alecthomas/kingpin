@@ -9,7 +9,7 @@ import (
 // Data model for Kingpin command-line structure.
 
 type FlagGroupModel struct {
-	Flags []*FlagModel
+	Flags []*ClauseModel
 }
 
 func (f *FlagGroupModel) FlagSummary() string {
@@ -33,7 +33,7 @@ func (f *FlagGroupModel) FlagSummary() string {
 	return strings.Join(out, " ")
 }
 
-type FlagModel struct {
+type ClauseModel struct {
 	Name        string
 	Help        string
 	Short       rune
@@ -45,36 +45,36 @@ type FlagModel struct {
 	Value       Value
 }
 
-func (f *FlagModel) String() string {
-	return f.Value.String()
+func (c *ClauseModel) String() string {
+	return c.Value.String()
 }
 
-func (f *FlagModel) IsBoolFlag() bool {
-	if fl, ok := f.Value.(boolFlag); ok {
+func (c *ClauseModel) IsBoolFlag() bool {
+	if fl, ok := c.Value.(boolFlag); ok {
 		return fl.IsBoolFlag()
 	}
 	return false
 }
 
-func (f *FlagModel) FormatPlaceHolder() string {
-	if f.PlaceHolder != "" {
-		return f.PlaceHolder
+func (c *ClauseModel) FormatPlaceHolder() string {
+	if c.PlaceHolder != "" {
+		return c.PlaceHolder
 	}
-	if len(f.Default) > 0 {
+	if len(c.Default) > 0 {
 		ellipsis := ""
-		if len(f.Default) > 1 {
+		if len(c.Default) > 1 {
 			ellipsis = "..."
 		}
-		if _, ok := f.Value.(*stringValue); ok {
-			return strconv.Quote(f.Default[0]) + ellipsis
+		if _, ok := c.Value.(*stringValue); ok {
+			return strconv.Quote(c.Default[0]) + ellipsis
 		}
-		return f.Default[0] + ellipsis
+		return c.Default[0] + ellipsis
 	}
-	return strings.ToUpper(f.Name)
+	return strings.ToUpper(c.Name)
 }
 
 type ArgGroupModel struct {
-	Args []*ArgModel
+	Args []*ClauseModel
 }
 
 func (a *ArgGroupModel) ArgSummary() string {
@@ -90,19 +90,6 @@ func (a *ArgGroupModel) ArgSummary() string {
 	}
 	out[len(out)-1] = out[len(out)-1] + strings.Repeat("]", depth)
 	return strings.Join(out, " ")
-}
-
-type ArgModel struct {
-	Name     string
-	Help     string
-	Default  []string
-	Envar    string
-	Required bool
-	Value    Value
-}
-
-func (a *ArgModel) String() string {
-	return a.Value.String()
 }
 
 type CmdGroupModel struct {
@@ -166,17 +153,6 @@ func (a *argGroup) Model() *ArgGroupModel {
 	return m
 }
 
-func (a *ArgClause) Model() *ArgModel {
-	return &ArgModel{
-		Name:     a.name,
-		Help:     a.help,
-		Default:  a.defaultValues,
-		Envar:    a.envar,
-		Required: a.required,
-		Value:    a.value,
-	}
-}
-
 func (f *flagGroup) Model() *FlagGroupModel {
 	m := &FlagGroupModel{}
 	for _, fl := range f.flagOrder {
@@ -185,8 +161,8 @@ func (f *flagGroup) Model() *FlagGroupModel {
 	return m
 }
 
-func (f *FlagClause) Model() *FlagModel {
-	return &FlagModel{
+func (f *Clause) Model() *ClauseModel {
+	return &ClauseModel{
 		Name:        f.name,
 		Help:        f.help,
 		Short:       rune(f.shorthand),

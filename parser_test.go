@@ -15,7 +15,7 @@ func TestParserExpandFromFile(t *testing.T) {
 	f.WriteString("hello\nworld\n")
 	f.Close()
 
-	app := New("test", "")
+	app := newTestApp()
 	arg0 := app.Arg("arg0", "").String()
 	arg1 := app.Arg("arg1", "").String()
 
@@ -26,8 +26,6 @@ func TestParserExpandFromFile(t *testing.T) {
 }
 
 func TestParseContextPush(t *testing.T) {
-	app := New("test", "")
-	app.Command("foo", "").Command("bar", "")
 	c := tokenize([]string{"foo", "bar"}, false)
 	a := c.Next()
 	assert.Equal(t, TokenArg, a.Type)

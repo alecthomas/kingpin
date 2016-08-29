@@ -6,10 +6,10 @@ import (
 )
 
 type cmdMixin struct {
+	actionMixin
 	*flagGroup
 	*argGroup
 	*cmdGroup
-	actionMixin
 }
 
 // CmdCompletion returns completion options for arguments, if that's where
@@ -22,13 +22,13 @@ func (c *cmdMixin) CmdCompletion(context *ParseContext) []string {
 	// and the user may want to explicitly list something else.
 	argsSatisfied := 0
 	for _, el := range context.Elements {
-		switch clause := el.Clause.(type) {
-		case *ArgClause:
+		switch {
+		case el.OneOf.Arg != nil:
 			if el.Value != nil && *el.Value != "" {
 				argsSatisfied++
 			}
-		case *CmdClause:
-			options = append(options, clause.completionAlts...)
+		case el.OneOf.Cmd != nil:
+			options = append(options, el.OneOf.Cmd.completionAlts...)
 		default:
 		}
 	}

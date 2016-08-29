@@ -73,12 +73,44 @@ func (t *Token) String() string {
 	}
 }
 
-// A union of possible elements in a parse stack.
+type OneOfClause struct {
+	Flag *Clause
+	Arg  *Clause
+	Cmd  *CmdClause
+}
+
+// A ParseElement represents the parsers view of each element in the command-line argument slice.
 type ParseElement struct {
-	// Clause is either *CmdClause, *ArgClause or *FlagClause.
-	Clause interface{}
-	// Value is corresponding value for an ArgClause or FlagClause (if any).
+	// Clause associated with this element. Exactly one of these will be present.
+	OneOf OneOfClause
+	// Value is corresponding value for an argument or flag. For commands this value will be nil.
 	Value *string
+}
+
+// ParseElements represents each element in the command-line argument slice.
+type ParseElements []*ParseElement
+
+// FlagMap collects all parsed flags into a map keyed by long name.
+func (p ParseElements) FlagMap() map[string]*ParseElement {
+	// Collect flags into maps.
+	flags := map[string]*ParseElement{}
+	for _, element := range p {
+		if element.OneOf.Flag != nil {
+			flags[element.OneOf.Flag.name] = element
+		}
+	}
+	return flags
+}
+
+// ArgMap collects all parsed positional arguments into a map keyed by long name.
+func (p ParseElements) ArgMap() map[string]*ParseElement {
+	flags := map[string]*ParseElement{}
+	for _, element := range p {
+		if element.OneOf.Arg != nil {
+			flags[element.OneOf.Arg.name] = element
+		}
+	}
+	return flags
 }
 
 // ParseContext holds the current context of the parser. When passed to
@@ -97,10 +129,10 @@ type ParseContext struct {
 	arguments       *argGroup
 	argumenti       int // Cursor into arguments
 	// Flags, arguments and commands encountered and collected during parse.
-	Elements []*ParseElement
+	Elements ParseElements
 }
 
-func (p *ParseContext) nextArg() *ArgClause {
+func (p *ParseContext) nextArg() *Clause {
 	if p.argumenti >= len(p.arguments.args) {
 		return nil
 	}
@@ -143,9 +175,7 @@ func (p *ParseContext) mergeFlags(flags *flagGroup) {
 }
 
 func (p *ParseContext) mergeArgs(args *argGroup) {
-	for _, arg := range args.args {
-		p.arguments.args = append(p.arguments.args, arg)
-	}
+	p.arguments.args = append(p.arguments.args, args.args...)
 }
 
 func (p *ParseContext) EOL() bool {
@@ -247,16 +277,16 @@ func (p *ParseContext) String() string {
 	return p.SelectedCommand.FullCommand()
 }
 
-func (p *ParseContext) matchedFlag(flag *FlagClause, value string) {
-	p.Elements = append(p.Elements, &ParseElement{Clause: flag, Value: &value})
+func (p *ParseContext) matchedFlag(flag *Clause, value string) {
+	p.Elements = append(p.Elements, &ParseElement{OneOf: OneOfClause{Flag: flag}, Value: &value})
 }
 
-func (p *ParseContext) matchedArg(arg *ArgClause, value string) {
-	p.Elements = append(p.Elements, &ParseElement{Clause: arg, Value: &value})
+func (p *ParseContext) matchedArg(arg *Clause, value string) {
+	p.Elements = append(p.Elements, &ParseElement{OneOf: OneOfClause{Arg: arg}, Value: &value})
 }
 
 func (p *ParseContext) matchedCmd(cmd *CmdClause) {
-	p.Elements = append(p.Elements, &ParseElement{Clause: cmd})
+	p.Elements = append(p.Elements, &ParseElement{OneOf: OneOfClause{Cmd: cmd}})
 	p.mergeFlags(cmd.flagGroup)
 	p.mergeArgs(cmd.argGroup)
 	p.SelectedCommand = cmd
@@ -304,7 +334,7 @@ loop:
 					}
 				}
 				return err
-			} else if flag == HelpFlag {
+			} else if flag == app.helpFlag {
 				ignoreDefault = true
 			}
 
@@ -323,7 +353,7 @@ loop:
 						return fmt.Errorf("expected command but got %q", token)
 					}
 				}
-				if cmd == HelpCommand {
+				if cmd == app.helpCommand {
 					ignoreDefault = true
 				}
 				cmd.completionAlts = nil

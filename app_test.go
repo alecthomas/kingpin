@@ -92,7 +92,7 @@ func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
 func TestDispatchCallbackIsCalled(t *testing.T) {
 	dispatched := false
 	c := newTestApp()
-	c.Command("cmd", "").Action(func(*ParseContext) error {
+	c.Command("cmd", "").Action(func(element *ParseElement, context *ParseContext) error {
 		dispatched = true
 		return nil
 	})
@@ -398,4 +398,22 @@ func TestBashCompletionOptions(t *testing.T) {
 		assert.Equal(t, c.ExpectedOptions, args, "Expected != Actual: [%v] != [%v]. \nInput was: [%v]", c.ExpectedOptions, args, c.Args)
 	}
 
+}
+
+func TestApplicationWideActions(t *testing.T) {
+	a := newTestApp()
+	a.Flag("--flag", "").String()
+	c := a.Command("cmd", "")
+	c.Arg("arg", "").String()
+
+	preValues := []string{}
+	a.PreAction(func(element *ParseElement, context *ParseContext) error {
+		preValues = append(preValues, *element.Value)
+		return nil
+	})
+	values := []string{}
+	a.Action(func(element *ParseElement, context *ParseContext) error {
+		values = append(values, *element.Value)
+		return nil
+	})
 }

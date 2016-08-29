@@ -72,7 +72,7 @@ func formatCmdUsage(app *ApplicationModel, cmd *CmdModel) string {
 	return strings.Join(s, " ")
 }
 
-func formatFlag(haveShort bool, flag *FlagModel) string {
+func formatFlag(haveShort bool, flag *ClauseModel) string {
 	flagString := ""
 	if flag.Short != 0 {
 		flagString += fmt.Sprintf("-%c, --%s", flag.Short, flag.Name)
@@ -124,7 +124,7 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			return buf.String()
 		},
 		"FormatFlag": formatFlag,
-		"FlagsToTwoColumns": func(f []*FlagModel) [][2]string {
+		"FlagsToTwoColumns": func(f []*ClauseModel) [][2]string {
 			rows := [][2]string{}
 			haveShort := false
 			for _, flag := range f {
@@ -140,8 +140,8 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			}
 			return rows
 		},
-		"RequiredFlags": func(f []*FlagModel) []*FlagModel {
-			requiredFlags := []*FlagModel{}
+		"RequiredFlags": func(f []*ClauseModel) []*ClauseModel {
+			requiredFlags := []*ClauseModel{}
 			for _, flag := range f {
 				if flag.Required == true {
 					requiredFlags = append(requiredFlags, flag)
@@ -149,8 +149,8 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			}
 			return requiredFlags
 		},
-		"OptionalFlags": func(f []*FlagModel) []*FlagModel {
-			optionalFlags := []*FlagModel{}
+		"OptionalFlags": func(f []*ClauseModel) []*ClauseModel {
+			optionalFlags := []*ClauseModel{}
 			for _, flag := range f {
 				if flag.Required == false {
 					optionalFlags = append(optionalFlags, flag)
@@ -158,7 +158,7 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			}
 			return optionalFlags
 		},
-		"ArgsToTwoColumns": func(a []*ArgModel) [][2]string {
+		"ArgsToTwoColumns": func(a []*ClauseModel) [][2]string {
 			rows := [][2]string{}
 			for _, arg := range a {
 				s := "<" + arg.Name + ">"

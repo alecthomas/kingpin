@@ -512,16 +512,17 @@ ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
 
 ### Struct tag interpolation
 
-Kingpin v3 supports basic flag definitions through struct tags:
+Kingpin v3 supports basic flag and arg definitions through struct tags:
 
 ```go
 type MyFlags struct {
+  Arg string `arg:"true" help:"An argument"`
   Debug bool `help:"Enable debug mode."`
   URL string `help:"URL to connect to." default:"localhost:80"`
 }
 
 flags := &MyFlags{}
-kingpin.FlagsStruct(flags)
+kingpin.Struct(flags)
 ```
 
 The `help` tag must be present for a flag to be defined.

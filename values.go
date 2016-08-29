@@ -10,7 +10,6 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/alecthomas/units"
 )
@@ -114,23 +113,6 @@ func (a *accumulator) Reset() {
 }
 
 func (b *boolValue) IsBoolFlag() bool { return true }
-
-// -- time.Duration Value
-type durationValue time.Duration
-
-func newDurationValue(p *time.Duration) *durationValue {
-	return (*durationValue)(p)
-}
-
-func (d *durationValue) Set(s string) error {
-	v, err := time.ParseDuration(s)
-	*d = durationValue(v)
-	return err
-}
-
-func (d *durationValue) Get() interface{} { return time.Duration(*d) }
-
-func (d *durationValue) String() string { return (*time.Duration)(d).String() }
 
 // -- map[string]string Value
 type stringMapValue map[string]string
