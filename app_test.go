@@ -218,10 +218,13 @@ func TestDefaultEnvars(t *testing.T) {
 	f0.Bool()
 	f1 := a.Flag("some-other-flag", "").NoEnvar()
 	f1.Bool()
+	f2 := a.Flag("a-1-flag", "")
+	f2.Bool()
 	_, err := a.Parse([]string{})
 	assert.NoError(t, err)
 	assert.Equal(t, "SOME_APP_SOME_FLAG", f0.envar)
 	assert.Equal(t, "", f1.envar)
+	assert.Equal(t, "SOME_APP_A_1_FLAG", f2.envar)
 }
 
 func TestBashCompletionOptionsWithEmptyApp(t *testing.T) {
