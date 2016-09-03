@@ -136,7 +136,7 @@ func (a *Application) Writer(w io.Writer) *Application {
 
 // ErrorWriter sets the io.Writer to use for errors.
 func (a *Application) ErrorWriter(w io.Writer) *Application {
-	a.usageWriter = w
+	a.errorWriter = w
 	return a
 }
 
