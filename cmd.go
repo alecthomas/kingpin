@@ -2,6 +2,7 @@ package kingpin
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -179,6 +180,25 @@ func (c *cmdGroup) init() error {
 
 func (c *cmdGroup) have() bool {
 	return len(c.commands) > 0
+}
+
+// SortCommand sort the command list lexicographically
+// (affect usage printing)
+// if recursive, it will apply the sort also on each sub-command
+func (c *cmdGroup) SortCommands(recursive bool) {
+	names := c.cmdNames()
+	sort.Strings(names)
+	for i, cmd := range names {
+		c.commandOrder[i] = c.commands[cmd]
+	}
+
+	if !recursive {
+		return
+	}
+
+	for _, cmd := range c.commandOrder {
+		cmd.SortCommands(true)
+	}
 }
 
 type CmdClauseValidator func(*CmdClause) error
