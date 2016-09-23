@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"unicode/utf8"
 )
 
 type TokenType int
@@ -189,7 +190,8 @@ func (p *ParseContext) Next() *Token {
 		if len(arg) == 1 {
 			return &Token{Index: p.argi, Type: TokenShort}
 		}
-		short := arg[1:2]
+		short_rune, size := utf8.DecodeRuneInString(arg[1:])
+		short := string(short_rune)
 		flag, ok := p.flags.short[short]
 		// Not a known short flag, we'll just return it anyway.
 		if !ok {
@@ -198,14 +200,14 @@ func (p *ParseContext) Next() *Token {
 		} else {
 			// Short flag with combined argument: -fARG
 			token := &Token{p.argi, TokenShort, short}
-			if len(arg) > 2 {
-				p.Push(&Token{p.argi, TokenArg, arg[2:]})
+			if len(arg) > size+1 {
+				p.Push(&Token{p.argi, TokenArg, arg[size+1:]})
 			}
 			return token
 		}
 
-		if len(arg) > 2 {
-			p.args = append([]string{"-" + arg[2:]}, p.args...)
+		if len(arg) > size+1 {
+			p.args = append([]string{"-" + arg[size+1:]}, p.args...)
 		}
 		return &Token{p.argi, TokenShort, short}
 	} else if strings.HasPrefix(arg, "@") {
