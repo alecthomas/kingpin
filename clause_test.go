@@ -85,3 +85,11 @@ func TestDefaultCumulativeValueIsSetBeforeParse(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, *v, []int{789, 123})
 }
+
+func TestUnicodeShortFlag(t *testing.T) {
+	app := newTestApp()
+	f := app.Flag("long", "").Short('ä').Bool()
+	_, err := app.Parse([]string{"-ä"})
+	assert.NoError(t, err)
+	assert.True(t, *f)
+}
