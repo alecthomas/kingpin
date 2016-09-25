@@ -78,6 +78,14 @@ func TestShortFlag(t *testing.T) {
 	assert.True(t, *f)
 }
 
+func TestUnicodeShortFlag(t *testing.T) {
+	app := newTestApp()
+	f := app.Flag("aaa", "").Short('ä').Bool()
+	_, err := app.Parse([]string{"-ä"})
+	assert.NoError(t, err)
+	assert.True(t, *f)
+}
+
 func TestCombinedShortFlags(t *testing.T) {
 	app := newTestApp()
 	a := app.Flag("short0", "").Short('0').Bool()
@@ -90,12 +98,42 @@ func TestCombinedShortFlags(t *testing.T) {
 	assert.False(t, *c)
 }
 
+func TestCombinedUnicodeShortFlags(t *testing.T) {
+	app := newTestApp()
+	a := app.Flag("short0", "").Short('0').Bool()
+	b := app.Flag("short1", "").Short('1').Bool()
+	c := app.Flag("short2", "").Short('ä').Bool()
+	d := app.Flag("short3", "").Short('2').Bool()
+	_, err := app.Parse([]string{"-0ä1"})
+	assert.NoError(t, err)
+	assert.True(t, *a)
+	assert.True(t, *b)
+	assert.True(t, *c)
+	assert.False(t, *d)
+}
+
 func TestCombinedShortFlagArg(t *testing.T) {
 	a := newTestApp()
 	n := a.Flag("short", "").Short('s').Int()
 	_, err := a.Parse([]string{"-s10"})
 	assert.NoError(t, err)
 	assert.Equal(t, 10, *n)
+}
+
+func TestCombinedUnicodeShortFlagArg(t *testing.T) {
+	app := newTestApp()
+	a := app.Flag("short", "").Short('ä').Int()
+	_, err := app.Parse([]string{"-ä10"})
+	assert.NoError(t, err)
+	assert.Equal(t, 10, *a)
+}
+
+func TestCombinedUnicodeShortFlagUnicodeArg(t *testing.T) {
+	app := newTestApp()
+	a := app.Flag("short", "").Short('ä').String()
+	_, err := app.Parse([]string{"-äöö"})
+	assert.NoError(t, err)
+	assert.Equal(t, "öö", *a)
 }
 
 func TestEmptyShortFlagIsAnError(t *testing.T) {
@@ -267,11 +305,11 @@ func TestMultiHintActions(t *testing.T) {
 
 	a := c.Flag("foo", "foo").
 		HintAction(func() []string {
-		return []string{"opt1"}
-	}).
+			return []string{"opt1"}
+		}).
 		HintAction(func() []string {
-		return []string{"opt2"}
-	})
+			return []string{"opt2"}
+		})
 	args := a.resolveCompletions()
 	assert.Equal(t, []string{"opt1", "opt2"}, args)
 }
@@ -292,14 +330,14 @@ func TestCombinationEnumActions(t *testing.T) {
 
 	a := c.Flag("foo", "foo").
 		HintAction(func() []string {
-		return []string{"opt1", "opt2"}
-	})
+			return []string{"opt1", "opt2"}
+		})
 	a.Enum("opt3", "opt4")
 
 	b := c.Flag("bar", "bar").
 		HintAction(func() []string {
-		return []string{"opt5", "opt6"}
-	})
+			return []string{"opt5", "opt6"}
+		})
 	b.EnumVar(&foo, "opt3", "opt4")
 
 	// Provided HintActions should override automatically generated Enum options.
