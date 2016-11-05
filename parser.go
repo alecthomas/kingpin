@@ -190,8 +190,8 @@ func (p *ParseContext) Next() *Token {
 		if len(arg) == 1 {
 			return &Token{Index: p.argi, Type: TokenShort}
 		}
-		short_rune, size := utf8.DecodeRuneInString(arg[1:])
-		short := string(short_rune)
+		shortRune, size := utf8.DecodeRuneInString(arg[1:])
+		short := string(shortRune)
 		flag, ok := p.flags.short[short]
 		// Not a known short flag, we'll just return it anyway.
 		if !ok {
