@@ -87,14 +87,13 @@ func (a *ArgClause) setDefault() error {
 		if v, ok := a.value.(remainderArg); !ok || !v.IsCumulative() {
 			// Use the value as-is
 			return a.value.Set(a.GetEnvarValue())
-		} else {
-			for _, value := range a.GetSplitEnvarValue() {
-				if err := a.value.Set(value); err != nil {
-					return err
-				}
-			}
-			return nil
 		}
+		for _, value := range a.GetSplitEnvarValue() {
+			if err := a.value.Set(value); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 
 	if len(a.defaultValues) > 0 {
