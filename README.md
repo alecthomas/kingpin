@@ -412,7 +412,7 @@ As a convenience, I would recommend something like this:
 
 ```go
 func HTTPHeader(s Settings) (target *http.Header) {
-  target = new(http.Header)
+  target = &http.Header{}
   s.SetValue((*HTTPHeaderValue)(target))
   return
 }
