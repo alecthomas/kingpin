@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"gopkg.in/alecthomas/kingpin.v2"
+	"github.com/alecthomas/kingpin"
 )
 
 var (
@@ -25,7 +25,7 @@ var (
 
 	post           = kingpin.Command("post", "POST a resource.")
 	postData       = post.Flag("data", "Key-value data to POST").Short('d').PlaceHolder("KEY:VALUE").StringMap()
-	postBinaryFile = post.Flag("data-binary", "File with binary data to POST.").File()
+	postBinaryFile = post.Flag("data-binary", "File with binary data to POST.").String()
 	postURL        = post.Arg("url", "URL to POST to.").Required().URL()
 )
 
@@ -85,7 +85,11 @@ func applyPOST() error {
 		if headers.Get("Content-Type") != "" {
 			headers.Set("Content-Type", "application/octet-stream")
 		}
-		req.Body = *postBinaryFile
+		body, err := os.Open(*postBinaryFile)
+		if err != nil {
+			return err
+		}
+		req.Body = body
 	} else {
 		return errors.New("--data or --data-binary must be provided to POST")
 	}

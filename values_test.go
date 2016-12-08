@@ -60,3 +60,12 @@ func TestHexBytes(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, []byte{0x01, 0x02, 0x0a, 0xff}, *actual)
 }
+
+func TestSetValueDoesNotReset(t *testing.T) {
+	app := newTestApp()
+	mapping := map[string]string{
+		"key": "value",
+	}
+	app.Flag("set", "").StringMapVar(&mapping)
+	assert.NotEmpty(t, mapping)
+}

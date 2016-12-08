@@ -143,7 +143,7 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 		"RequiredFlags": func(f []*ClauseModel) []*ClauseModel {
 			requiredFlags := []*ClauseModel{}
 			for _, flag := range f {
-				if flag.Required == true {
+				if flag.Required {
 					requiredFlags = append(requiredFlags, flag)
 				}
 			}
@@ -152,7 +152,7 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 		"OptionalFlags": func(f []*ClauseModel) []*ClauseModel {
 			optionalFlags := []*ClauseModel{}
 			for _, flag := range f {
-				if flag.Required == false {
+				if !flag.Required {
 					optionalFlags = append(optionalFlags, flag)
 				}
 			}
