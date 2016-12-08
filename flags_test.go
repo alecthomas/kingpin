@@ -345,15 +345,15 @@ func TestFlagsStruct(t *testing.T) {
 
 	*actual = MyFlags{}
 	a.Parse([]string{})
-	assert.Equal(t, &MyFlags{URL: "localhost:80", Names: []string{}}, actual)
+	assert.Equal(t, &MyFlags{URL: "localhost:80"}, actual)
 
 	*actual = MyFlags{}
 	a.Parse([]string{"--debug"})
-	assert.Equal(t, &MyFlags{Debug: true, URL: "localhost:80", Names: []string{}}, actual)
+	assert.Equal(t, &MyFlags{Debug: true, URL: "localhost:80"}, actual)
 
 	*actual = MyFlags{}
 	a.Parse([]string{"--url=w3.org"})
-	assert.Equal(t, &MyFlags{URL: "w3.org", Names: []string{}}, actual)
+	assert.Equal(t, &MyFlags{URL: "w3.org"}, actual)
 
 	*actual = MyFlags{}
 	a.Parse([]string{"--names=alec", "--names=bob"})

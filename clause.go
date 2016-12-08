@@ -175,8 +175,8 @@ func (c *Clause) reset() {
 }
 
 func (c *Clause) setDefault() error {
-	c.reset()
 	if c.HasEnvarValue() {
+		c.reset()
 		if v, ok := c.value.(cumulativeValue); !ok || !v.IsCumulative() {
 			// Use the value as-is
 			return c.value.Set(c.GetEnvarValue())
@@ -188,9 +188,8 @@ func (c *Clause) setDefault() error {
 			}
 			return nil
 		}
-	}
-
-	if len(c.defaultValues) > 0 {
+	} else if len(c.defaultValues) > 0 {
+		c.reset()
 		for _, defaultValue := range c.defaultValues {
 			if err := c.value.Set(defaultValue); err != nil {
 				return err
