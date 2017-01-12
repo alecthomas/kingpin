@@ -1,7 +1,7 @@
 package kingpin
 
 import (
-	"fmt"
+	"errors"
 	"net/url"
 	"os"
 	"regexp"
@@ -54,13 +54,13 @@ func (c *Clause) consumesRemainder() bool {
 
 func (c *Clause) init() error {
 	if c.required && len(c.defaultValues) > 0 {
-		return fmt.Errorf("required flag '--%s' with default value that will never be used", c.name)
+		return errors.New(T("required flag '--{{.Arg0}}' with default value that will never be used", map[string]interface{}{"Arg0": c.name}))
 	}
 	if c.value == nil {
-		return fmt.Errorf("no type defined for --%s (eg. .String())", c.name)
+		return errors.New(T("no type defined for --{{.Arg0}} (eg. .String())", map[string]interface{}{"Arg0": c.name}))
 	}
 	if v, ok := c.value.(cumulativeValue); (!ok || !v.IsCumulative()) && len(c.defaultValues) > 1 {
-		return fmt.Errorf("invalid default for '--%s', expecting single value", c.name)
+		return errors.New(T("invalid default for '--{{.Arg0}}', expecting single value", map[string]interface{}{"Arg0": c.name}))
 	}
 	return nil
 }

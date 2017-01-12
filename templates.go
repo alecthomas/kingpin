@@ -24,25 +24,25 @@ var DefaultUsageTemplate = `{{define "FormatCommand" -}}
 {{end -}}
 
 {{if .Context.SelectedCommand -}}
-usage: {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
+{{T "usage:"}} {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
 {{else -}}
-usage: {{.App.Name}}{{template "FormatUsage" .App}}
+{{T "usage:"}} {{.App.Name}}{{template "FormatUsage" .App}}
 {{end -}}
 {{if .Context.Flags -}}
-Flags:
+{{T "Flags:"}}
 {{.Context.Flags|FlagsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 {{if .Context.Args -}}
-Args:
+{{T "Args:"}}
 {{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 {{if .Context.SelectedCommand -}}
 {{if len .Context.SelectedCommand.Commands -}}
-Subcommands:
+{{T "Subcommands:"}}
 {{template "FormatCommands" .Context.SelectedCommand}}
 {{end -}}
 {{else if .App.Commands -}}
-Commands:
+{{T "Commands:"}}
 {{template "FormatCommands" .App}}
 {{end -}}
 `
@@ -70,9 +70,9 @@ var SeparateOptionalFlagsUsageTemplate = `{{define "FormatCommand" -}}
 
 {{end -}}
 {{if .Context.SelectedCommand -}}
-usage: {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
+{{T "usage:"}} {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
 {{else -}}
-usage: {{.App.Name}}{{template "FormatUsage" .App}}
+{{T "usage:"}} {{.App.Name}}{{template "FormatUsage" .App}}
 {{end -}}
 
 {{if .Context.Flags|RequiredFlags -}}
@@ -84,16 +84,16 @@ Optional flags:
 {{.Context.Flags|OptionalFlags|FlagsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 {{if .Context.Args -}}
-Args:
+{{T "Args:"}}
 {{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 {{if .Context.SelectedCommand -}}
-Subcommands:
+{{T "Subcommands:"}}
 {{if .Context.SelectedCommand.Commands -}}
 {{template "FormatCommands" .Context.SelectedCommand}}
 {{end -}}
 {{else if .App.Commands -}}
-Commands:
+{{T "Commands:"}}
 {{template "FormatCommands" .App}}
 {{end -}}
 `
@@ -122,26 +122,26 @@ var CompactUsageTemplate = `{{define "FormatCommand" -}}
 {{end -}}
 
 {{if .Context.SelectedCommand -}}
-usage: {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
+{{T "usage:"}} {{.App.Name}} {{.Context.SelectedCommand}}{{template "FormatUsage" .Context.SelectedCommand}}
 {{else -}}
-usage: {{.App.Name}}{{template "FormatUsage" .App}}
+{{T "usage:"}} {{.App.Name}}{{template "FormatUsage" .App}}
 {{end -}}
 {{if .Context.Flags -}}
-Flags:
+{{T "Flags:"}}
 {{.Context.Flags|FlagsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 {{if .Context.Args -}}
-Args:
+{{T "Args:"}}
 {{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 {{if .Context.SelectedCommand -}}
 {{if .Context.SelectedCommand.Commands -}}
-Commands:
+{{T "Commands:"}}
   {{.Context.SelectedCommand}}
 {{template "FormatCommandList" .Context.SelectedCommand.Commands}}
 {{end -}}
 {{else if .App.Commands -}}
-Commands:
+{{T "Commands:"}}
 {{template "FormatCommandList" .App.Commands}}
 {{end -}}
 `
@@ -217,17 +217,17 @@ var LongHelpTemplate = `{{define "FormatCommand" -}}
 
 {{end -}}
 
-usage: {{.App.Name}}{{template "FormatUsage" .App}}
+{{T "usage:"}} {{.App.Name}}{{template "FormatUsage" .App}}
 {{if .Context.Flags -}}
-Flags:
+{{T "Flags:"}}
 {{.Context.Flags|FlagsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 {{if .Context.Args -}}
-Args:
+{{T "Args:"}}
 {{.Context.Args|ArgsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 {{if .App.Commands -}}
-Commands:
+{{T "Commands:"}}
 {{template "FormatCommands" .App}}
 {{end -}}
 `

@@ -22,17 +22,17 @@ const (
 func (t TokenType) String() string {
 	switch t {
 	case TokenShort:
-		return "short flag"
+		return T("short flag")
 	case TokenLong:
-		return "long flag"
+		return T("long flag")
 	case TokenArg:
-		return "argument"
+		return T("argument")
 	case TokenError:
-		return "error"
+		return T("error")
 	case TokenEOL:
-		return "<EOL>"
+		return T("<EOL>")
 	}
-	return "?"
+	return T("unknown")
 }
 
 var (
@@ -66,9 +66,9 @@ func (t *Token) String() string {
 	case TokenArg:
 		return t.Value
 	case TokenError:
-		return "error: " + t.Value
+		return T("error: ") + t.Value
 	case TokenEOL:
-		return "<EOL>"
+		return T("<EOL>")
 	default:
 		panic("unhandled type")
 	}
@@ -352,7 +352,7 @@ loop:
 						}
 					}
 					if cmd == nil {
-						return fmt.Errorf("expected command but got %q", token)
+						return fmt.Errorf(T("expected command but got {{.Arg0}}", map[string]interface{}{"Arg0": token}))
 					}
 				}
 				if cmd == app.helpCommand {
@@ -396,14 +396,14 @@ loop:
 	}
 
 	if !context.EOL() {
-		return fmt.Errorf("unexpected %s", context.Peek())
+		return fmt.Errorf(T("unexpected {{.Arg0}}", map[string]interface{}{"Arg0": context.Peek()}))
 	}
 
 	// Set defaults for all remaining args.
 	for arg := context.nextArg(); arg != nil && !arg.consumesRemainder(); arg = context.nextArg() {
 		for _, defaultValue := range arg.defaultValues {
 			if err := arg.value.Set(defaultValue); err != nil {
-				return fmt.Errorf("invalid default value '%s' for argument '%s'", defaultValue, arg.name)
+				return fmt.Errorf(T("invalid default value '{{.Arg0}}' for argument '{{.Arg1}}'", map[string]interface{}{"Arg0": defaultValue, "Arg1": arg.name}))
 			}
 		}
 	}

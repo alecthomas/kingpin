@@ -1,0 +1,3 @@
+package kingpin
+
+var i18n_fr = []byte("[\n  {\n    \"id\": \"Show context-sensitive help (also try --help-long and --help-man).\",\n    \"translation\": \"Afficher l'aide contextuelle (essayez aussi --help-long et --help-man).\"\n  },\n  {\n    \"id\": \"usage:\",\n    \"translation\": \"usage:\"\n  },\n  {\n    \"id\": \"Flags:\",\n    \"translation\": \"Drapeaux:\"\n  },\n  {\n    \"id\": \"Args:\",\n    \"translation\": \"Arguments:\"\n  },\n  {\n    \"id\": \"Commands:\",\n    \"translation\": \"Commandes:\"\n  },\n  {\n    \"id\": \"Subcommands\",\n    \"translation\": \"Sous-commandes\"\n  },\n  {\n    \"id\": \"Show help.\",\n    \"translation\": \"Afficher l'aide.\"\n  }\n]\n")

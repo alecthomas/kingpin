@@ -1,7 +1,7 @@
 package kingpin
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 )
 
@@ -150,7 +150,7 @@ func (c *cmdGroup) addCommand(name, help string) *CmdClause {
 func (c *cmdGroup) init() error {
 	seen := map[string]bool{}
 	if c.defaultSubcommand() != nil && !c.have() {
-		return fmt.Errorf("default subcommand %q provided but no subcommands defined", c.defaultSubcommand().name)
+		return errors.New(T("default subcommand {{.Arg0}} provided but no subcommands defined", map[string]interface{}{"Arg0": c.defaultSubcommand().name}))
 	}
 	defaults := []string{}
 	for _, cmd := range c.commandOrder {
@@ -158,12 +158,12 @@ func (c *cmdGroup) init() error {
 			defaults = append(defaults, cmd.name)
 		}
 		if seen[cmd.name] {
-			return fmt.Errorf("duplicate command %q", cmd.name)
+			return errors.New(T("duplicate command {{.Arg0}}", map[string]interface{}{"Arg0": cmd.name}))
 		}
 		seen[cmd.name] = true
 		for _, alias := range cmd.aliases {
 			if seen[alias] {
-				return fmt.Errorf("alias duplicates existing command %q", alias)
+				return errors.New(T("alias duplicates existing command {{.Arg0}}", map[string]interface{}{"Arg0": alias}))
 			}
 			c.commands[alias] = cmd
 		}
@@ -172,7 +172,7 @@ func (c *cmdGroup) init() error {
 		}
 	}
 	if len(defaults) > 1 {
-		return fmt.Errorf("more than one default subcommand exists: %s", strings.Join(defaults, ", "))
+		return errors.New(T("more than one default subcommand exists: {{.Arg0}}", map[string]interface{}{"Arg0": strings.Join(defaults, ", ")}))
 	}
 	return nil
 }
@@ -257,7 +257,7 @@ func (c *CmdClause) init() error {
 		return err
 	}
 	if c.argGroup.have() && c.cmdGroup.have() {
-		return fmt.Errorf("can't mix Arg()s with Command()s")
+		return errors.New(T("can't mix Arg()s with Command()s"))
 	}
 	if err := c.argGroup.init(); err != nil {
 		return err

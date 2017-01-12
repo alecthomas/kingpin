@@ -28,7 +28,7 @@ func (f *FlagGroupModel) FlagSummary() string {
 		}
 	}
 	if count != len(out) {
-		out = append(out, "[<flags>]")
+		out = append(out, T("[<flags>]"))
 	}
 	return strings.Join(out, " ")
 }

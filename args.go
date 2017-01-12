@@ -1,8 +1,6 @@
 package kingpin
 
-import (
-	"fmt"
-)
+import "errors"
 
 type argGroup struct {
 	args []*Clause
@@ -41,17 +39,17 @@ func (a *argGroup) init() error {
 	previousArgMustBeLast := false
 	for i, arg := range a.args {
 		if previousArgMustBeLast {
-			return fmt.Errorf("Args() can't be followed by another argument '%s'", arg.name)
+			return errors.New(T("Args() can't be followed by another argument '{{.Arg0}}'", map[string]interface{}{"Arg0": arg.name}))
 		}
 		if arg.consumesRemainder() {
 			previousArgMustBeLast = true
 		}
 		if _, ok := seen[arg.name]; ok {
-			return fmt.Errorf("duplicate argument '%s'", arg.name)
+			return errors.New(T("duplicate argument '{{.Arg0}}'", map[string]interface{}{"Arg0": arg.name}))
 		}
 		seen[arg.name] = struct{}{}
 		if arg.required && required != i {
-			return fmt.Errorf("required arguments found after non-required")
+			return errors.New(T("required arguments found after non-required"))
 		}
 		if arg.required {
 			required++

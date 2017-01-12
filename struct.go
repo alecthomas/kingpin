@@ -1,7 +1,7 @@
 package kingpin
 
 import (
-	"fmt"
+	"errors"
 	"reflect"
 	"strings"
 	"time"
@@ -24,7 +24,7 @@ import (
 func (c *cmdMixin) Struct(v interface{}) error {
 	rv := reflect.Indirect(reflect.ValueOf(v))
 	if rv.Kind() != reflect.Struct {
-		return fmt.Errorf("expected a struct but received " + reflect.TypeOf(v).String())
+		return errors.New(T("expected a struct but received ") + reflect.TypeOf(v).String())
 	}
 	for i := 0; i < rv.NumField(); i++ {
 		// Parse out tags
@@ -65,7 +65,7 @@ func (c *cmdMixin) Struct(v interface{}) error {
 		if short != "" {
 			r, _ := utf8.DecodeRuneInString(short)
 			if r == utf8.RuneError {
-				return fmt.Errorf("invalid short flag %q", short)
+				return errors.New(T("invalid short flag {{.Arg0}}", map[string]interface{}{"Arg0": short}))
 			}
 			clause = clause.Short(r)
 		}
@@ -155,12 +155,12 @@ func (c *cmdMixin) Struct(v interface{}) error {
 						clause.Uint64ListVar(ptr.(*[]uint64))
 
 					default:
-						return fmt.Errorf("unsupported field type %s for field %s", ft.Type.String(), ft.Name)
+						return errors.New(T("unsupported field type {{.Arg0}} for field {{.Arg1}}", map[string]interface{}{"Arg0": ft.Type.String(), "Arg1": ft.Name}))
 					}
 				}
 
 			default:
-				return fmt.Errorf("unsupported field type %s for field %s", ft.Type.String(), ft.Name)
+				return errors.New(T("unsupported field type {{.Arg0}} for field {{.Arg1}}", map[string]interface{}{"Arg0": ft.Type.String(), "Arg1": ft.Name}))
 			}
 		}
 	}

@@ -1,7 +1,7 @@
 package kingpin
 
 import (
-	"fmt"
+	"errors"
 	"strings"
 )
 
@@ -58,12 +58,12 @@ func (f *flagGroup) checkDuplicates() error {
 	for _, flag := range f.flagOrder {
 		if flag.shorthand != 0 {
 			if _, ok := seenShort[flag.shorthand]; ok {
-				return fmt.Errorf("duplicate short flag -%c", flag.shorthand)
+				return errors.New(T("duplicate short flag -{{.Arg0}}", map[string]interface{}{"Arg0": flag.shorthand}))
 			}
 			seenShort[flag.shorthand] = true
 		}
 		if _, ok := seenLong[flag.name]; ok {
-			return fmt.Errorf("duplicate long flag --%s", flag.name)
+			return errors.New(T("duplicate long flag --{{.Arg0}}", map[string]interface{}{"Arg0": flag.name}))
 		}
 		seenLong[flag.name] = true
 	}
@@ -99,12 +99,12 @@ loop:
 					invert = true
 				}
 				if !ok {
-					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+					return nil, errors.New(T("unknown long flag '{{.Arg0}}'", map[string]interface{}{"Arg0": flagToken}))
 				}
 			} else {
 				flag, ok = f.short[name]
 				if !ok {
-					return nil, fmt.Errorf("unknown short flag '%s'", flagToken)
+					return nil, errors.New(T("unknown short flag '{{.Arg0}}'", map[string]interface{}{"Arg0": flagToken}))
 				}
 			}
 
@@ -120,12 +120,12 @@ loop:
 			} else {
 				if invert {
 					context.Push(token)
-					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+					return nil, errors.New(T("unknown long flag '{{.Arg0}}'", map[string]interface{}{"Arg0": flagToken}))
 				}
 				token = context.Peek()
 				if token.Type != TokenArg {
 					context.Push(token)
-					return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
+					return nil, errors.New(T("expected argument for flag '{{.Arg0}}'", map[string]interface{}{"Arg0": flagToken}))
 				}
 				context.Next()
 				defaultValue = token.Value

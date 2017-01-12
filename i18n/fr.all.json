@@ -1,0 +1,30 @@
+[
+  {
+    "id": "Show context-sensitive help (also try --help-long and --help-man).",
+    "translation": "Afficher l'aide contextuelle (essayez aussi --help-long et --help-man)."
+  },
+  {
+    "id": "usage:",
+    "translation": "usage:"
+  },
+  {
+    "id": "Flags:",
+    "translation": "Drapeaux:"
+  },
+  {
+    "id": "Args:",
+    "translation": "Arguments:"
+  },
+  {
+    "id": "Commands:",
+    "translation": "Commandes:"
+  },
+  {
+    "id": "Subcommands",
+    "translation": "Sous-commandes"
+  },
+  {
+    "id": "Show help.",
+    "translation": "Afficher l'aide."
+  }
+]

@@ -3,6 +3,7 @@ package kingpin
 //go:generate go run ./cmd/genvalues/main.go
 
 import (
+	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -67,7 +68,7 @@ type accumulator struct {
 func newAccumulator(slice interface{}, element func(value interface{}) Value) *accumulator {
 	typ := reflect.TypeOf(slice)
 	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Slice {
-		panic("expected a pointer to a slice")
+		panic(T("expected a pointer to a slice"))
 	}
 	return &accumulator{
 		element: element,
@@ -125,7 +126,7 @@ var stringMapRegex = regexp.MustCompile("[:=]")
 func (s *stringMapValue) Set(value string) error {
 	parts := stringMapRegex.Split(value, 2)
 	if len(parts) != 2 {
-		return fmt.Errorf("expected KEY=VALUE got '%s'", value)
+		return errors.New(T("expected KEY=VALUE got '{{.Arg0}}'", map[string]interface{}{"Arg0": value}))
 	}
 	(*s)[parts[0]] = parts[1]
 	return nil
@@ -163,7 +164,7 @@ func newFileStatValue(p *string, predicate func(os.FileInfo) error) *fileStatVal
 
 func (f *fileStatValue) Set(value string) error {
 	if s, err := os.Stat(value); os.IsNotExist(err) {
-		return fmt.Errorf("path '%s' does not exist", value)
+		return errors.New(T("path '{{.Arg0}}' does not exist", map[string]interface{}{"Arg0": value}))
 	} else if err != nil {
 		return err
 	} else if err := f.predicate(s); err != nil {
@@ -193,7 +194,7 @@ func newURLValue(p **url.URL) *urlValue {
 func (u *urlValue) Set(value string) error {
 	url, err := url.Parse(value)
 	if err != nil {
-		return fmt.Errorf("invalid URL: %s", err)
+		return errors.New(T("invalid URL: {{.Arg0}}", map[string]interface{}{"Arg0": err}))
 	}
 	*u.u = url
 	return nil
@@ -205,7 +206,7 @@ func (u *urlValue) Get() interface{} {
 
 func (u *urlValue) String() string {
 	if *u.u == nil {
-		return "<nil>"
+		return T("<nil>")
 	}
 	return (*u.u).String()
 }
@@ -220,7 +221,7 @@ func newURLListValue(p *[]*url.URL) *urlListValue {
 func (u *urlListValue) Set(value string) error {
 	url, err := url.Parse(value)
 	if err != nil {
-		return fmt.Errorf("invalid URL: %s", err)
+		return errors.New(T("invalid URL: {{.Arg0}}", map[string]interface{}{"Arg0": err}))
 	}
 	*u = append(*u, url)
 	return nil
@@ -262,7 +263,7 @@ func (e *enumValue) Set(value string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(e.options, ","), value)
+	return errors.New(T("enum value must be one of {{.Arg0}}, got '{{.Arg1}}'", map[string]interface{}{"Arg0": strings.Join(e.options, T(",")), "Arg1": value}))
 }
 
 func (e *enumValue) Get() interface{} {
@@ -289,7 +290,7 @@ func (e *enumsValue) Set(value string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(e.options, ","), value)
+	return errors.New(T("enum value must be one of {{.Arg0}}, got '{{.Arg1}}'", map[string]interface{}{"Arg0": strings.Join(e.options, T(",")), "Arg1": value}))
 }
 
 func (e *enumsValue) Get() interface{} {
@@ -328,7 +329,7 @@ func (d *bytesValue) String() string { return (*units.Base2Bytes)(d).String() }
 func newExistingFileValue(target *string) *fileStatValue {
 	return newFileStatValue(target, func(s os.FileInfo) error {
 		if s.IsDir() {
-			return fmt.Errorf("'%s' is a directory", s.Name())
+			return errors.New(T("'{{.Arg0}}' is a directory", map[string]interface{}{"Arg0": s.Name()}))
 		}
 		return nil
 	})
@@ -337,7 +338,7 @@ func newExistingFileValue(target *string) *fileStatValue {
 func newExistingDirValue(target *string) *fileStatValue {
 	return newFileStatValue(target, func(s os.FileInfo) error {
 		if !s.IsDir() {
-			return fmt.Errorf("'%s' is a file", s.Name())
+			return errors.New(T("'{{.Arg0}}' is a file", map[string]interface{}{"Arg0": s.Name()}))
 		}
 		return nil
 	})

@@ -1,6 +1,7 @@
 package kingpin
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -9,7 +10,7 @@ import (
 )
 
 var (
-	ErrCommandNotSpecified = fmt.Errorf("command not specified")
+	ErrCommandNotSpecified = errors.New(T("command not specified"))
 )
 
 var (
@@ -49,13 +50,13 @@ func New(name, help string) *Application {
 	a.flagGroup = newFlagGroup()
 	a.argGroup = newArgGroup()
 	a.cmdGroup = newCmdGroup(a)
-	a.helpFlag = a.Flag("help", "Show context-sensitive help (also try --help-long and --help-man).")
+	a.helpFlag = a.Flag("help", T("Show context-sensitive help (also try --help-long and --help-man)."))
 	a.helpFlag.Bool()
-	a.Flag("help-long", "Generate long help.").Hidden().Bool()
-	a.Flag("help-man", "Generate a man page.").Hidden().Bool()
-	a.Flag("completion-bash", "Output possible completions for the given args.").Hidden().BoolVar(&a.completion)
-	a.Flag("completion-script-bash", "Generate completion script for bash.").Hidden().PreAction(a.generateBashCompletionScript).Bool()
-	a.Flag("completion-script-zsh", "Generate completion script for ZSH.").Hidden().PreAction(a.generateZSHCompletionScript).Bool()
+	a.Flag("help-long", T("Generate long help.")).Hidden().Bool()
+	a.Flag("help-man", T("Generate a man page.")).Hidden().Bool()
+	a.Flag("completion-bash", T("Output possible completions for the given args.")).Hidden().BoolVar(&a.completion)
+	a.Flag("completion-script-bash", T("Generate completion script for bash.")).Hidden().PreAction(a.generateBashCompletionScript).Bool()
+	a.Flag("completion-script-zsh", T("Generate completion script for ZSH.")).Hidden().PreAction(a.generateZSHCompletionScript).Bool()
 
 	return a
 }
@@ -193,7 +194,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 
 		a.maybeHelp(context)
 		if !context.EOL() {
-			return "", fmt.Errorf("unexpected argument '%s'", context.Peek())
+			return "", errors.New(T("unexpected argument '{{.Arg0}}'", map[string]interface{}{"Arg0": context.Peek()}))
 		}
 
 		if setValuesErr != nil {
@@ -231,7 +232,7 @@ func (a *Application) maybeHelp(context *ParseContext) {
 // Version adds a --version flag for displaying the application version.
 func (a *Application) Version(version string) *Application {
 	a.version = version
-	a.Flag("version", "Show application version.").
+	a.Flag("version", T("Show application version.")).
 		PreAction(func(*ParseElement, *ParseContext) error {
 			fmt.Fprintln(a.writer, version)
 			a.terminate(0)
@@ -271,20 +272,20 @@ func (a *Application) init() error {
 		return nil
 	}
 	if a.cmdGroup.have() && a.argGroup.have() {
-		return fmt.Errorf("can't mix top-level Arg()s with Command()s")
+		return errors.New(T("can't mix top-level Arg()s with Command()s"))
 	}
 
 	// If we have subcommands, add a help command at the top-level.
 	if a.cmdGroup.have() {
 		var command []string
-		a.helpCommand = a.Command("help", "Show help.").
+		a.helpCommand = a.Command("help", T("Show help.")).
 			PreAction(func(element *ParseElement, context *ParseContext) error {
 				a.Usage(command)
 				a.terminate(0)
 				return nil
 			})
 		a.helpCommand.
-			Arg("command", "Show help on command.").
+			Arg("command", T("Show help on command.")).
 			StringsVar(&command)
 		// Make help first command.
 		l := len(a.commandOrder)
@@ -322,11 +323,11 @@ func checkDuplicateFlags(current *CmdClause, flagGroups []*flagGroup) error {
 		for _, flag := range current.flagOrder {
 			if flag.shorthand != 0 {
 				if _, ok := flags.short[string(flag.shorthand)]; ok {
-					return fmt.Errorf("duplicate short flag -%c", flag.shorthand)
+					return errors.New(T("duplicate short flag -{{.Arg0}}", map[string]interface{}{"Arg0": flag.shorthand}))
 				}
 			}
 			if _, ok := flags.long[flag.name]; ok {
-				return fmt.Errorf("duplicate long flag --%s", flag.name)
+				return errors.New(T("duplicate long flag --{{.Arg0}}", map[string]interface{}{"Arg0": flag.name}))
 			}
 		}
 	}
@@ -395,7 +396,7 @@ func (a *Application) validateRequired(context *ParseContext) error {
 		if flagElements[flag.name] == nil {
 			// Check required flags were provided.
 			if flag.needsValue() {
-				return fmt.Errorf("required flag --%s not provided", flag.name)
+				return errors.New(T("required flag --{{.Arg0}} not provided", map[string]interface{}{"Arg0": flag.name}))
 			}
 		}
 	}
@@ -403,7 +404,7 @@ func (a *Application) validateRequired(context *ParseContext) error {
 	for _, arg := range context.arguments.args {
 		if argElements[arg.name] == nil {
 			if arg.needsValue() {
-				return fmt.Errorf("required argument '%s' not provided", arg.name)
+				return errors.New(T("required argument '{{.Arg0}}' not provided", map[string]interface{}{"Arg0": arg.name}))
 			}
 		}
 	}
@@ -422,7 +423,7 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 			clause := element.OneOf.Flag
 			if _, ok := flagSet[clause.name]; ok {
 				if v, ok := clause.value.(cumulativeValue); !ok || !v.IsCumulative() {
-					return nil, fmt.Errorf("flag '%s' cannot be repeated", clause.name)
+					return nil, errors.New(T("flag '{{.Arg0}}' cannot be repeated", map[string]interface{}{"Arg0": clause.name}))
 				}
 			}
 			if err = clause.value.Set(*element.Value); err != nil {
@@ -449,7 +450,7 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 	}
 
 	if lastCmd != nil && len(lastCmd.commands) > 0 {
-		return nil, fmt.Errorf("must select a subcommand of '%s'", lastCmd.FullCommand())
+		return nil, errors.New(T("must select a subcommand of '{{.Arg0}}'", map[string]interface{}{"Arg0": lastCmd.FullCommand()}))
 	}
 
 	return
@@ -457,7 +458,7 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 
 // Errorf prints an error message to w in the format "<appname>: error: <message>".
 func (a *Application) Errorf(format string, args ...interface{}) {
-	fmt.Fprintf(a.writer, a.Name+": error: "+format+"\n", args...)
+	fmt.Fprintf(a.writer, a.Name+T(": error: ")+format+"\n", args...)
 }
 
 // Fatalf writes a formatted error to w then terminates with exit status 1.
