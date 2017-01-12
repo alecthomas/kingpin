@@ -120,14 +120,6 @@
     "translation": "expected KEY=VALUE got '{{.Arg0}}'"
   },
   {
-    "id": "expected a pointer to a slice",
-    "translation": "expected a pointer to a slice"
-  },
-  {
-    "id": "expected a struct but received ",
-    "translation": "expected a struct but received "
-  },
-  {
     "id": "expected argument for flag '{{.Arg0}}'",
     "translation": "expected argument for flag '{{.Arg0}}'"
   },
@@ -150,10 +142,6 @@
   {
     "id": "invalid default value '{{.Arg0}}' for argument '{{.Arg1}}'",
     "translation": "invalid default value '{{.Arg0}}' for argument '{{.Arg1}}'"
-  },
-  {
-    "id": "invalid short flag {{.Arg0}}",
-    "translation": "invalid short flag {{.Arg0}}"
   },
   {
     "id": "long flag",
@@ -214,10 +202,6 @@
   {
     "id": "unknown short flag '{{.Arg0}}'",
     "translation": "unknown short flag '{{.Arg0}}'"
-  },
-  {
-    "id": "unsupported field type {{.Arg0}} for field {{.Arg1}}",
-    "translation": "unsupported field type {{.Arg0}} for field {{.Arg1}}"
   },
   {
     "id": "{{.Arg0}}, try --help",

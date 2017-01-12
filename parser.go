@@ -2,7 +2,6 @@ package kingpin
 
 import (
 	"bufio"
-	"fmt"
 	"os"
 	"strings"
 	"unicode/utf8"
@@ -352,7 +351,7 @@ loop:
 						}
 					}
 					if cmd == nil {
-						return fmt.Errorf(T("expected command but got {{.Arg0}}", map[string]interface{}{"Arg0": token}))
+						return TError("expected command but got {{.Arg0}}", V{"Arg0": token})
 					}
 				}
 				if cmd == app.helpCommand {
@@ -396,14 +395,14 @@ loop:
 	}
 
 	if !context.EOL() {
-		return fmt.Errorf(T("unexpected {{.Arg0}}", map[string]interface{}{"Arg0": context.Peek()}))
+		return TError("unexpected {{.Arg0}}", V{"Arg0": context.Peek()})
 	}
 
 	// Set defaults for all remaining args.
 	for arg := context.nextArg(); arg != nil && !arg.consumesRemainder(); arg = context.nextArg() {
 		for _, defaultValue := range arg.defaultValues {
 			if err := arg.value.Set(defaultValue); err != nil {
-				return fmt.Errorf(T("invalid default value '{{.Arg0}}' for argument '{{.Arg1}}'", map[string]interface{}{"Arg0": defaultValue, "Arg1": arg.name}))
+				return TError("invalid default value '{{.Arg0}}' for argument '{{.Arg1}}'", V{"Arg0": defaultValue, "Arg1": arg.name})
 			}
 		}
 	}

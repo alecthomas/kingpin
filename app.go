@@ -1,7 +1,6 @@
 package kingpin
 
 import (
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -10,11 +9,8 @@ import (
 )
 
 var (
-	ErrCommandNotSpecified = errors.New(T("command not specified"))
-)
-
-var (
-	envarTransformRegexp = regexp.MustCompile(`[^a-zA-Z_]+`)
+	errCommandNotSpecified = TError("command not specified")
+	envarTransformRegexp   = regexp.MustCompile(`[^a-zA-Z_]+`)
 )
 
 // An Application contains the definitions of flags, arguments and commands
@@ -194,7 +190,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 
 		a.maybeHelp(context)
 		if !context.EOL() {
-			return "", errors.New(T("unexpected argument '{{.Arg0}}'", map[string]interface{}{"Arg0": context.Peek()}))
+			return "", TError("unexpected argument '{{.Arg0}}'", V{"Arg0": context.Peek()})
 		}
 
 		if setValuesErr != nil {
@@ -202,7 +198,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 		}
 
 		command, err = a.execute(context, selected)
-		if err == ErrCommandNotSpecified {
+		if err == errCommandNotSpecified {
 			a.writeUsage(context, nil)
 		}
 	}
@@ -272,7 +268,7 @@ func (a *Application) init() error {
 		return nil
 	}
 	if a.cmdGroup.have() && a.argGroup.have() {
-		return errors.New(T("can't mix top-level Arg()s with Command()s"))
+		return TError("can't mix top-level Arg()s with Command()s")
 	}
 
 	// If we have subcommands, add a help command at the top-level.
@@ -323,11 +319,11 @@ func checkDuplicateFlags(current *CmdClause, flagGroups []*flagGroup) error {
 		for _, flag := range current.flagOrder {
 			if flag.shorthand != 0 {
 				if _, ok := flags.short[string(flag.shorthand)]; ok {
-					return errors.New(T("duplicate short flag -{{.Arg0}}", map[string]interface{}{"Arg0": flag.shorthand}))
+					return TError("duplicate short flag -{{.Arg0}}", V{"Arg0": flag.shorthand})
 				}
 			}
 			if _, ok := flags.long[flag.name]; ok {
-				return errors.New(T("duplicate long flag --{{.Arg0}}", map[string]interface{}{"Arg0": flag.name}))
+				return TError("duplicate long flag --{{.Arg0}}", V{"Arg0": flag.name})
 			}
 		}
 	}
@@ -354,7 +350,7 @@ func (a *Application) execute(context *ParseContext, selected []string) (string,
 
 	command := strings.Join(selected, " ")
 	if command == "" && a.cmdGroup.have() {
-		return "", ErrCommandNotSpecified
+		return "", errCommandNotSpecified
 	}
 	return command, err
 }
@@ -396,7 +392,7 @@ func (a *Application) validateRequired(context *ParseContext) error {
 		if flagElements[flag.name] == nil {
 			// Check required flags were provided.
 			if flag.needsValue() {
-				return errors.New(T("required flag --{{.Arg0}} not provided", map[string]interface{}{"Arg0": flag.name}))
+				return TError("required flag --{{.Arg0}} not provided", V{"Arg0": flag.name})
 			}
 		}
 	}
@@ -404,7 +400,7 @@ func (a *Application) validateRequired(context *ParseContext) error {
 	for _, arg := range context.arguments.args {
 		if argElements[arg.name] == nil {
 			if arg.needsValue() {
-				return errors.New(T("required argument '{{.Arg0}}' not provided", map[string]interface{}{"Arg0": arg.name}))
+				return TError("required argument '{{.Arg0}}' not provided", V{"Arg0": arg.name})
 			}
 		}
 	}
@@ -423,7 +419,7 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 			clause := element.OneOf.Flag
 			if _, ok := flagSet[clause.name]; ok {
 				if v, ok := clause.value.(cumulativeValue); !ok || !v.IsCumulative() {
-					return nil, errors.New(T("flag '{{.Arg0}}' cannot be repeated", map[string]interface{}{"Arg0": clause.name}))
+					return nil, TError("flag '{{.Arg0}}' cannot be repeated", V{"Arg0": clause.name})
 				}
 			}
 			if err = clause.value.Set(*element.Value); err != nil {
@@ -450,7 +446,7 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 	}
 
 	if lastCmd != nil && len(lastCmd.commands) > 0 {
-		return nil, errors.New(T("must select a subcommand of '{{.Arg0}}'", map[string]interface{}{"Arg0": lastCmd.FullCommand()}))
+		return nil, TError("must select a subcommand of '{{.Arg0}}'", V{"Arg0": lastCmd.FullCommand()})
 	}
 
 	return

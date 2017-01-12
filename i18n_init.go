@@ -9,6 +9,18 @@ import (
 	"github.com/nicksnyder/go-i18n/i18n"
 )
 
+type tError struct {
+	msg  string
+	args []interface{}
+}
+
+// TError is an error that translates itself.
+//
+// It has the same signature and usage as T().
+func TError(msg string, args ...interface{}) error { return &tError{msg: msg, args: args} }
+func (i *tError) Error() string                    { return T(i.msg, i.args...) }
+
+// T is a translation function.
 var T = initI18N()
 
 func initI18N() i18n.TranslateFunc {
@@ -16,6 +28,7 @@ func initI18N() i18n.TranslateFunc {
 	i18n.ParseTranslationFileBytes("i18n/en-AU.all.json", i18n_en_AU)
 	i18n.ParseTranslationFileBytes("i18n/fr.all.json", i18n_fr)
 
+	// Detect language.
 	lang := os.Getenv("LANG")
 	t, err := i18n.Tfunc(lang, "en")
 	if err != nil {
@@ -23,3 +36,17 @@ func initI18N() i18n.TranslateFunc {
 	}
 	return t
 }
+
+// SetLanguage sets the language for Kingpin.
+func SetLanguage(lang string, others ...string) error {
+	t, err := i18n.Tfunc(lang, others...)
+	if err != nil {
+		return err
+	}
+	T = t
+	return nil
+}
+
+// V is a convenience alias for translation function variables.
+// eg. T("Something {{.Arg0}}", V{"Arg0": "moo"})
+type V map[string]interface{}

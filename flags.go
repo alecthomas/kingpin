@@ -1,9 +1,6 @@
 package kingpin
 
-import (
-	"errors"
-	"strings"
-)
+import "strings"
 
 type flagGroup struct {
 	short     map[string]*Clause
@@ -58,12 +55,12 @@ func (f *flagGroup) checkDuplicates() error {
 	for _, flag := range f.flagOrder {
 		if flag.shorthand != 0 {
 			if _, ok := seenShort[flag.shorthand]; ok {
-				return errors.New(T("duplicate short flag -{{.Arg0}}", map[string]interface{}{"Arg0": flag.shorthand}))
+				return TError("duplicate short flag -{{.Arg0}}", V{"Arg0": flag.shorthand})
 			}
 			seenShort[flag.shorthand] = true
 		}
 		if _, ok := seenLong[flag.name]; ok {
-			return errors.New(T("duplicate long flag --{{.Arg0}}", map[string]interface{}{"Arg0": flag.name}))
+			return TError("duplicate long flag --{{.Arg0}}", V{"Arg0": flag.name})
 		}
 		seenLong[flag.name] = true
 	}
@@ -99,12 +96,12 @@ loop:
 					invert = true
 				}
 				if !ok {
-					return nil, errors.New(T("unknown long flag '{{.Arg0}}'", map[string]interface{}{"Arg0": flagToken}))
+					return nil, TError("unknown long flag '{{.Arg0}}'", V{"Arg0": flagToken})
 				}
 			} else {
 				flag, ok = f.short[name]
 				if !ok {
-					return nil, errors.New(T("unknown short flag '{{.Arg0}}'", map[string]interface{}{"Arg0": flagToken}))
+					return nil, TError("unknown short flag '{{.Arg0}}'", V{"Arg0": flagToken})
 				}
 			}
 
@@ -120,12 +117,12 @@ loop:
 			} else {
 				if invert {
 					context.Push(token)
-					return nil, errors.New(T("unknown long flag '{{.Arg0}}'", map[string]interface{}{"Arg0": flagToken}))
+					return nil, TError("unknown long flag '{{.Arg0}}'", V{"Arg0": flagToken})
 				}
 				token = context.Peek()
 				if token.Type != TokenArg {
 					context.Push(token)
-					return nil, errors.New(T("expected argument for flag '{{.Arg0}}'", map[string]interface{}{"Arg0": flagToken}))
+					return nil, TError("expected argument for flag '{{.Arg0}}'", V{"Arg0": flagToken})
 				}
 				context.Next()
 				defaultValue = token.Value
