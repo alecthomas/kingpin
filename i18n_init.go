@@ -4,6 +4,9 @@ package kingpin
 //go:generate go run ./cmd/embedi18n/main.go fr
 
 import (
+	"bytes"
+	"compress/gzip"
+	"io/ioutil"
 	"os"
 
 	"github.com/nicksnyder/go-i18n/i18n"
@@ -25,8 +28,8 @@ var T = initI18N()
 
 func initI18N() i18n.TranslateFunc {
 	// Initialise translations.
-	i18n.ParseTranslationFileBytes("i18n/en-AU.all.json", i18n_en_AU)
-	i18n.ParseTranslationFileBytes("i18n/fr.all.json", i18n_fr)
+	i18n.ParseTranslationFileBytes("i18n/en-AU.all.json", decompressLang(i18n_en_AU))
+	i18n.ParseTranslationFileBytes("i18n/fr.all.json", decompressLang(i18n_fr))
 
 	// Detect language.
 	lang := os.Getenv("LANG")
@@ -35,6 +38,19 @@ func initI18N() i18n.TranslateFunc {
 		panic(err)
 	}
 	return t
+}
+
+func decompressLang(data []byte) []byte {
+	r := bytes.NewReader(data)
+	gr, err := gzip.NewReader(r)
+	if err != nil {
+		panic(err)
+	}
+	out, err := ioutil.ReadAll(gr)
+	if err != nil {
+		panic(err)
+	}
+	return out
 }
 
 // SetLanguage sets the language for Kingpin.

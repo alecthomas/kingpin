@@ -1,11 +1,27 @@
 package main
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
 )
+
+func compress(data []byte) []byte {
+	w := bytes.NewBuffer(nil)
+	gw, err := gzip.NewWriterLevel(w, gzip.BestCompression)
+	if err != nil {
+		panic(err)
+	}
+	_, err = gw.Write(data)
+	if err != nil {
+		panic(err)
+	}
+	gw.Close()
+	return w.Bytes()
+}
 
 func main() {
 	name := os.Args[1]
@@ -18,6 +34,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	data = compress(data)
 	id := strings.Replace(name, "-", "_", -1)
 	w, err := os.Create("i18n_" + id + ".go")
 	if err != nil {
