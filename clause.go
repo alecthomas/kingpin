@@ -180,14 +180,13 @@ func (c *Clause) setDefault() error {
 		if v, ok := c.value.(cumulativeValue); !ok || !v.IsCumulative() {
 			// Use the value as-is
 			return c.value.Set(c.GetEnvarValue())
-		} else {
-			for _, value := range c.GetSplitEnvarValue() {
-				if err := c.value.Set(value); err != nil {
-					return err
-				}
-			}
-			return nil
 		}
+		for _, value := range c.GetSplitEnvarValue() {
+			if err := c.value.Set(value); err != nil {
+				return err
+			}
+		}
+		return nil
 	} else if len(c.defaultValues) > 0 {
 		c.reset()
 		for _, defaultValue := range c.defaultValues {
@@ -222,10 +221,7 @@ func (c *Clause) GetSplitEnvarValue() []string {
 
 	// Split by new line to extract multiple values, if any.
 	trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
-	for _, value := range envVarValuesSplitter.Split(trimmed, -1) {
-		values = append(values, value)
-	}
-
+	values = append(values, envVarValuesSplitter.Split(trimmed, -1)...)
 	return values
 }
 

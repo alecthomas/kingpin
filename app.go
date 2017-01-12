@@ -166,11 +166,7 @@ func (a *Application) parseContext(ignoreDefault bool, args []string) (*ParseCon
 // This will populate all flag and argument values, call all callbacks, and so
 // on.
 func (a *Application) Parse(args []string) (command string, err error) {
-
 	context, parseErr := a.ParseContext(args)
-	selected := []string{}
-	var setValuesErr error
-
 	if context == nil {
 		// Since we do not throw error immediately, there could be a case
 		// where a context returns nil. Protect against that.
@@ -181,7 +177,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 		return "", err
 	}
 
-	selected, setValuesErr = a.setValues(context)
+	selected, setValuesErr := a.setValues(context)
 
 	if err = a.applyPreActions(context, !a.completion); err != nil {
 		return "", err

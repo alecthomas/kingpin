@@ -82,7 +82,6 @@ loop:
 
 		case TokenLong, TokenShort:
 			flagToken := token
-			defaultValue := ""
 			var flag *Clause
 			var ok bool
 			invert := false
@@ -111,6 +110,7 @@ loop:
 
 			context.Next()
 
+			var defaultValue string
 			if fb, ok := flag.value.(boolFlag); ok && fb.IsBoolFlag() {
 				if invert {
 					defaultValue = "false"

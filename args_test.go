@@ -2,8 +2,8 @@ package kingpin
 
 import (
 	"io/ioutil"
-	"testing"
 	"os"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -38,7 +38,7 @@ func TestArgMultipleRequired(t *testing.T) {
 	assert.Error(t, err)
 	_, err = app.Parse([]string{"A", "B"})
 	assert.NoError(t, err)
-	_, err = app.Parse([]string{"--version"})
+	_, _ = app.Parse([]string{"--version"})
 	assert.True(t, terminated)
 }
 

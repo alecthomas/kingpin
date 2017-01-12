@@ -18,12 +18,12 @@ type actionMixin struct {
 	preActions []Action
 }
 
-func (h *actionMixin) addAction(action Action) {
-	h.actions = append(h.actions, action)
+func (a *actionMixin) addAction(action Action) {
+	a.actions = append(a.actions, action)
 }
 
-func (h *actionMixin) addPreAction(action Action) {
-	h.actions = append(h.actions, action)
+func (a *actionMixin) addPreAction(action Action) {
+	a.actions = append(a.actions, action)
 }
 
 func (a *actionMixin) applyActions(element *ParseElement, context *ParseContext) error {

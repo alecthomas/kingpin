@@ -165,7 +165,7 @@ func (f *Clause) Model() *ClauseModel {
 	return &ClauseModel{
 		Name:        f.name,
 		Help:        f.help,
-		Short:       rune(f.shorthand),
+		Short:       f.shorthand,
 		Default:     f.defaultValues,
 		Envar:       f.envar,
 		PlaceHolder: f.placeholder,

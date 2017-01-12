@@ -4,7 +4,6 @@ package kingpin
 
 import (
 	"fmt"
-	"net"
 	"net/url"
 	"os"
 	"reflect"
@@ -148,56 +147,6 @@ func (s *stringMapValue) Reset() {
 	*s = map[string]string{}
 }
 
-// -- net.IP Value
-type ipValue net.IP
-
-func newIPValue(p *net.IP) *ipValue {
-	return (*ipValue)(p)
-}
-
-func (i *ipValue) Set(value string) error {
-	if ip := net.ParseIP(value); ip == nil {
-		return fmt.Errorf("'%s' is not an IP address", value)
-	} else {
-		*i = *(*ipValue)(&ip)
-		return nil
-	}
-}
-
-func (i *ipValue) Get() interface{} {
-	return (net.IP)(*i)
-}
-
-func (i *ipValue) String() string {
-	return (*net.IP)(i).String()
-}
-
-// -- *net.TCPAddr Value
-type tcpAddrValue struct {
-	addr **net.TCPAddr
-}
-
-func newTCPAddrValue(p **net.TCPAddr) *tcpAddrValue {
-	return &tcpAddrValue{p}
-}
-
-func (i *tcpAddrValue) Set(value string) error {
-	if addr, err := net.ResolveTCPAddr("tcp", value); err != nil {
-		return fmt.Errorf("'%s' is not a valid TCP address: %s", value, err)
-	} else {
-		*i.addr = addr
-		return nil
-	}
-}
-
-func (t *tcpAddrValue) Get() interface{} {
-	return (*net.TCPAddr)(*t.addr)
-}
-
-func (i *tcpAddrValue) String() string {
-	return (*i.addr).String()
-}
-
 // -- existingFile Value
 
 type fileStatValue struct {
@@ -212,15 +161,15 @@ func newFileStatValue(p *string, predicate func(os.FileInfo) error) *fileStatVal
 	}
 }
 
-func (e *fileStatValue) Set(value string) error {
+func (f *fileStatValue) Set(value string) error {
 	if s, err := os.Stat(value); os.IsNotExist(err) {
 		return fmt.Errorf("path '%s' does not exist", value)
 	} else if err != nil {
 		return err
-	} else if err := e.predicate(s); err != nil {
+	} else if err := f.predicate(s); err != nil {
 		return err
 	}
-	*e.path = value
+	*f.path = value
 	return nil
 }
 
@@ -228,40 +177,8 @@ func (f *fileStatValue) Get() interface{} {
 	return (string)(*f.path)
 }
 
-func (e *fileStatValue) String() string {
-	return *e.path
-}
-
-// -- os.File value
-
-type fileValue struct {
-	f    **os.File
-	flag int
-	perm os.FileMode
-}
-
-func newFileValue(p **os.File, flag int, perm os.FileMode) *fileValue {
-	return &fileValue{p, flag, perm}
-}
-
-func (f *fileValue) Set(value string) error {
-	if fd, err := os.OpenFile(value, f.flag, f.perm); err != nil {
-		return err
-	} else {
-		*f.f = fd
-		return nil
-	}
-}
-
-func (f *fileValue) Get() interface{} {
-	return (*os.File)(*f.f)
-}
-
-func (f *fileValue) String() string {
-	if *f.f == nil {
-		return "<nil>"
-	}
-	return (*f.f).Name()
+func (f *fileStatValue) String() string {
+	return *f.path
 }
 
 // -- url.URL Value
@@ -274,12 +191,12 @@ func newURLValue(p **url.URL) *urlValue {
 }
 
 func (u *urlValue) Set(value string) error {
-	if url, err := url.Parse(value); err != nil {
+	url, err := url.Parse(value)
+	if err != nil {
 		return fmt.Errorf("invalid URL: %s", err)
-	} else {
-		*u.u = url
-		return nil
 	}
+	*u.u = url
+	return nil
 }
 
 func (u *urlValue) Get() interface{} {
@@ -301,12 +218,12 @@ func newURLListValue(p *[]*url.URL) *urlListValue {
 }
 
 func (u *urlListValue) Set(value string) error {
-	if url, err := url.Parse(value); err != nil {
+	url, err := url.Parse(value)
+	if err != nil {
 		return fmt.Errorf("invalid URL: %s", err)
-	} else {
-		*u = append(*u, url)
-		return nil
 	}
+	*u = append(*u, url)
+	return nil
 }
 
 func (u *urlListValue) Get() interface{} {
@@ -334,18 +251,18 @@ func newEnumFlag(target *string, options ...string) *enumValue {
 	}
 }
 
-func (a *enumValue) String() string {
-	return *a.value
+func (e *enumValue) String() string {
+	return *e.value
 }
 
-func (a *enumValue) Set(value string) error {
-	for _, v := range a.options {
+func (e *enumValue) Set(value string) error {
+	for _, v := range e.options {
 		if v == value {
-			*a.value = value
+			*e.value = value
 			return nil
 		}
 	}
-	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(a.options, ","), value)
+	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(e.options, ","), value)
 }
 
 func (e *enumValue) Get() interface{} {
@@ -446,15 +363,3 @@ func (c *counterValue) IsBoolFlag() bool   { return true }
 func (c *counterValue) String() string     { return fmt.Sprintf("%d", *c) }
 func (c *counterValue) IsCumulative() bool { return true }
 func (c *counterValue) Reset()             { *c = 0 }
-
-func resolveHost(value string) (net.IP, error) {
-	if ip := net.ParseIP(value); ip != nil {
-		return ip, nil
-	} else {
-		if addr, err := net.ResolveIPAddr("ip", value); err != nil {
-			return nil, err
-		} else {
-			return addr.IP, nil
-		}
-	}
-}
