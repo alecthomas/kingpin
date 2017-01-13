@@ -210,5 +210,22 @@
   {
     "id": "usage:",
     "translation": "usage:"
-  }
+  },
+  {
+    "id": "Flags:",
+    "translation": "Flags:"
+  },
+  {
+    "id": "Args:",
+    "translation": "Args:"
+  },
+  {
+    "id": "Commands:",
+    "translation": "Commands:"
+  },
+  {
+    "id": "Subcommands:",
+    "translation": "Subcommands:"
+  },
+
 ]
