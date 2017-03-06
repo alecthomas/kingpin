@@ -387,7 +387,7 @@ func main() {
 
 Kingpin supports both flag and positional argument parsers for converting to
 Go types. For example, some included parsers are `Int()`, `Float()`,
-`Duration()` and `ExistingFile()`.
+`Duration()` and `ExistingFile()` (see [parsers.go](./parsers.go) for a complete list of included parsers).
 
 Parsers conform to Go's [`flag.Value`](http://godoc.org/flag#Value)
 interface, so any existing implementations will work.
