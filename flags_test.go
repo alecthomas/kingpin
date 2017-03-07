@@ -385,3 +385,27 @@ func TestFlagsStruct(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 5*time.Second, dflag.Elapsed)
 }
+
+func TestNestedStruct(t *testing.T) {
+	type NestedFlags struct {
+		URL string `help:"URL to connect to." default:"localhost:80"`
+	}
+
+	type MyFlags struct {
+		NestedFlags
+		Debug bool `help:"Enable debug mode"`
+	}
+
+	a := newTestApp()
+	actual := &MyFlags{}
+	err := a.Struct(actual)
+	assert.NoError(t, err)
+
+	assert.NotNil(t, a.GetFlag("debug"))
+	assert.NotNil(t, a.GetFlag("url"))
+
+	_, err = a.Parse([]string{"--debug", "--url=foobar"})
+	assert.NoError(t, err)
+	assert.True(t, actual.Debug)
+	assert.Equal(t, "foobar", actual.URL)
+}

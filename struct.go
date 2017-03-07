@@ -30,6 +30,15 @@ func (c *cmdMixin) Struct(v interface{}) error {
 		// Parse out tags
 		field := rv.Field(i)
 		ft := rv.Type().Field(i)
+		if field.Kind() == reflect.Struct {
+			if !ft.Anonymous {
+				continue
+			}
+			if err := c.Struct(field.Addr().Interface()); err != nil {
+				return err
+			}
+			continue
+		}
 		tag := ft.Tag
 		help := tag.Get("help")
 		if help == "" {
