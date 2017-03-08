@@ -8,6 +8,10 @@ import (
 	"unicode/utf8"
 )
 
+type structParser interface {
+	Struct(v interface{}) error
+}
+
 // Struct allows applications to define flags with struct tags.
 //
 // Supported struct tags are: help, default, placeholder, required, hidden, long and short.
@@ -21,7 +25,7 @@ import (
 // and slices of same.
 //
 // For compatibility, also supports the tags used by https://github.com/jessevdk/go-flags
-func (c *cmdMixin) Struct(v interface{}) error {
+func (c *cmdMixin) Struct(v interface{}) error { // nolint: gocyclo
 	rv := reflect.Indirect(reflect.ValueOf(v))
 	if rv.Kind() != reflect.Struct {
 		return fmt.Errorf("expected a struct but received %s", reflect.TypeOf(v).String())
@@ -30,22 +34,10 @@ func (c *cmdMixin) Struct(v interface{}) error {
 		// Parse out tags
 		field := rv.Field(i)
 		ft := rv.Type().Field(i)
-		if field.Kind() == reflect.Struct {
-			if !ft.Anonymous {
-				continue
-			}
-			if err := c.Struct(field.Addr().Interface()); err != nil {
-				return err
-			}
-			continue
-		}
 		tag := ft.Tag
 		help := tag.Get("help")
 		if help == "" {
 			help = tag.Get("description")
-		}
-		if help == "" {
-			continue
 		}
 		placeholder := tag.Get("placeholder")
 		if placeholder == "" {
@@ -60,6 +52,21 @@ func (c *cmdMixin) Struct(v interface{}) error {
 			name = tag.Get("long")
 		}
 		arg := tag.Get("arg")
+
+		if field.Kind() == reflect.Struct {
+			var structer structParser = c
+			if !ft.Anonymous {
+				cmd := c.addCommand(name, help)
+				if hidden != "" {
+					cmd = cmd.Hidden()
+				}
+				structer = cmd
+			}
+			if err := structer.Struct(field.Addr().Interface()); err != nil {
+				return err
+			}
+			continue
+		}
 
 		// Define flag using extracted tags
 		var clause *Clause

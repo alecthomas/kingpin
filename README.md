@@ -26,8 +26,11 @@
   - [Consuming all remaining arguments](#consuming-all-remaining-arguments)
   - [Struct tag interpolation](#struct-tag-interpolation)
   - [Bash/ZSH Shell Completion](#bashzsh-shell-completion)
+    - [Additional API](#additional-api)
   - [Supporting -h for help](#supporting--h-for-help)
   - [Custom help](#custom-help)
+    - [Default help template](#default-help-template)
+    - [Compact help template](#compact-help-template)
 
 <!-- /MarkdownTOC -->
 
@@ -512,20 +515,24 @@ ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
 
 ### Struct tag interpolation
 
-Kingpin v3 supports basic flag and arg definitions through struct tags:
+Kingpin v3 now supports defining flags, arguments and commands via
+struct reflection. If desired, this can (almost) completely replace
+the fluent-style interface.
 
 ```go
 type MyFlags struct {
   Arg string `arg:"true" help:"An argument"`
   Debug bool `help:"Enable debug mode."`
   URL string `help:"URL to connect to." default:"localhost:80"`
+
+  Login struct {
+    Name string `help:"Username to authenticate with." args:"true"`
+  } `help:"Login to server."`
 }
 
 flags := &MyFlags{}
 kingpin.Struct(flags)
 ```
-
-The `help` tag must be present for a flag to be defined.
 
 ### Bash/ZSH Shell Completion
 
