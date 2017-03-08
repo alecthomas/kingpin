@@ -534,6 +534,20 @@ flags := &MyFlags{}
 kingpin.Struct(flags)
 ```
 
+Supported struct tags are:
+
+| Tag             | Description                                 |
+| --------------- | ------------------------------------------- |
+| `help`          | Help text.                                  |
+| `placeholder`   | Placeholder text.                           |
+| `default`       | Default value.                              |
+| `short`         | Short name, if flag.                        |
+| `long`          | Long name, for overriding field name.       |
+| `required`      | If present, flag/arg is required.           |
+| `hidden`        | If present, flag/arg/command is hidden.     |
+| `enum`          | For enums, a comma separated list of cases. |
+| `arg`           | If true, field is an argument.              |
+
 ### Bash/ZSH Shell Completion
 
 By default, all flags and commands/subcommands generate completions

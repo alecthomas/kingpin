@@ -47,6 +47,7 @@ func (c *cmdMixin) Struct(v interface{}) error { // nolint: gocyclo
 		short := tag.Get("short")
 		required := tag.Get("required")
 		hidden := tag.Get("hidden")
+		enum := tag.Get("enum")
 		name := strings.ToLower(strings.Join(camelCase(ft.Name), "-"))
 		if tag.Get("long") != "" {
 			name = tag.Get("long")
@@ -100,7 +101,11 @@ func (c *cmdMixin) Struct(v interface{}) error { // nolint: gocyclo
 		} else {
 			switch ft.Type.Kind() {
 			case reflect.String:
-				clause.StringVar(ptr.(*string))
+				if enum != "" {
+					clause.EnumVar(ptr.(*string), strings.Split(enum, ",")...)
+				} else {
+					clause.StringVar(ptr.(*string))
+				}
 
 			case reflect.Bool:
 				clause.BoolVar(ptr.(*bool))
@@ -138,7 +143,11 @@ func (c *cmdMixin) Struct(v interface{}) error { // nolint: gocyclo
 				} else {
 					switch ft.Type.Elem().Kind() {
 					case reflect.String:
-						clause.StringsVar(field.Addr().Interface().(*[]string))
+						if enum != "" {
+							clause.EnumsVar(field.Addr().Interface().(*[]string), strings.Split(enum, ",")...)
+						} else {
+							clause.StringsVar(field.Addr().Interface().(*[]string))
+						}
 
 					case reflect.Bool:
 						clause.BoolListVar(field.Addr().Interface().(*[]bool))

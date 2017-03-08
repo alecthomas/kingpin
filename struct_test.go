@@ -110,3 +110,20 @@ func TestStructHierarchy(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, expected, actual)
 }
+
+func TestStructEnum(t *testing.T) {
+	type App struct {
+		Enum  string   `enum:"one,two"`
+		Enums []string `enum:"one,two"`
+	}
+	actual := &App{}
+	a := newTestApp()
+	a.Struct(actual)
+	_, err := a.Parse([]string{"--enum=three"})
+	assert.Error(t, err)
+	_, err = a.Parse([]string{"--enums=three"})
+	assert.Error(t, err)
+	_, err = a.Parse([]string{"--enum=one", "--enums=one", "--enums=two"})
+	assert.NoError(t, err)
+	assert.Equal(t, &App{Enum: "one", Enums: []string{"one", "two"}}, actual)
+}
