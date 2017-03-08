@@ -519,6 +519,14 @@ Kingpin v3 now supports defining flags, arguments and commands via
 struct reflection. If desired, this can (almost) completely replace
 the fluent-style interface.
 
+The name of the flag will default to the CamelCase name transformed to camel-
+case. This can be overridden with the "long" tag.
+
+All basic Go types are supported including floats, ints, strings,
+time.Duration, and slices of same.
+
+For compatibility, also supports the tags used by https://github.com/jessevdk/go-flags
+
 ```go
 type MyFlags struct {
   Arg string `arg:"true" help:"An argument"`

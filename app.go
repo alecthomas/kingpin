@@ -57,6 +57,22 @@ func New(name, help string) *Application {
 	return a
 }
 
+// Struct allows applications to define flags with struct tags.
+//
+// Supported struct tags are: help, placeholder, default, short, long, required, hidden, enum, and
+// arg.
+//
+// The name of the flag will default to the CamelCase name transformed to camel-case. This can
+// be overridden with the "long" tag.
+//
+// All basic Go types are supported including floats, ints, strings, time.Duration,
+// and slices of same.
+//
+// For compatibility, also supports the tags used by https://github.com/jessevdk/go-flags
+func (a *Application) Struct(v interface{}) error {
+	return a.fromStruct(nil, v)
+}
+
 func (a *Application) generateLongHelp(e *ParseElement, c *ParseContext) error {
 	a.Writer(os.Stdout)
 	if err := a.UsageForContextWithTemplate(c, 2, LongHelpTemplate); err != nil {

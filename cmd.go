@@ -206,6 +206,22 @@ func newCommand(app *Application, name, help string) *CmdClause {
 	return c
 }
 
+// Struct allows applications to define flags with struct tags.
+//
+// Supported struct tags are: help, placeholder, default, short, long, required, hidden, enum, and
+// arg.
+//
+// The name of the flag will default to the CamelCase name transformed to camel-case. This can
+// be overridden with the "long" tag.
+//
+// All basic Go types are supported including floats, ints, strings, time.Duration,
+// and slices of same.
+//
+// For compatibility, also supports the tags used by https://github.com/jessevdk/go-flags
+func (c *CmdClause) Struct(v interface{}) error {
+	return c.fromStruct(c, v)
+}
+
 // Add an Alias for this command.
 func (c *CmdClause) Alias(name string) *CmdClause {
 	c.aliases = append(c.aliases, name)
