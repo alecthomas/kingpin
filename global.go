@@ -26,9 +26,10 @@ func Arg(name, help string) *Clause {
 }
 
 // Struct creates a command-line from a struct.
-func Struct(v interface{}) {
+func Struct(v interface{}) *Application {
 	err := CommandLine.Struct(v)
 	FatalIfError(err, "")
+	return CommandLine
 }
 
 // Parse and return the selected command. Will call the termination handler if

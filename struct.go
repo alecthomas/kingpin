@@ -30,6 +30,7 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 		short := tag.Get("short")
 		required := tag.Get("required")
 		hidden := tag.Get("hidden")
+		env := tag.Get("env")
 		enum := tag.Get("enum")
 		name := strings.ToLower(strings.Join(camelCase(ft.Name), "-"))
 		if tag.Get("long") != "" {
@@ -80,6 +81,9 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 		}
 		if placeholder != "" {
 			clause = clause.PlaceHolder(placeholder)
+		}
+		if env != "" {
+			clause = clause.Envar(env)
 		}
 		ptr := field.Addr().Interface()
 		if ft.Type == reflect.TypeOf(time.Duration(0)) {

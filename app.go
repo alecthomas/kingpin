@@ -59,8 +59,8 @@ func New(name, help string) *Application {
 
 // Struct allows applications to define flags with struct tags.
 //
-// Supported struct tags are: help, placeholder, default, short, long, required, hidden, enum, and
-// arg.
+// Supported struct tags are: help, placeholder, default, short, long, required, hidden, env,
+// enum, and arg.
 //
 // The name of the flag will default to the CamelCase name transformed to camel-case. This can
 // be overridden with the "long" tag.
