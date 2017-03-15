@@ -45,7 +45,6 @@ func TestHiddenCommand(t *testing.T) {
 	}
 
 	var buf bytes.Buffer
-	t.Log("1")
 
 	a := New("test", "Test").Writer(&buf).Terminate(nil)
 	a.Command("visible", "visible")

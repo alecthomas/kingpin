@@ -3,15 +3,15 @@ package kingpin
 // Default usage template.
 var DefaultUsageTemplate = `{{define "FormatCommand" -}}
 {{if .FlagSummary}} {{.FlagSummary}}{{end -}}
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end -}}
+{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}} ...{{end}}{{if not .Required}}]{{end}}{{end -}}
 {{end -}}
 
 {{define "FormatCommands" -}}
 {{range .FlattenedCommands -}}
-{{if not .Hidden -}}
+{{if not .Hidden}}
   {{.FullCommand}}{{if .Default}}*{{end}}{{template "FormatCommand" .}}
 {{.Help|Wrap 4}}
-{{end -}}
+{{- end -}}
 {{end -}}
 {{end -}}
 
@@ -42,7 +42,7 @@ var DefaultUsageTemplate = `{{define "FormatCommand" -}}
 {{template "FormatCommands" .Context.SelectedCommand}}
 {{end -}}
 {{else if .App.Commands -}}
-{{T "Commands:"}}
+{{T "Commands:" -}}
 {{template "FormatCommands" .App}}
 {{end -}}
 `
@@ -50,7 +50,7 @@ var DefaultUsageTemplate = `{{define "FormatCommand" -}}
 // Usage template where command's optional flags are listed separately
 var SeparateOptionalFlagsUsageTemplate = `{{define "FormatCommand" -}}
 {{if .FlagSummary}} {{.FlagSummary}}{{end -}}
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end -}}
+{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}} ...{{end}}{{if not .Required}}]{{end}}{{end -}}
 {{end -}}
 
 {{define "FormatCommands" -}}
@@ -101,7 +101,7 @@ Optional flags:
 // Usage template with compactly formatted commands.
 var CompactUsageTemplate = `{{define "FormatCommand" -}}
 {{if .FlagSummary}} {{.FlagSummary}}{{end -}}
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end -}}
+{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}} ...{{end}}{{if not .Required}}]{{end}}{{end -}}
 {{end -}}
 
 {{define "FormatCommandList" -}}
@@ -138,11 +138,11 @@ var CompactUsageTemplate = `{{define "FormatCommand" -}}
 {{if .Context.SelectedCommand.Commands -}}
 {{T "Commands:"}}
   {{.Context.SelectedCommand}}
-{{template "FormatCommandList" .Context.SelectedCommand.Commands}}
+{{.Context.SelectedCommand.Commands|CommandsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 {{else if .App.Commands -}}
 {{T "Commands:"}}
-{{template "FormatCommandList" .App.Commands}}
+{{.App.Commands|CommandsToTwoColumns|FormatTwoColumns}}
 {{end -}}
 `
 
@@ -158,7 +158,7 @@ var ManPageTemplate = `{{define "FormatFlags" -}}
 
 {{define "FormatCommand" -}}
 {{if .FlagSummary}} {{.FlagSummary}}{{end -}}
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}{{if .Default}}*{{end}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end -}}
+{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}{{if .Default}}*{{end}}>{{if .Value|IsCumulative}} ...{{end}}{{if not .Required}}]{{end}}{{end -}}
 {{end -}}
 
 {{define "FormatCommands" -}}
@@ -196,15 +196,17 @@ var ManPageTemplate = `{{define "FormatFlags" -}}
 // Default usage template.
 var LongHelpTemplate = `{{define "FormatCommand" -}}
 {{if .FlagSummary}} {{.FlagSummary}}{{end -}}
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end -}}
+{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}} ...{{end}}{{if not .Required}}]{{end}}{{end -}}
 {{end -}}
 
 {{define "FormatCommands" -}}
 {{range .FlattenedCommands -}}
-{{if not .Hidden -}}
+{{if not .Hidden}}
   {{.FullCommand}}{{template "FormatCommand" .}}
 {{.Help|Wrap 4}}
+{{if .Flags -}}
 {{with .Flags|FlagsToTwoColumns}}{{FormatTwoColumnsWithIndent . 4 2}}{{end}}
+{{end -}}
 {{end -}}
 {{end -}}
 {{end -}}

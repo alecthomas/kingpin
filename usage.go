@@ -170,6 +170,9 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			}
 			return rows
 		},
+		"CommandsToTwoColumns": func(c []*CmdModel) [][2]string {
+			return commandsToColumns(indent, c)
+		},
 		"FormatTwoColumns": func(rows [][2]string) string {
 			buf := bytes.NewBuffer(nil)
 			formatTwoColumns(buf, indent, indent, width, rows)
@@ -208,4 +211,33 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 		},
 	}
 	return t.Execute(a.writer, ctx)
+}
+
+func commandsToColumns(indent int, cmds []*CmdModel) [][2]string {
+	out := [][2]string{}
+	for _, cmd := range cmds {
+		if cmd.Hidden {
+			continue
+		}
+		left := cmd.Name
+		if cmd.FlagSummary() != "" {
+			left += " " + cmd.FlagSummary()
+		}
+		args := []string{}
+		for _, arg := range cmd.Args {
+			if arg.Required {
+				argText := "<" + arg.Name + ">"
+				if _, ok := arg.Value.(cumulativeValue); ok {
+					argText += " ..."
+				}
+				args = append(args, argText)
+			}
+		}
+		if len(args) != 0 {
+			left += " " + strings.Join(args, " ")
+		}
+		out = append(out, [2]string{strings.Repeat(" ", cmd.Depth*indent-1) + left, cmd.Help})
+		out = append(out, commandsToColumns(indent, cmd.Commands)...)
+	}
+	return out
 }
