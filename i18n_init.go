@@ -8,6 +8,7 @@ import (
 	"compress/gzip"
 	"io/ioutil"
 	"os"
+	"strings"
 
 	"github.com/nicksnyder/go-i18n/i18n"
 )
@@ -32,12 +33,25 @@ func initI18N() i18n.TranslateFunc {
 	i18n.ParseTranslationFileBytes("i18n/fr.all.json", decompressLang(i18n_fr))
 
 	// Detect language.
-	lang := os.Getenv("LANG")
+	lang := detectLang()
 	t, err := i18n.Tfunc(lang, "en")
 	if err != nil {
 		panic(err)
 	}
 	return t
+}
+
+func detectLang() string {
+	lang := os.Getenv("LANG")
+	if lang == "" {
+		return "en"
+	}
+	// Remove encoding spec (eg. ".UTF-8")
+	if idx := strings.Index(lang, "."); idx != -1 {
+		lang = lang[0:idx]
+	}
+	// en_AU -> en-AU
+	return strings.Replace(lang, "_", "-", -1)
 }
 
 func decompressLang(data []byte) []byte {
