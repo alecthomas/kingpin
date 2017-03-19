@@ -74,7 +74,7 @@ func TestNestedCommandsWithFlags(t *testing.T) {
 	b := cmd.Flag("bbb", "").Short('b').String()
 	err := app.init()
 	assert.NoError(t, err)
-	context := tokenize(strings.Split("a b --aaa x -b x", " "), false)
+	context := tokenize(strings.Fields("a b --aaa x -b x"), false)
 	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, context.EOL())
@@ -93,7 +93,7 @@ func TestNestedCommandWithMergedFlags(t *testing.T) {
 	cmd00f0 := cmd00.Flag("aaflag", "").Bool()
 	err := app.init()
 	assert.NoError(t, err)
-	context := tokenize(strings.Split("a aa --aflag --aaflag", " "), false)
+	context := tokenize(strings.Fields("a aa --aflag --aaflag"), false)
 	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, *cmd0f0)
@@ -120,7 +120,7 @@ func TestNestedCommandWithArgAndMergedFlags(t *testing.T) {
 	cmd00f0 := cmd00.Flag("aaflag", "").Bool()
 	err := app.init()
 	assert.NoError(t, err)
-	context := tokenize(strings.Split("a aa hello --aflag --aaflag", " "), false)
+	context := tokenize(strings.Fields("a aa hello --aflag --aaflag"), false)
 	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, *cmd0f0)
@@ -371,4 +371,28 @@ func TestDefaultCmdCompletion(t *testing.T) {
 
 	// With both args of a default sub cmd, should get no completions
 	assert.Empty(t, complete(t, app, "arg1", "arg2"))
+}
+
+func TestCannotMixOptionalArgWithCommand(t *testing.T) {
+	app := newTestApp()
+	app.Arg("arg", "").String()
+	app.Command("cmd", "")
+	_, err := app.Parse([]string{})
+	assert.Error(t, err)
+}
+
+func TestMixArgWithCommand(t *testing.T) {
+	app := newTestApp()
+	arg0 := app.Arg("arg0", "").Required().String()
+	arg1 := app.Arg("arg1", "").Required().String()
+	cmd := app.Command("cmd", "")
+	arg2 := cmd.Arg("arg2", "").Required().String()
+	_, err := app.Parse([]string{"a", "b", "cmd"})
+	assert.Error(t, err)
+	selected, err := app.Parse([]string{"a", "b", "cmd", "c"})
+	assert.NoError(t, err)
+	assert.Equal(t, "a", *arg0)
+	assert.Equal(t, "b", *arg1)
+	assert.Equal(t, "cmd", selected)
+	assert.Equal(t, "c", *arg2)
 }

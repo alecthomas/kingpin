@@ -1,6 +1,9 @@
 package kingpin
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 type cmdMixin struct {
 	actionMixin
@@ -265,12 +268,26 @@ func (c *CmdClause) PreAction(action Action) *CmdClause {
 	return c
 }
 
+func (c *cmdMixin) checkArgCommandMixing() error {
+	if c.argGroup.have() && c.cmdGroup.have() {
+		for _, arg := range c.args {
+			if arg.consumesRemainder() {
+				return errors.New("cannot mix cumulative Arg() with Command()s")
+			}
+			if !arg.required {
+				return errors.New("Arg()s mixed with Command()s MUST be required")
+			}
+		}
+	}
+	return nil
+}
+
 func (c *CmdClause) init() error {
 	if err := c.flagGroup.init(c.app.defaultEnvarPrefix()); err != nil {
 		return err
 	}
-	if c.argGroup.have() && c.cmdGroup.have() {
-		return TError("can't mix Arg()s with Command()s")
+	if err := c.checkArgCommandMixing(); err != nil {
+		return err
 	}
 	if err := c.argGroup.init(); err != nil {
 		return err

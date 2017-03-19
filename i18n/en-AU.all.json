@@ -188,8 +188,8 @@
     "translation": "unexpected argument '{{.Arg0}}'"
   },
   {
-    "id": "unexpected {{.Arg0}}",
-    "translation": "unexpected {{.Arg0}}"
+    "id": "unexpected '{{.Arg0}}'",
+    "translation": "unexpected '{{.Arg0}}'"
   },
   {
     "id": "unknown",
@@ -226,6 +226,5 @@
   {
     "id": "Subcommands:",
     "translation": "Subcommands:"
-  },
-
+  }
 ]

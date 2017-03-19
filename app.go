@@ -283,8 +283,8 @@ func (a *Application) init() error {
 	if a.initialized {
 		return nil
 	}
-	if a.cmdGroup.have() && a.argGroup.have() {
-		return TError("can't mix top-level Arg()s with Command()s")
+	if err := a.checkArgCommandMixing(); err != nil {
+		return err
 	}
 
 	// If we have subcommands, add a help command at the top-level.
