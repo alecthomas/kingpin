@@ -293,6 +293,7 @@ func (a *Application) init() error {
 		a.helpCommand = a.Command("help", T("Show help.")).
 			PreAction(func(element *ParseElement, context *ParseContext) error {
 				a.Usage(command)
+				command = []string{}
 				a.terminate(0)
 				return nil
 			})

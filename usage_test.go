@@ -62,3 +62,21 @@ func TestHiddenCommand(t *testing.T) {
 		assert.Contains(t, usage, "visible")
 	}
 }
+
+func TestIssue169MultipleUsageCorruption(t *testing.T) {
+	buf := &bytes.Buffer{}
+	app := newTestApp()
+	cmd := app.Command("cmd", "")
+	cmd.Flag("flag", "").Default("false").Bool()
+	app.Writer(buf)
+	_, err := app.Parse([]string{"help", "cmd"})
+	assert.NoError(t, err)
+	expected := buf.String()
+
+	buf.Reset()
+	_, err = app.Parse([]string{"help"})
+	assert.NoError(t, err)
+	actual := buf.String()
+
+	assert.NotEqual(t, expected, actual)
+}

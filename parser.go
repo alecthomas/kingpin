@@ -264,6 +264,9 @@ func (p *ParseContext) pop() *Token {
 }
 
 func (p *ParseContext) String() string {
+	if p.SelectedCommand == nil {
+		return ""
+	}
 	return p.SelectedCommand.FullCommand()
 }
 
