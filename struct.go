@@ -9,14 +9,18 @@ import (
 )
 
 func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolint: gocyclo
+	urv := reflect.ValueOf(v)
 	rv := reflect.Indirect(reflect.ValueOf(v))
 	if rv.Kind() != reflect.Struct {
-		panic("expected a struct but received " + reflect.TypeOf(v).String())
+		return fmt.Errorf("expected a struct but received " + reflect.TypeOf(v).String())
 	}
 	for i := 0; i < rv.NumField(); i++ {
 		// Parse out tags
 		field := rv.Field(i)
 		ft := rv.Type().Field(i)
+		if strings.ToLower(ft.Name[0:1]) == ft.Name[0:1] {
+			continue
+		}
 		tag := ft.Tag
 		help := tag.Get("help")
 		if help == "" {
@@ -37,6 +41,12 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 			name = tag.Get("long")
 		}
 		arg := tag.Get("arg")
+
+		var action Action
+		onMethodName := "On" + strings.ToUpper(ft.Name[0:1]) + ft.Name[1:]
+		if actionMethod := urv.MethodByName(onMethodName); actionMethod.IsValid() {
+			action, _ = actionMethod.Interface().(func(element *ParseElement, context *ParseContext) error)
+		}
 
 		if field.Kind() == reflect.Struct {
 			if ft.Anonymous {
@@ -62,6 +72,9 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 			clause = c.Arg(name, help)
 		} else {
 			clause = c.Flag(name, help)
+		}
+		if action != nil {
+			clause.Action(action)
 		}
 		if dflt != "" {
 			clause = clause.Default(dflt)

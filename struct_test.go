@@ -127,3 +127,25 @@ func TestStructEnum(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, &App{Enum: "one", Enums: []string{"one", "two"}}, actual)
 }
+
+type onActionStructTest struct {
+	Debug bool
+
+	called int
+}
+
+func (o *onActionStructTest) OnDebug(element *ParseElement, context *ParseContext) error {
+	o.called++
+	return nil
+}
+
+func TestStructOnAction(t *testing.T) {
+	actual := &onActionStructTest{}
+	var _ Action = actual.OnDebug
+	a := newTestApp()
+	err := a.Struct(actual)
+	assert.NoError(t, err)
+	_, err = a.Parse([]string{"--debug"})
+	assert.NoError(t, err)
+	assert.Equal(t, &onActionStructTest{Debug: true, called: 1}, actual)
+}
