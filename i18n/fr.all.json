@@ -1,7 +1,7 @@
 [
   {
-    "id": "Show context-sensitive help (also try --help-long and --help-man).",
-    "translation": "Afficher l'aide contextuelle (essayez aussi --help-long et --help-man)."
+    "id": "Show context-sensitive help.",
+    "translation": "Afficher l'aide contextuelle."
   },
   {
     "id": "usage:",

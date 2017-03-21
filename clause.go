@@ -64,6 +64,20 @@ func (c *Clause) init() error {
 	return nil
 }
 
+// UsageAction adds a PreAction() that will display the given UsageContext.
+func (c *Clause) UsageAction(context *UsageContext) *Clause {
+	c.PreAction(func(a *Application, e *ParseElement, c *ParseContext) error {
+		a.UsageForContextWithTemplate(context, c)
+		a.terminate(0)
+		return nil
+	})
+	return c
+}
+
+func (c *Clause) UsageActionTemplate(template string) *Clause {
+	return c.UsageAction(&UsageContext{Template: template})
+}
+
 func (c *Clause) Action(action Action) *Clause {
 	c.actions = append(c.actions, action)
 	return c

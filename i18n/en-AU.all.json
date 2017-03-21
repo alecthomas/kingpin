@@ -48,8 +48,8 @@
     "translation": "Show application version."
   },
   {
-    "id": "Show context-sensitive help (also try --help-long and --help-man).",
-    "translation": "Show context-sensitive help (also try --help-long and --help-man)."
+    "id": "Show context-sensitive help.",
+    "translation": "Show context-sensitive help."
   },
   {
     "id": "Show help on command.",

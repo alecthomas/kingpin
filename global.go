@@ -76,7 +76,8 @@ func Usage() {
 	CommandLine.Usage(os.Args[1:])
 }
 
-// Set global usage template to use (defaults to DefaultUsageTemplate).
+// UsageTemplate associates a template with a flag. The flag must be a Bool() and must
+// already be defined.
 func UsageTemplate(template string) *Application {
 	return CommandLine.UsageTemplate(template)
 }

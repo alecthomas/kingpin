@@ -2,6 +2,7 @@ package kingpin
 
 import (
 	"bytes"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -40,13 +41,12 @@ func TestHiddenCommand(t *testing.T) {
 	templates := []struct{ name, template string }{
 		{"default", DefaultUsageTemplate},
 		{"Compact", CompactUsageTemplate},
-		{"Long", LongHelpTemplate},
 		{"Man", ManPageTemplate},
 	}
 
 	var buf bytes.Buffer
 
-	a := New("test", "Test").Writer(&buf).Terminate(nil)
+	a := New("test", "Test").Writers(&buf, ioutil.Discard).Terminate(nil)
 	a.Command("visible", "visible")
 	a.Command("hidden", "hidden").Hidden()
 
@@ -68,7 +68,7 @@ func TestIssue169MultipleUsageCorruption(t *testing.T) {
 	app := newTestApp()
 	cmd := app.Command("cmd", "")
 	cmd.Flag("flag", "").Default("false").Bool()
-	app.Writer(buf)
+	app.Writers(buf, ioutil.Discard)
 	_, err := app.Parse([]string{"help", "cmd"})
 	assert.NoError(t, err)
 	expected := buf.String()

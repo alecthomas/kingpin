@@ -237,12 +237,31 @@ func (c *CmdClause) Validate(validator CmdClauseValidator) *CmdClause {
 	return c
 }
 
+// FullCommand returns the fully qualified "path" to this command,
+// including interspersed argument placeholders. Does not include trailing
+// argument placeholders.
+//
+// eg. "signup <username> <email>"
 func (c *CmdClause) FullCommand() string {
-	out := []string{c.name}
-	for p := c.parent; p != nil; p = p.parent {
-		out = append([]string{p.name}, out...)
+	return strings.Join(c.fullCommand(), " ")
+}
+
+func (c *CmdClause) fullCommand() (out []string) {
+	out = append(out, c.name)
+	for _, arg := range c.args {
+		text := "<" + arg.name + ">"
+		if _, ok := arg.value.(cumulativeValue); ok {
+			text += " ..."
+		}
+		if !arg.required {
+			text = "[" + text + "]"
+		}
+		out = append(out, text)
 	}
-	return strings.Join(out, " ")
+	if c.parent != nil {
+		out = append(c.parent.fullCommand(), out...)
+	}
+	return
 }
 
 // Command adds a new sub-command.

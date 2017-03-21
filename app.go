@@ -24,32 +24,38 @@ type Application struct {
 
 	author         string
 	version        string
-	writer         io.Writer // Destination for usage and errors.
-	usageTemplate  string
+	output         io.Writer // Destination for usage.
+	errors         io.Writer
 	terminate      func(status int) // See Terminate()
 	noInterspersed bool             // can flags be interspersed with args (or must they come first)
 	defaultEnvars  bool
 	completion     bool
 	helpFlag       *Clause
 	helpCommand    *CmdClause
+	defaultUsage   *UsageContext
 }
 
 // New creates a new Kingpin application instance.
 func New(name, help string) *Application {
 	a := &Application{
-		Name:          name,
-		Help:          help,
-		writer:        os.Stderr,
-		usageTemplate: DefaultUsageTemplate,
-		terminate:     os.Exit,
+		Name:      name,
+		Help:      help,
+		output:    os.Stdout,
+		errors:    os.Stderr,
+		terminate: os.Exit,
+		defaultUsage: &UsageContext{
+			Template: DefaultUsageTemplate,
+		},
 	}
 	a.flagGroup = newFlagGroup()
 	a.argGroup = newArgGroup()
 	a.cmdGroup = newCmdGroup(a)
-	a.helpFlag = a.Flag("help", T("Show context-sensitive help (also try --help-long and --help-man)."))
+	a.helpFlag = a.Flag("help", T("Show context-sensitive help.")).Action(func(a *Application, e *ParseElement, c *ParseContext) error {
+		a.UsageForContext(c)
+		a.terminate(0)
+		return nil
+	})
 	a.helpFlag.Bool()
-	a.Flag("help-long", T("Generate long help.")).Hidden().PreAction(a.generateLongHelp).Bool()
-	a.Flag("help-man", T("Generate a man page.")).Hidden().PreAction(a.generateManPage).Bool()
 	a.Flag("completion-bash", T("Output possible completions for the given args.")).Hidden().BoolVar(&a.completion)
 	a.Flag("completion-script-bash", T("Generate completion script for bash.")).Hidden().PreAction(a.generateBashCompletionScript).Bool()
 	a.Flag("completion-script-zsh", T("Generate completion script for ZSH.")).Hidden().PreAction(a.generateZSHCompletionScript).Bool()
@@ -73,36 +79,24 @@ func (a *Application) Struct(v interface{}) error {
 	return a.fromStruct(nil, v)
 }
 
-func (a *Application) generateLongHelp(e *ParseElement, c *ParseContext) error {
-	a.Writer(os.Stdout)
-	if err := a.UsageForContextWithTemplate(c, 2, LongHelpTemplate); err != nil {
+func (a *Application) generateBashCompletionScript(_ *Application, e *ParseElement, c *ParseContext) error {
+	usageContext := &UsageContext{
+		Template: BashCompletionTemplate,
+	}
+	a.Writers(os.Stdout, os.Stderr)
+	if err := a.UsageForContextWithTemplate(usageContext, c); err != nil {
 		return err
 	}
 	a.terminate(0)
 	return nil
 }
 
-func (a *Application) generateManPage(e *ParseElement, c *ParseContext) error {
-	a.Writer(os.Stdout)
-	if err := a.UsageForContextWithTemplate(c, 2, ManPageTemplate); err != nil {
-		return err
+func (a *Application) generateZSHCompletionScript(_ *Application, e *ParseElement, c *ParseContext) error {
+	usageContext := &UsageContext{
+		Template: ZshCompletionTemplate,
 	}
-	a.terminate(0)
-	return nil
-}
-
-func (a *Application) generateBashCompletionScript(e *ParseElement, c *ParseContext) error {
-	a.Writer(os.Stdout)
-	if err := a.UsageForContextWithTemplate(c, 2, BashCompletionTemplate); err != nil {
-		return err
-	}
-	a.terminate(0)
-	return nil
-}
-
-func (a *Application) generateZSHCompletionScript(e *ParseElement, c *ParseContext) error {
-	a.Writer(os.Stdout)
-	if err := a.UsageForContextWithTemplate(c, 2, ZshCompletionTemplate); err != nil {
+	a.Writers(os.Stdout, os.Stderr)
+	if err := a.UsageForContextWithTemplate(usageContext, c); err != nil {
 		return err
 	}
 	a.terminate(0)
@@ -144,16 +138,24 @@ func (a *Application) Terminate(terminate func(int)) *Application {
 	return a
 }
 
-// Specify the writer to use for usage and errors. Defaults to os.Stderr.
-func (a *Application) Writer(w io.Writer) *Application {
-	a.writer = w
+// Writer specifies the writer to use for usage and errors. Defaults to os.Stderr.
+func (a *Application) Writers(out, err io.Writer) *Application {
+	a.output = out
+	a.errors = err
 	return a
 }
 
 // UsageTemplate specifies the text template to use when displaying usage
-// information. The default is UsageTemplate.
+// information via --help. The default is DefaultUsageTemplate.
 func (a *Application) UsageTemplate(template string) *Application {
-	a.usageTemplate = template
+	a.defaultUsage.Template = template
+	return a
+}
+
+// UsageContext specifies the UsageContext to use when displaying usage
+// information via --help.
+func (a *Application) UsageContext(context *UsageContext) *Application {
+	a.defaultUsage = context
 	return a
 }
 
@@ -245,8 +247,8 @@ func (a *Application) maybeHelp(context *ParseContext) {
 func (a *Application) Version(version string) *Application {
 	a.version = version
 	a.Flag("version", T("Show application version.")).
-		PreAction(func(*ParseElement, *ParseContext) error {
-			fmt.Fprintln(a.writer, version)
+		PreAction(func(*Application, *ParseElement, *ParseContext) error {
+			fmt.Fprintln(a.output, version)
 			a.terminate(0)
 			return nil
 		}).
@@ -254,6 +256,7 @@ func (a *Application) Version(version string) *Application {
 	return a
 }
 
+// Author sets the author name for usage templates.
 func (a *Application) Author(author string) *Application {
 	a.author = author
 	return a
@@ -291,7 +294,7 @@ func (a *Application) init() error {
 	if a.cmdGroup.have() {
 		var command []string
 		a.helpCommand = a.Command("help", T("Show help.")).
-			PreAction(func(element *ParseElement, context *ParseContext) error {
+			PreAction(func(_ *Application, element *ParseElement, context *ParseContext) error {
 				a.Usage(command)
 				command = []string{}
 				a.terminate(0)
@@ -471,7 +474,7 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 
 // Errorf prints an error message to w in the format "<appname>: error: <message>".
 func (a *Application) Errorf(format string, args ...interface{}) {
-	fmt.Fprintf(a.writer, a.Name+T(": error: ")+format+"\n", args...)
+	fmt.Fprintf(a.errors, a.Name+T(": error: ")+format+"\n", args...)
 }
 
 // Fatalf writes a formatted error to w then terminates with exit status 1.
@@ -592,11 +595,11 @@ func (a *Application) applyPreActions(context *ParseContext, dispatch bool) erro
 	if !dispatch {
 		return nil
 	}
-	if err := a.actionMixin.applyPreActions(nil, context); err != nil {
+	if err := a.actionMixin.applyPreActions(a, nil, context); err != nil {
 		return err
 	}
 	for _, element := range context.Elements {
-		if err := a.actionMixin.applyPreActions(element, context); err != nil {
+		if err := a.actionMixin.applyPreActions(a, element, context); err != nil {
 			return err
 		}
 		var applier actionApplier
@@ -608,7 +611,7 @@ func (a *Application) applyPreActions(context *ParseContext, dispatch bool) erro
 		case element.OneOf.Cmd != nil:
 			applier = element.OneOf.Cmd
 		}
-		if err := applier.applyPreActions(element, context); err != nil {
+		if err := applier.applyPreActions(a, element, context); err != nil {
 			return err
 		}
 	}
@@ -616,12 +619,12 @@ func (a *Application) applyPreActions(context *ParseContext, dispatch bool) erro
 }
 
 func (a *Application) applyActions(context *ParseContext) error {
-	if err := a.actionMixin.applyActions(nil, context); err != nil {
+	if err := a.actionMixin.applyActions(a, nil, context); err != nil {
 		return err
 	}
 	// Dispatch to actions.
 	for _, element := range context.Elements {
-		if err := a.actionMixin.applyActions(element, context); err != nil {
+		if err := a.actionMixin.applyActions(a, element, context); err != nil {
 			return err
 		}
 		var applier actionApplier
@@ -633,7 +636,7 @@ func (a *Application) applyActions(context *ParseContext) error {
 		case element.OneOf.Cmd != nil:
 			applier = element.OneOf.Cmd
 		}
-		if err := applier.applyActions(element, context); err != nil {
+		if err := applier.applyActions(a, element, context); err != nil {
 			return err
 		}
 	}

@@ -13,6 +13,20 @@ var (
 	preIndent = "  "
 )
 
+// UsageContext contains all of the context used to render a usage message.
+type UsageContext struct {
+	// The text/template body to use.
+	Template string
+	// Indentation multiplier (defaults to 2 of omitted).
+	Indent int
+	// Width of wrap. Defaults wraps to the terminal.
+	Width int
+	// Funcs available in the template.
+	Funcs template.FuncMap
+	// Vars available in the template.
+	Vars map[string]interface{}
+}
+
 func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string) {
 	// Find size of first column.
 	s := 0
@@ -40,12 +54,12 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 	}
 }
 
-// Usage writes application usage to w. It parses args to determine
+// Usage writes application usage to Writer. It parses args to determine
 // appropriate help context, such as which command to show help for.
 func (a *Application) Usage(args []string) {
 	context, err := a.parseContext(true, args)
 	a.FatalIfError(err, "")
-	if err := a.UsageForContextWithTemplate(context, 2, a.usageTemplate); err != nil {
+	if err := a.UsageForContextWithTemplate(a.defaultUsage, context); err != nil {
 		panic(err)
 	}
 }
@@ -98,21 +112,30 @@ type templateParseContext struct {
 	*ArgGroupModel
 }
 
-type templateContext struct {
-	App     *ApplicationModel
-	Width   int
-	Context *templateParseContext
-}
-
 // UsageForContext displays usage information from a ParseContext (obtained from
 // Application.ParseContext() or Action(f) callbacks).
 func (a *Application) UsageForContext(context *ParseContext) error {
-	return a.UsageForContextWithTemplate(context, 2, a.usageTemplate)
+	return a.UsageForContextWithTemplate(a.defaultUsage, context)
 }
 
-// UsageForContextWithTemplate is the base usage function. You generally don't need to use this.
-func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent int, tmpl string) error {
-	width := guessWidth(a.writer)
+// UsageForContextWithTemplate is for fine-grained control over usage messages. You generally don't
+// need to use this.
+func (a *Application) UsageForContextWithTemplate(usageContext *UsageContext, parseContext *ParseContext) error { // nolint: gocyclo
+	indent := usageContext.Indent
+	if indent == 0 {
+		indent = 2
+	}
+	width := usageContext.Width
+	if width == 0 {
+		width = guessWidth(a.output)
+	}
+	tmpl := usageContext.Template
+	if tmpl == "" {
+		tmpl = a.defaultUsage.Template
+		if tmpl == "" {
+			tmpl = DefaultUsageTemplate
+		}
+	}
 	funcs := template.FuncMap{
 		"T": T,
 		"Indent": func(level int) string {
@@ -193,24 +216,31 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			return string(c)
 		},
 	}
+	for name, fn := range usageContext.Funcs {
+		funcs[name] = fn
+	}
 	t, err := template.New("usage").Funcs(funcs).Parse(tmpl)
 	if err != nil {
 		return err
 	}
+	appModel := a.Model()
 	var selectedCommand *CmdModel
-	if context.SelectedCommand != nil {
-		selectedCommand = context.SelectedCommand.Model()
+	if parseContext.SelectedCommand != nil {
+		selectedCommand = appModel.FindModelForCommand(parseContext.SelectedCommand)
 	}
-	ctx := templateContext{
-		App:   a.Model(),
-		Width: width,
-		Context: &templateParseContext{
+	ctx := map[string]interface{}{
+		"App":   appModel,
+		"Width": width,
+		"Context": &templateParseContext{
 			SelectedCommand: selectedCommand,
-			FlagGroupModel:  context.flags.Model(),
-			ArgGroupModel:   context.arguments.Model(),
+			FlagGroupModel:  parseContext.flags.Model(),
+			ArgGroupModel:   parseContext.arguments.Model(),
 		},
 	}
-	return t.Execute(a.writer, ctx)
+	for k, v := range usageContext.Vars {
+		ctx[k] = v
+	}
+	return t.Execute(a.output, ctx)
 }
 
 func commandsToColumns(indent int, cmds []*CmdModel) [][2]string {

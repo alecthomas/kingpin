@@ -1,7 +1,6 @@
 package kingpin
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -56,8 +55,7 @@ func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
 }
 
 func TestRequiredFlag(t *testing.T) {
-	app := newTestApp()
-	app.Version("0.0.0").Writer(ioutil.Discard)
+	app := newTestApp().Version("0.0.0")
 	exits := 0
 	app.Terminate(func(int) { exits++ })
 	app.Flag("a", "").Required().Bool()

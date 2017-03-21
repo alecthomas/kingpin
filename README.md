@@ -29,6 +29,7 @@
     - [Additional API](#additional-api)
   - [Supporting -h for help](#supporting--h-for-help)
   - [Custom help](#custom-help)
+    - [Adding a new help command](#adding-a-new-help-command)
     - [Default help template](#default-help-template)
     - [Compact help template](#compact-help-template)
 
@@ -655,20 +656,30 @@ You can see an in depth example of the completion API within
 
 ### Supporting -h for help
 
-`kingpin.CommandLine.HelpFlag.Short('h')`
+`kingpin.CommandLine.GetFlag("help").Short('h')`
 
 ### Custom help
 
-Kingpin v2 supports templatised help using the text/template library.
+Kingpin supports templatised help using the text/template library.
 
 You can specify the template to use with the [Application.UsageTemplate()](http://godoc.org/gopkg.in/alecthomas/kingpin.v2#Application.UsageTemplate) function.
 
-There are four included templates: `kingpin.DefaultUsageTemplate` is the default,
-`kingpin.CompactUsageTemplate` provides a more compact representation for more complex command-line structures,
-`kingpin.SeparateOptionalFlagsUsageTemplate` looks like the default template, but splits required
-and optional command flags into separate lists, and `kingpin.ManPageTemplate` is used to generate man pages.
+There are four included templates: `kingpin.DefaultUsageTemplate` is the
+default, `kingpin.CompactUsageTemplate` provides a more compact representation
+for more complex command-line structures,  and `kingpin.ManPageTemplate` is
+used to generate man pages.
 
 See the above templates for examples of usage, and the the function [UsageForContextWithTemplate()](https://github.com/alecthomas/kingpin/blob/master/usage.go#L198) method for details on the context.
+
+#### Adding a new help command
+
+It is often useful to add extra help formats, such as man pages, etc. Here's how you'd add a `--help-man` flag:
+
+```go
+kingpin.Flag("help-man", "Generate man page.").
+  UsageActionTemplate(kingpin.ManPageTemplate).
+  Bool()
+```
 
 #### Default help template
 
