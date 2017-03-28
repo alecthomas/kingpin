@@ -246,7 +246,7 @@ var (
 func main() {
   kingpin.Version("0.0.1")
   kingpin.Parse()
-  fmt.Printf("Would ping: %s with timeout %s and count %d", *ip, *timeout, *count)
+  fmt.Printf("Would ping: %s with timeout %s and count %d\n", *ip, *timeout, *count)
 }
 ```
 
