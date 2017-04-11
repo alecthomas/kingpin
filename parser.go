@@ -101,6 +101,25 @@ type ParseContext struct {
 	Elements []*ParseElement
 }
 
+// SelectedCmds: Get the selected validated commands from a context.
+func (p *ParseContext) SelectedCmds() (selected []*CmdClause, err error) {
+	selected = make([]*CmdClause, 0, len(p.Elements))
+
+        for _, element := range p.Elements {
+                switch clause := element.Clause.(type) {
+                case *CmdClause:
+                        if clause.validator != nil {
+                                if err = clause.validator(clause); err != nil {
+                                        return
+                                }
+                        }
+                        selected = append(selected, clause)
+                }
+        }
+
+        return
+}
+
 func (p *ParseContext) nextArg() *ArgClause {
 	if p.argumenti >= len(p.arguments.args) {
 		return nil
