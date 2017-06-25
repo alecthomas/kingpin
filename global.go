@@ -3,6 +3,7 @@ package kingpin
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 var (
@@ -14,7 +15,28 @@ var (
 	HelpCommand = CommandLine.HelpCommand
 	// Global version flag. Exposed for user customisation. May be nil.
 	VersionFlag = CommandLine.VersionFlag
+
+	globalArgs []string
 )
+
+func init() {
+	if strings.HasSuffix(os.Args[0], ".test") {
+		i := 1
+		for {
+			if i >= len(os.Args) {
+				break
+			}
+			if !strings.HasPrefix(os.Args[i], "-test.") {
+				globalArgs = append(globalArgs, os.Args[i])
+				os.Args = append(os.Args[:i], os.Args[i+1:]...)
+			} else {
+				i++
+			}
+		}
+	} else {
+		globalArgs = os.Args[1:]
+	}
+}
 
 // Command adds a new command to the default parser.
 func Command(name, help string) *CmdClause {
@@ -34,7 +56,7 @@ func Arg(name, help string) *ArgClause {
 // Parse and return the selected command. Will call the termination handler if
 // an error is encountered.
 func Parse() string {
-	selected := MustParse(CommandLine.Parse(os.Args[1:]))
+	selected := MustParse(CommandLine.Parse(globalArgs))
 	if selected == "" && CommandLine.cmdGroup.have() {
 		Usage()
 		CommandLine.terminate(0)
