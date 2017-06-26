@@ -30,6 +30,9 @@ func init() {
 				globalArgs = append(globalArgs, os.Args[i])
 				os.Args = append(os.Args[:i], os.Args[i+1:]...)
 			} else {
+				if strings.IndexByte(os.Args[i], '=') == -1 {
+					i++ // Current arg doesn't embed value: ignore next arg.
+				}
 				i++
 			}
 		}
