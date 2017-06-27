@@ -177,6 +177,15 @@ func TestSubCommandRequired(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestOptionalSubcommandsApp(t *testing.T) {
+	app := newTestApp()
+	c0 := app.Command("c0", "").OptionalSubcommands()
+	c0.Command("c1", "")
+	s, err := app.Parse([]string{"c0"})
+	assert.NoError(t, err)
+	assert.Equal(t, "c0", s)
+}
+
 func TestInterspersedFalse(t *testing.T) {
 	app := newTestApp().Interspersed(false)
 	a1 := app.Arg("a1", "").String()
