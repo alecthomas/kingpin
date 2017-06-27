@@ -24,6 +24,72 @@ func TestFormatTwoColumns(t *testing.T) {
 	assert.Equal(t, expected, buf.String())
 }
 
+func TestRequiredSubcommandsUsage(t *testing.T) {
+	var buf bytes.Buffer
+
+	a := New("test", "Test").Writers(&buf, ioutil.Discard).Terminate(nil)
+	c0 := a.Command("c0", "c0info")
+	c0.Command("c1", "c1info")
+	_, err := a.Parse(nil)
+	assert.Error(t, err)
+
+	expectedStr := `
+usage: test [<flags>] <command>
+
+Test
+
+
+Flags:
+  --help  Show context-sensitive help.
+
+Commands:
+  help [<command> ...]
+    Show help.
+
+
+  c0 c1
+    c1info
+
+
+`
+	assert.Equal(t, expectedStr, buf.String())
+}
+
+func TestOptionalSubcommandsUsage(t *testing.T) {
+	var buf bytes.Buffer
+
+	a := New("test", "Test").Writers(&buf, ioutil.Discard).Terminate(nil)
+	c0 := a.Command("c0", "c0info").OptionalSubcommands()
+	c0.Command("c1", "c1info")
+	_, err := a.Parse(nil)
+	assert.Error(t, err)
+
+	expectedStr := `
+usage: test [<flags>] <command>
+
+Test
+
+
+Flags:
+  --help  Show context-sensitive help.
+
+Commands:
+  help [<command> ...]
+    Show help.
+
+
+  c0
+    c0info
+
+
+  c0 c1
+    c1info
+
+
+`
+	assert.Equal(t, expectedStr, buf.String())
+}
+
 func TestFormatTwoColumnsWide(t *testing.T) {
 	samples := [][2]string{
 		{strings.Repeat("x", 29), "29 chars"},

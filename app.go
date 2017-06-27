@@ -465,7 +465,10 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 		}
 	}
 
-	if lastCmd != nil && len(lastCmd.commands) > 0 {
+	if lastCmd == nil || lastCmd.optionalSubcommands {
+		return
+	}
+	if len(lastCmd.commands) > 0 {
 		return nil, TError("must select a subcommand of '{{.Arg0}}'", V{"Arg0": lastCmd.FullCommand()})
 	}
 

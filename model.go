@@ -106,6 +106,9 @@ type CmdGroupModel struct {
 
 func (c *CmdGroupModel) FlattenedCommands() (out []*CmdModel) {
 	for _, cmd := range c.Commands {
+		if cmd.OptionalSubcommands {
+			out = append(out, cmd)
+		}
 		if len(cmd.Commands) == 0 {
 			out = append(out, cmd)
 		}
@@ -115,13 +118,14 @@ func (c *CmdGroupModel) FlattenedCommands() (out []*CmdModel) {
 }
 
 type CmdModel struct {
-	Name    string
-	Aliases []string
-	Help    string
-	Depth   int
-	Hidden  bool
-	Default bool
-	Parent  *CmdModel
+	Name                string
+	Aliases             []string
+	Help                string
+	Depth               int
+	Hidden              bool
+	Default             bool
+	OptionalSubcommands bool
+	Parent              *CmdModel
 	*FlagGroupModel
 	*ArgGroupModel
 	*CmdGroupModel
@@ -265,15 +269,16 @@ func (c *CmdClause) Model(parent *CmdModel) *CmdModel {
 		depth++
 	}
 	cmd := &CmdModel{
-		Name:           c.name,
-		Parent:         parent,
-		Aliases:        c.aliases,
-		Help:           c.help,
-		Depth:          depth,
-		Hidden:         c.hidden,
-		Default:        c.isDefault,
-		FlagGroupModel: c.flagGroup.Model(),
-		ArgGroupModel:  c.argGroup.Model(),
+		Name:                c.name,
+		Parent:              parent,
+		Aliases:             c.aliases,
+		Help:                c.help,
+		Depth:               depth,
+		Hidden:              c.hidden,
+		Default:             c.isDefault,
+		OptionalSubcommands: c.optionalSubcommands,
+		FlagGroupModel:      c.flagGroup.Model(),
+		ArgGroupModel:       c.argGroup.Model(),
 	}
 	cmd.CmdGroupModel = c.cmdGroup.Model(cmd)
 	return cmd
