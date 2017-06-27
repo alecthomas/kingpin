@@ -435,7 +435,8 @@ func (a *Application) setDefaults(context *ParseContext) error {
 
 func (a *Application) validateRequired(context *ParseContext) error {
 	flagElements := map[string]*ParseElement{}
-	for _, element := range context.Elements {
+	for i, element := range context.Elements {
+		context.setLocal(i)
 		if flag, ok := element.Clause.(*FlagClause); ok {
 			flagElements[flag.name] = element
 		}
@@ -503,7 +504,10 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 		}
 	}
 
-	if lastCmd != nil && len(lastCmd.commands) > 0 {
+	if lastCmd == nil || lastCmd.subcommandOptional {
+		return
+	}
+	if len(lastCmd.commands) > 0 {
 		return nil, fmt.Errorf("must select a subcommand of '%s'", lastCmd.FullCommand())
 	}
 
@@ -512,7 +516,8 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 
 func (a *Application) applyValidators(context *ParseContext) (err error) {
 	// Call command validation functions.
-	for _, element := range context.Elements {
+	for i, element := range context.Elements {
+		context.setLocal(i)
 		if cmd, ok := element.Clause.(*CmdClause); ok && cmd.validator != nil {
 			if err = cmd.validator(cmd); err != nil {
 				return err
@@ -532,7 +537,8 @@ func (a *Application) applyPreActions(context *ParseContext, dispatch bool) erro
 	}
 	// Dispatch to actions.
 	if dispatch {
-		for _, element := range context.Elements {
+		for i, element := range context.Elements {
+			context.setLocal(i)
 			if applier, ok := element.Clause.(actionApplier); ok {
 				if err := applier.applyPreActions(context); err != nil {
 					return err
@@ -549,7 +555,8 @@ func (a *Application) applyActions(context *ParseContext) error {
 		return err
 	}
 	// Dispatch to actions.
-	for _, element := range context.Elements {
+	for i, element := range context.Elements {
+		context.setLocal(i)
 		if applier, ok := element.Clause.(actionApplier); ok {
 			if err := applier.applyActions(context); err != nil {
 				return err

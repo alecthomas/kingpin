@@ -82,6 +82,10 @@ type ParseElement struct {
 	Value *string
 }
 
+type localContext struct {
+	lastCmd bool // True if this is the last command being evaluated
+}
+
 // ParseContext holds the current context of the parser. When passed to
 // Action() callbacks Elements will be fully populated with *FlagClause,
 // *ArgClause and *CmdClause values and their corresponding arguments (if
@@ -99,6 +103,23 @@ type ParseContext struct {
 	argumenti       int // Cursor into arguments
 	// Flags, arguments and commands encountered and collected during parse.
 	Elements []*ParseElement
+	// Contains local information such as the currently parsed element
+	local localContext
+}
+
+func (p *ParseContext) setLocal(i int) {
+	// Takes as input the index of the current Element. This is re-run at
+	// every step in case the context state gets modified during action
+	// evaluation.
+
+	lastCmdIndex := -1
+	for i, e := range p.Elements {
+		switch e.Clause.(type) {
+		case *CmdClause:
+			lastCmdIndex = i
+		}
+	}
+	p.local.lastCmd = (lastCmdIndex == i)
 }
 
 func (p *ParseContext) nextArg() *ArgClause {
@@ -110,6 +131,12 @@ func (p *ParseContext) nextArg() *ArgClause {
 		p.argumenti++
 	}
 	return arg
+}
+
+// LastCmd returns true if the current element is the last (sub)command
+// being evaluated.
+func (p *ParseContext) LastCmd() bool {
+	return p.local.lastCmd
 }
 
 func (p *ParseContext) next() {

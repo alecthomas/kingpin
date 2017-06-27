@@ -187,14 +187,15 @@ type CmdClauseValidator func(*CmdClause) error
 // and either subcommands or positional arguments.
 type CmdClause struct {
 	cmdMixin
-	app            *Application
-	name           string
-	aliases        []string
-	help           string
-	isDefault      bool
-	validator      CmdClauseValidator
-	hidden         bool
-	completionAlts []string
+	app                *Application
+	name               string
+	aliases            []string
+	help               string
+	isDefault          bool
+	validator          CmdClauseValidator
+	hidden             bool
+	completionAlts     []string
+	subcommandOptional bool
 }
 
 func newCommand(app *Application, name, help string) *CmdClause {
@@ -234,6 +235,12 @@ func (c *CmdClause) Command(name, help string) *CmdClause {
 	cmd := c.addCommand(name, help)
 	cmd.parent = c
 	return cmd
+}
+
+// SubcommandOptional makes subcommands optional
+func (c *CmdClause) SubcommandOptional() *CmdClause {
+	c.subcommandOptional = true
+	return c
 }
 
 // Default makes this command the default if commands don't match.
