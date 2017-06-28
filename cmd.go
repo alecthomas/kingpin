@@ -130,16 +130,6 @@ func newCmdGroup(app *Application) *cmdGroup {
 	}
 }
 
-func (c *cmdGroup) flattenedCommands() (out []*CmdClause) {
-	for _, cmd := range c.commandOrder {
-		if len(cmd.commands) == 0 {
-			out = append(out, cmd)
-		}
-		out = append(out, cmd.flattenedCommands()...)
-	}
-	return
-}
-
 func (c *cmdGroup) addCommand(name, help string) *CmdClause {
 	cmd := newCommand(c.app, name, help)
 	c.commands[name] = cmd

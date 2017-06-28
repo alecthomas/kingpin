@@ -23,18 +23,16 @@ type Clause struct {
 	actionMixin
 	completionsMixin
 
-	name               string
-	shorthand          rune
-	help               string
-	placeholder        string
-	hidden             bool
-	defaultValues      []string
-	value              Value
-	required           bool
-	envar              string
-	noEnvar            bool
-	hintActions        []HintAction
-	builtinHintActions []HintAction
+	name          string
+	shorthand     rune
+	help          string
+	placeholder   string
+	hidden        bool
+	defaultValues []string
+	value         Value
+	required      bool
+	envar         string
+	noEnvar       bool
 }
 
 func NewClause(name, help string) *Clause {
@@ -93,15 +91,6 @@ func (c *Clause) PreAction(action Action) *Clause {
 func (c *Clause) HintAction(action HintAction) *Clause {
 	c.addHintAction(action)
 	return c
-}
-
-func (c *Clause) addHintAction(action HintAction) {
-	c.hintActions = append(c.hintActions, action)
-}
-
-// Allow adding of HintActions which are added internally, ie, EnumVar
-func (c *Clause) addHintActionBuiltin(action HintAction) {
-	c.builtinHintActions = append(c.builtinHintActions, action)
 }
 
 func (c *Clause) resolveCompletions() []string {
