@@ -283,16 +283,20 @@ func (c *Clause) BytesVar(target *units.Base2Bytes) {
 
 // ExistingFile sets the parser to one that requires and returns an existing file.
 func (c *Clause) ExistingFileVar(target *string) {
+	c.builtinCompletion.Files = true
 	c.SetValue(newExistingFileValue(target))
 }
 
 // ExistingDir sets the parser to one that requires and returns an existing directory.
 func (c *Clause) ExistingDirVar(target *string) {
+	c.builtinCompletion.Directories = true
 	c.SetValue(newExistingDirValue(target))
 }
 
 // ExistingDir sets the parser to one that requires and returns an existing directory.
 func (c *Clause) ExistingFileOrDirVar(target *string) {
+	c.builtinCompletion.Directories = true
+	c.builtinCompletion.Files = true
 	c.SetValue(newExistingFileOrDirValue(target))
 }
 

@@ -262,6 +262,14 @@ func TestBashCompletionOptions(t *testing.T) {
 		return []string{"arg-4-opt-1", "arg-4-opt-2"}
 	}).String()
 
+	four := a.Command("four", "")
+	four.Arg("arg-5", "").ExistingFileOrDir()
+	four.Arg("arg-6", "").HintOptions("/usr", "/usr/local").ExistingDir()
+
+	five := a.Command("five", "")
+	five.Flag("flag-5", "").ExistingFile()
+	five.Command("sub-1", "").Flag("flag-6", "").ExistingDir()
+
 	cases := []struct {
 		Args          string
 		ExpectedDir   bool
@@ -270,7 +278,7 @@ func TestBashCompletionOptions(t *testing.T) {
 	}{
 		{
 			Args:          "--completion-bash",
-			ExpectedWords: []string{"help", "one", "three", "two"},
+			ExpectedWords: []string{"five", "four", "help", "one", "three", "two"},
 		},
 		{
 			Args:          "--completion-bash --",
@@ -283,7 +291,7 @@ func TestBashCompletionOptions(t *testing.T) {
 		{
 			// No options available for flag-0, return to cmd completion
 			Args:          "--completion-bash --flag-0",
-			ExpectedWords: []string{"help", "one", "three", "two"},
+			ExpectedWords: []string{"five", "four", "help", "one", "three", "two"},
 		},
 		{
 			Args:          "--completion-bash --flag-0 --",
@@ -299,7 +307,7 @@ func TestBashCompletionOptions(t *testing.T) {
 		},
 		{
 			Args:          "--completion-bash --flag-1 opt1",
-			ExpectedWords: []string{"help", "one", "three", "two"},
+			ExpectedWords: []string{"five", "four", "help", "one", "three", "two"},
 		},
 		{
 			Args:          "--completion-bash --flag-1 opt1 --",

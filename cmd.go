@@ -51,7 +51,6 @@ func (c *cmdMixin) CmdCompletion(context *ParseContext) Completion {
 			options.addWords(cmd.name)
 		}
 	}
-
 	return options
 }
 
