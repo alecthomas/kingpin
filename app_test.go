@@ -2,10 +2,10 @@ package kingpin
 
 import (
 	"io/ioutil"
+	"sort"
 
 	"github.com/stretchr/testify/assert"
 
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -239,8 +239,8 @@ func TestBashCompletionOptionsWithEmptyApp(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unexpected error whilst parsing context: [%v]", err)
 	}
-	args := a.completionOptions(context)
-	assert.Equal(t, []string(nil), args)
+	args := a.resolveCompletion(context)
+	assert.Equal(t, Completion{}, args)
 }
 
 func TestBashCompletionOptions(t *testing.T) {
@@ -263,150 +263,155 @@ func TestBashCompletionOptions(t *testing.T) {
 	}).String()
 
 	cases := []struct {
-		Args            string
-		ExpectedOptions []string
+		Args          string
+		ExpectedDir   bool
+		ExpectedFile  bool
+		ExpectedWords []string
 	}{
 		{
-			Args:            "--completion-bash",
-			ExpectedOptions: []string{"help", "one", "three", "two"},
+			Args:          "--completion-bash",
+			ExpectedWords: []string{"help", "one", "three", "two"},
 		},
 		{
-			Args:            "--completion-bash --",
-			ExpectedOptions: []string{"--flag-0", "--flag-1", "--help"},
+			Args:          "--completion-bash --",
+			ExpectedWords: []string{"--flag-0", "--flag-1", "--help"},
 		},
 		{
-			Args:            "--completion-bash --fla",
-			ExpectedOptions: []string{"--flag-0", "--flag-1", "--help"},
+			Args:          "--completion-bash --fla",
+			ExpectedWords: []string{"--flag-0", "--flag-1", "--help"},
 		},
 		{
 			// No options available for flag-0, return to cmd completion
-			Args:            "--completion-bash --flag-0",
-			ExpectedOptions: []string{"help", "one", "three", "two"},
+			Args:          "--completion-bash --flag-0",
+			ExpectedWords: []string{"help", "one", "three", "two"},
 		},
 		{
-			Args:            "--completion-bash --flag-0 --",
-			ExpectedOptions: []string{"--flag-0", "--flag-1", "--help"},
+			Args:          "--completion-bash --flag-0 --",
+			ExpectedWords: []string{"--flag-0", "--flag-1", "--help"},
 		},
 		{
-			Args:            "--completion-bash --flag-1",
-			ExpectedOptions: []string{"opt1", "opt2", "opt3"},
+			Args:          "--completion-bash --flag-1",
+			ExpectedWords: []string{"opt1", "opt2", "opt3"},
 		},
 		{
-			Args:            "--completion-bash --flag-1 opt",
-			ExpectedOptions: []string{"opt1", "opt2", "opt3"},
+			Args:          "--completion-bash --flag-1 opt",
+			ExpectedWords: []string{"opt1", "opt2", "opt3"},
 		},
 		{
-			Args:            "--completion-bash --flag-1 opt1",
-			ExpectedOptions: []string{"help", "one", "three", "two"},
+			Args:          "--completion-bash --flag-1 opt1",
+			ExpectedWords: []string{"help", "one", "three", "two"},
 		},
 		{
-			Args:            "--completion-bash --flag-1 opt1 --",
-			ExpectedOptions: []string{"--flag-0", "--flag-1", "--help"},
+			Args:          "--completion-bash --flag-1 opt1 --",
+			ExpectedWords: []string{"--flag-0", "--flag-1", "--help"},
 		},
 
 		// Try Subcommand
 		{
-			Args:            "--completion-bash two",
-			ExpectedOptions: []string(nil),
+			Args:          "--completion-bash two",
+			ExpectedWords: []string{},
 		},
 		{
-			Args:            "--completion-bash two --",
-			ExpectedOptions: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
+			Args:          "--completion-bash two --",
+			ExpectedWords: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
 		},
 		{
-			Args:            "--completion-bash two --flag",
-			ExpectedOptions: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
+			Args:          "--completion-bash two --flag",
+			ExpectedWords: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
 		},
 		{
-			Args:            "--completion-bash two --flag-2",
-			ExpectedOptions: []string(nil),
-		},
-		{
-			// Top level flags carry downwards
-			Args:            "--completion-bash two --flag-1",
-			ExpectedOptions: []string{"opt1", "opt2", "opt3"},
+			Args:          "--completion-bash two --flag-2",
+			ExpectedWords: []string{},
 		},
 		{
 			// Top level flags carry downwards
-			Args:            "--completion-bash two --flag-1 opt",
-			ExpectedOptions: []string{"opt1", "opt2", "opt3"},
+			Args:          "--completion-bash two --flag-1",
+			ExpectedWords: []string{"opt1", "opt2", "opt3"},
 		},
 		{
 			// Top level flags carry downwards
-			Args:            "--completion-bash two --flag-1 opt1",
-			ExpectedOptions: []string(nil),
+			Args:          "--completion-bash two --flag-1 opt",
+			ExpectedWords: []string{"opt1", "opt2", "opt3"},
 		},
 		{
-			Args:            "--completion-bash two --flag-3",
-			ExpectedOptions: []string{"opt4", "opt5", "opt6"},
+			// Top level flags carry downwards
+			Args:          "--completion-bash two --flag-1 opt1",
+			ExpectedWords: []string{},
 		},
 		{
-			Args:            "--completion-bash two --flag-3 opt",
-			ExpectedOptions: []string{"opt4", "opt5", "opt6"},
+			Args:          "--completion-bash two --flag-3",
+			ExpectedWords: []string{"opt4", "opt5", "opt6"},
 		},
 		{
-			Args:            "--completion-bash two --flag-3 opt4",
-			ExpectedOptions: []string(nil),
+			Args:          "--completion-bash two --flag-3 opt",
+			ExpectedWords: []string{"opt4", "opt5", "opt6"},
 		},
 		{
-			Args:            "--completion-bash two --flag-3 opt4 --",
-			ExpectedOptions: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
+			Args:          "--completion-bash two --flag-3 opt4",
+			ExpectedWords: []string{},
+		},
+		{
+			Args:          "--completion-bash two --flag-3 opt4 --",
+			ExpectedWords: []string{"--help", "--flag-2", "--flag-3", "--flag-0", "--flag-1"},
 		},
 
 		// Args complete
 		{
 			// After a command with an arg with no options, nothing should be
 			// shown
-			Args:            "--completion-bash three ",
-			ExpectedOptions: []string(nil),
+			Args:          "--completion-bash three ",
+			ExpectedWords: []string{},
 		},
 		{
 			// After a command with an arg, explicitly starting a flag should
 			// complete flags
-			Args:            "--completion-bash three --",
-			ExpectedOptions: []string{"--flag-0", "--flag-1", "--flag-4", "--help"},
+			Args:          "--completion-bash three --",
+			ExpectedWords: []string{"--flag-0", "--flag-1", "--flag-4", "--help"},
 		},
 		{
 			// After a command with an arg that does have completions, they
 			// should be shown
-			Args:            "--completion-bash three arg1 ",
-			ExpectedOptions: []string{"arg-2-opt-1", "arg-2-opt-2"},
+			Args:          "--completion-bash three arg1 ",
+			ExpectedWords: []string{"arg-2-opt-1", "arg-2-opt-2"},
 		},
 		{
 			// After a command with an arg that does have completions, but a
 			// flag is started, flag options should be completed
-			Args:            "--completion-bash three arg1 --",
-			ExpectedOptions: []string{"--flag-0", "--flag-1", "--flag-4", "--help"},
+			Args:          "--completion-bash three arg1 --",
+			ExpectedWords: []string{"--flag-0", "--flag-1", "--flag-4", "--help"},
 		},
 		{
 			// After a command with an arg that has no completions, and isn't first,
 			// nothing should be shown
-			Args:            "--completion-bash three arg1 arg2 ",
-			ExpectedOptions: []string(nil),
+			Args:          "--completion-bash three arg1 arg2 ",
+			ExpectedWords: []string{},
 		},
 		{
 			// After a command with a different arg that also has completions,
 			// those different options should be shown
-			Args:            "--completion-bash three arg1 arg2 arg3 ",
-			ExpectedOptions: []string{"arg-4-opt-1", "arg-4-opt-2"},
+			Args:          "--completion-bash three arg1 arg2 arg3 ",
+			ExpectedWords: []string{"arg-4-opt-1", "arg-4-opt-2"},
 		},
 		{
 			// After a command with all args listed, nothing should complete
-			Args:            "--completion-bash three arg1 arg2 arg3 arg4",
-			ExpectedOptions: []string(nil),
+			Args:          "--completion-bash three arg1 arg2 arg3 arg4",
+			ExpectedWords: []string{},
 		},
 	}
 
 	for _, c := range cases {
 		context, _ := a.ParseContext(strings.Split(c.Args, " "))
-		args := a.completionOptions(context)
+		completion := a.resolveCompletion(context)
+		actualWords := completion.resolveWords()
+		sort.Strings(c.ExpectedWords)
 
-		sort.Strings(args)
-		sort.Strings(c.ExpectedOptions)
-
-		assert.Equal(t, c.ExpectedOptions, args, "Expected != Actual: [%v] != [%v]. \nInput was: [%v]", c.ExpectedOptions, args, c.Args)
+		assert.Equal(t, c.ExpectedDir, completion.Directories,
+			"Expected != Actual: [%v] != [%v]. \nInput was: [%v]", c.ExpectedDir, completion.Directories, c.Args)
+		assert.Equal(t, c.ExpectedFile, completion.Files,
+			"Expected != Actual: [%v] != [%v]. \nInput was: [%v]", c.ExpectedFile, completion.Files, c.Args)
+		assert.Equal(t, c.ExpectedWords, actualWords,
+			"Expected != Actual: [%v] != [%v]. \nInput was: [%v]", c.ExpectedWords, actualWords, c.Args)
 	}
-
 }
 
 func TestApplicationWideActions(t *testing.T) {

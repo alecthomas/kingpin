@@ -89,30 +89,17 @@ func (c *Clause) PreAction(action Action) *Clause {
 
 // HintAction registers a HintAction (function) for the flag to provide completions
 func (c *Clause) HintAction(action HintAction) *Clause {
-	c.addHintAction(action)
+	c.userCompletion.WordActions = append(c.userCompletion.WordActions, action)
 	return c
 }
 
-func (c *Clause) resolveCompletions() []string {
-	var hints []string
-
-	options := c.builtinHintActions
-	if len(c.hintActions) > 0 {
-		// User specified their own hintActions. Use those instead.
-		options = c.hintActions
-	}
-
-	for _, hintAction := range options {
-		hints = append(hints, hintAction()...)
-	}
-	return hints
+func (c *Clause) resolveCompletion() Completion {
+	return c.completionsMixin.resolveCompletion()
 }
 
 // HintOptions registers any number of options for the flag to provide completions
 func (c *Clause) HintOptions(options ...string) *Clause {
-	c.addHintAction(func() []string {
-		return options
-	})
+	c.userCompletion.addWords(options...)
 	return c
 }
 
@@ -335,7 +322,7 @@ func (c *Clause) Enum(options ...string) (target *string) {
 
 // EnumVar allows a value from a set of options.
 func (c *Clause) EnumVar(target *string, options ...string) {
-	c.addHintActionBuiltin(func() []string { return options })
+	c.builtinCompletion.addWords(options...)
 	c.SetValue(newEnumFlag(target, options...))
 }
 

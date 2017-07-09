@@ -517,7 +517,7 @@ func (a *Application) FatalIfError(err error, format string, args ...interface{}
 	}
 }
 
-func (a *Application) completionOptions(context *ParseContext) []string {
+func (a *Application) resolveCompletion(context *ParseContext) Completion {
 	args := context.rawArgs
 
 	var (
@@ -579,7 +579,7 @@ func (a *Application) completionOptions(context *ParseContext) []string {
 				options = topOptions
 			} else {
 				// Add top level flags
-				options = append(options, topOptions...)
+				options = mergeCompletions(options, topOptions)
 			}
 		}
 		return options
@@ -590,8 +590,8 @@ func (a *Application) completionOptions(context *ParseContext) []string {
 }
 
 func (a *Application) generateBashCompletion(context *ParseContext) {
-	options := a.completionOptions(context)
-	fmt.Printf("%s", strings.Join(options, "\n"))
+	options := a.resolveCompletion(context)
+	fmt.Print(options.generateBashString())
 }
 
 func (a *Application) applyPreActions(context *ParseContext, dispatch bool) error {

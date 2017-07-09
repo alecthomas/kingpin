@@ -225,16 +225,20 @@ func TestFlagHintAction(t *testing.T) {
 	}
 
 	a := c.Flag("foo", "foo").HintAction(action)
-	args := a.resolveCompletions()
-	assert.Equal(t, []string{"opt1", "opt2"}, args)
+	args := a.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt1", "opt2"}, args.resolveWords())
 }
 
 func TestFlagHintOptions(t *testing.T) {
 	c := newTestApp()
 
 	a := c.Flag("foo", "foo").HintOptions("opt1", "opt2")
-	args := a.resolveCompletions()
-	assert.Equal(t, []string{"opt1", "opt2"}, args)
+	args := a.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt1", "opt2"}, args.resolveWords())
 }
 
 func TestFlagEnumVar(t *testing.T) {
@@ -246,19 +250,25 @@ func TestFlagEnumVar(t *testing.T) {
 	b := c.Flag("bar", "bar")
 	b.EnumVar(&bar, "opt3", "opt4")
 
-	args := a.resolveCompletions()
-	assert.Equal(t, []string{"opt1", "opt2"}, args)
+	args := a.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt1", "opt2"}, args.resolveWords())
 
-	args = b.resolveCompletions()
-	assert.Equal(t, []string{"opt3", "opt4"}, args)
+	args = b.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt3", "opt4"}, args.resolveWords())
 }
 
 func TestMultiHintOptions(t *testing.T) {
 	c := newTestApp()
 
 	a := c.Flag("foo", "foo").HintOptions("opt1").HintOptions("opt2")
-	args := a.resolveCompletions()
-	assert.Equal(t, []string{"opt1", "opt2"}, args)
+	args := a.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt1", "opt2"}, args.resolveWords())
 }
 func TestMultiHintActions(t *testing.T) {
 	c := newTestApp()
@@ -270,8 +280,10 @@ func TestMultiHintActions(t *testing.T) {
 		HintAction(func() []string {
 			return []string{"opt2"}
 		})
-	args := a.resolveCompletions()
-	assert.Equal(t, []string{"opt1", "opt2"}, args)
+	args := a.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt1", "opt2"}, args.resolveWords())
 }
 
 func TestCombinationHintActionsOptions(t *testing.T) {
@@ -280,8 +292,10 @@ func TestCombinationHintActionsOptions(t *testing.T) {
 	a := c.Flag("foo", "foo").HintAction(func() []string {
 		return []string{"opt1"}
 	}).HintOptions("opt2")
-	args := a.resolveCompletions()
-	assert.Equal(t, []string{"opt1", "opt2"}, args)
+	args := a.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt1", "opt2"}, args.resolveWords())
 }
 
 func TestCombinationEnumActions(t *testing.T) {
@@ -301,11 +315,15 @@ func TestCombinationEnumActions(t *testing.T) {
 	b.EnumVar(&foo, "opt3", "opt4")
 
 	// Provided HintActions should override automatically generated Enum options.
-	args := a.resolveCompletions()
-	assert.Equal(t, []string{"opt1", "opt2"}, args)
+	args := a.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt1", "opt2"}, args.resolveWords())
 
-	args = b.resolveCompletions()
-	assert.Equal(t, []string{"opt5", "opt6"}, args)
+	args = b.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt5", "opt6"}, args.resolveWords())
 }
 
 func TestCombinationEnumOptions(t *testing.T) {
@@ -319,10 +337,13 @@ func TestCombinationEnumOptions(t *testing.T) {
 	b.EnumVar(&foo, "opt3", "opt4")
 
 	// Provided HintOptions should override automatically generated Enum options.
-	args := a.resolveCompletions()
-	assert.Equal(t, []string{"opt1", "opt2"}, args)
+	args := a.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt1", "opt2"}, args.resolveWords())
 
-	args = b.resolveCompletions()
-	assert.Equal(t, []string{"opt5", "opt6"}, args)
-
+	args = b.resolveCompletion()
+	assert.False(t, args.Directories)
+	assert.False(t, args.Files)
+	assert.Equal(t, []string{"opt5", "opt6"}, args.resolveWords())
 }

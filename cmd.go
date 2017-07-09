@@ -14,8 +14,8 @@ type cmdMixin struct {
 
 // CmdCompletion returns completion options for arguments, if that's where
 // parsing left off, or commands if there aren't any unsatisfied args.
-func (c *cmdMixin) CmdCompletion(context *ParseContext) []string {
-	var options []string
+func (c *cmdMixin) CmdCompletion(context *ParseContext) Completion {
+	var options Completion
 
 	// Count args already satisfied - we won't complete those, and add any
 	// default commands' alternatives, since they weren't listed explicitly
@@ -28,51 +28,52 @@ func (c *cmdMixin) CmdCompletion(context *ParseContext) []string {
 				argsSatisfied++
 			}
 		case el.OneOf.Cmd != nil:
-			options = append(options, el.OneOf.Cmd.completionAlts...)
+			options.addWords(el.OneOf.Cmd.completionAlts...)
 		default:
 		}
 	}
 
 	if argsSatisfied < len(c.argGroup.args) {
 		// Since not all args have been satisfied, show options for the current one
-		options = append(options, c.argGroup.args[argsSatisfied].resolveCompletions()...)
-	} else {
-		// If all args are satisfied, then go back to completing commands
-		for _, cmd := range c.cmdGroup.commandOrder {
-			if !cmd.hidden {
-				options = append(options, cmd.name)
-			}
+		return mergeCompletions(options, c.argGroup.args[argsSatisfied].resolveCompletion())
+	}
+
+	// If all args are satisfied, then go back to completing commands
+	for _, cmd := range c.cmdGroup.commandOrder {
+		if !cmd.hidden {
+			options.addWords(cmd.name)
 		}
 	}
 
 	return options
 }
 
-func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (choices []string, flagMatch bool, optionMatch bool) {
+func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (result Completion, flagMatch bool, optionMatch bool) {
 	// Check if flagName matches a known flag.
 	// If it does, show the options for the flag
 	// Otherwise, show all flags
 
-	options := []string{}
+	options := Completion{}
 
 	for _, flag := range c.flagGroup.flagOrder {
 		// Loop through each flag and determine if a match exists
 		if flag.name == flagName {
-			// User typed entire flag. Need to look for flag options.
-			options = flag.resolveCompletions()
-			if len(options) == 0 {
-				// No Options to Choose From, Assume Match.
+			// User typed entire flag. Need to look for matches in the wordlist.
+			options = flag.resolveCompletion()
+			if len(options.WordActions) == 0 {
+				// No wordlist Options to Choose From, Assume Match.
 				return options, true, true
 			}
 
 			// Loop options to find if the user specified value matches
+			words := options.resolveWords()
 			isPrefix := false
 			matched := false
 
-			for _, opt := range options {
-				if flagValue == opt {
+			for _, word := range words {
+				if flagValue == word {
 					matched = true
-				} else if strings.HasPrefix(opt, flagValue) {
+				} else if strings.HasPrefix(word, flagValue) {
 					isPrefix = true
 				}
 			}
@@ -83,7 +84,7 @@ func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (choices []
 		}
 
 		if !flag.hidden {
-			options = append(options, "--"+flag.name)
+			options.addWords("--" + flag.name)
 		}
 	}
 	// No Flag directly matched.
