@@ -17,9 +17,9 @@ type cmdMixin struct {
 func (c *cmdMixin) CmdCompletion(context *ParseContext) Completion {
 	var options Completion
 
-	// Count args already satisfied - we won't complete those, and add any
-	// default commands' alternatives, since they weren't listed explicitly
-	// and the user may want to explicitly list something else.
+	// Count args already satisfied - we won't complete those unless they consume
+	// the remainder. Also, add any default commands' alternatives,  since they
+	// weren't listed explicitly, and the user may want to  explicitly list something else.
 	argsSatisfied := 0
 	for _, el := range context.Elements {
 		switch {
@@ -38,7 +38,14 @@ func (c *cmdMixin) CmdCompletion(context *ParseContext) Completion {
 		return mergeCompletions(options, c.argGroup.args[argsSatisfied].resolveCompletion())
 	}
 
-	// If all args are satisfied, then go back to completing commands
+	// If all args are satisfied, check to see if the last consumes the remainder, and if
+	// so, return its completions
+	lastArgIdx := len(c.argGroup.args) - 1
+	if argsSatisfied > 0 && c.argGroup.args[lastArgIdx].consumesRemainder() {
+		return mergeCompletions(options, c.argGroup.args[lastArgIdx].resolveCompletion())
+	}
+
+	// Otherwise, go back to completing commands
 	for _, cmd := range c.cmdGroup.commandOrder {
 		if !cmd.hidden {
 			options.addWords(cmd.name)
@@ -48,7 +55,7 @@ func (c *cmdMixin) CmdCompletion(context *ParseContext) Completion {
 	return options
 }
 
-func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (result Completion, flagMatch bool, optionMatch bool) {
+func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (result Completion, flagMatch bool, valueMatch bool) {
 	// Check if flagName matches a known flag.
 	// If it does, show the options for the flag
 	// Otherwise, show all flags
@@ -89,7 +96,6 @@ func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (result Com
 	}
 	// No Flag directly matched.
 	return options, false, false
-
 }
 
 type cmdGroup struct {

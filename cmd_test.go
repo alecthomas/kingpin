@@ -428,3 +428,24 @@ func TestMixArgWithCommand(t *testing.T) {
 	assert.Equal(t, "cmd", selected)
 	assert.Equal(t, "c", *arg2)
 }
+
+func TestMultiArgCmdCompletion(t *testing.T) {
+	app := newTestApp()
+	cmd := app.Command("cmd", "")
+	cmd.Arg("arg", "").HintOptions("opt1", "opt2", "opt3").Strings()
+
+	result := complete(t, app, "cmd")
+	assert.False(t, result.Directories)
+	assert.False(t, result.Files)
+	assert.Equal(t, []string{"opt1", "opt2", "opt3"}, result.resolveWords())
+
+	result = complete(t, app, "cmd", "opt1")
+	assert.False(t, result.Directories)
+	assert.False(t, result.Files)
+	assert.Equal(t, []string{"opt1", "opt2", "opt3"}, result.resolveWords())
+
+	result = complete(t, app, "cmd", "opt3", "opt2")
+	assert.False(t, result.Directories)
+	assert.False(t, result.Files)
+	assert.Equal(t, []string{"opt1", "opt2", "opt3"}, result.resolveWords())
+}
