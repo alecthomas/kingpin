@@ -13,6 +13,15 @@ type FlagGroupModel struct {
 	Flags []*ClauseModel
 }
 
+func (f *FlagGroupModel) FlagByName(name string) *ClauseModel {
+	for _, flag := range f.Flags {
+		if flag.Name == name {
+			return flag
+		}
+	}
+	return nil
+}
+
 func (f *FlagGroupModel) FlagSummary() string {
 	out := []string{}
 	count := 0
