@@ -71,7 +71,6 @@ func New(name, help string) *Application {
 }
 
 func (a *Application) generateLongHelp(c *ParseContext) error {
-	a.Writer(os.Stdout)
 	if err := a.UsageForContextWithTemplate(c, 2, LongHelpTemplate); err != nil {
 		return err
 	}
@@ -80,7 +79,6 @@ func (a *Application) generateLongHelp(c *ParseContext) error {
 }
 
 func (a *Application) generateManPage(c *ParseContext) error {
-	a.Writer(os.Stdout)
 	if err := a.UsageForContextWithTemplate(c, 2, ManPageTemplate); err != nil {
 		return err
 	}
@@ -89,7 +87,6 @@ func (a *Application) generateManPage(c *ParseContext) error {
 }
 
 func (a *Application) generateBashCompletionScript(c *ParseContext) error {
-	a.Writer(os.Stdout)
 	if err := a.UsageForContextWithTemplate(c, 2, BashCompletionTemplate); err != nil {
 		return err
 	}
@@ -98,7 +95,6 @@ func (a *Application) generateBashCompletionScript(c *ParseContext) error {
 }
 
 func (a *Application) generateZSHCompletionScript(c *ParseContext) error {
-	a.Writer(os.Stdout)
 	if err := a.UsageForContextWithTemplate(c, 2, ZshCompletionTemplate); err != nil {
 		return err
 	}
