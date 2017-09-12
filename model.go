@@ -44,16 +44,17 @@ func (f *FlagGroupModel) FlagSummary() string {
 }
 
 type ClauseModel struct {
-	Name        string
-	Help        string
-	Short       rune
-	Default     []string
-	Envar       string
-	PlaceHolder string
-	Required    bool
-	Hidden      bool
-	Value       Value
-	Cumulative  bool
+	Name              string
+	Help              string
+	Short             rune
+	Default           []string
+	Envar             string
+	ConfigResolverKey string
+	PlaceHolder       string
+	Required          bool
+	Hidden            bool
+	Value             Value
+	Cumulative        bool
 }
 
 func (c *ClauseModel) String() string {
@@ -251,16 +252,17 @@ func (f *flagGroup) Model() *FlagGroupModel {
 func (f *Clause) Model() *ClauseModel {
 	_, cumulative := f.value.(cumulativeValue)
 	return &ClauseModel{
-		Name:        f.name,
-		Help:        f.help,
-		Short:       f.shorthand,
-		Default:     f.defaultValues,
-		Envar:       f.envar,
-		PlaceHolder: f.placeholder,
-		Required:    f.required,
-		Hidden:      f.hidden,
-		Value:       f.value,
-		Cumulative:  cumulative,
+		Name:              f.name,
+		Help:              f.help,
+		Short:             f.shorthand,
+		Default:           f.defaultValues,
+		Envar:             f.envar,
+		ConfigResolverKey: f.resolverKey,
+		PlaceHolder:       f.placeholder,
+		Required:          f.required,
+		Hidden:            f.hidden,
+		Value:             f.value,
+		Cumulative:        cumulative,
 	}
 }
 

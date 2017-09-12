@@ -23,16 +23,18 @@ type Clause struct {
 	actionMixin
 	completionsMixin
 
-	name          string
-	shorthand     rune
-	help          string
-	placeholder   string
-	hidden        bool
-	defaultValues []string
-	value         Value
-	required      bool
-	envar         string
-	noEnvar       bool
+	name             string
+	shorthand        rune
+	help             string
+	placeholder      string
+	hidden           bool
+	defaultValues    []string
+	value            Value
+	required         bool
+	envar            string
+	noEnvar          bool
+	resolverKey      string
+	noConfigResolver bool
 }
 
 func NewClause(name, help string) *Clause {
@@ -139,6 +141,23 @@ func (c *Clause) NoEnvar() *Clause {
 	return c
 }
 
+// ConfigResolverKey overrides the default value(s) for a flag from a config
+// file, if it is set. Several default values can be provided by using new
+// lines to separate them.
+func (c *Clause) ConfigResolverKey(key string) *Clause {
+	c.resolverKey = key
+	c.noConfigResolver = false
+	return c
+}
+
+// NoConfigResolver forces resolver variable defaults to be disabled for this flag.
+// Most useful in conjunction with app.ConfigResolver().
+func (c *Clause) NoConfigResolver() *Clause {
+	c.resolverKey = ""
+	c.noConfigResolver = true
+	return c
+}
+
 // PlaceHolder sets the place-holder string used for flag values in the help. The
 // default behaviour is to use the value provided by Default() if provided,
 // then fall back on the capitalized flag name.
@@ -165,9 +184,9 @@ func (c *Clause) Short(name rune) *Clause {
 	return c
 }
 
-func (c *Clause) needsValue() bool {
+func (c *Clause) needsValue(context *ParseContext) bool {
 	haveDefault := len(c.defaultValues) > 0
-	return c.required && !(haveDefault || c.HasEnvarValue())
+	return c.required && !(haveDefault || c.HasEnvarValue() || c.HasConfigResolvers(context))
 }
 
 func (c *Clause) reset() {
@@ -176,7 +195,7 @@ func (c *Clause) reset() {
 	}
 }
 
-func (c *Clause) setDefault() error {
+func (c *Clause) setDefault(context *ParseContext) error {
 	if c.HasEnvarValue() {
 		c.reset()
 		if v, ok := c.value.(cumulativeValue); !ok || !v.IsCumulative() {
@@ -189,6 +208,9 @@ func (c *Clause) setDefault() error {
 			}
 		}
 		return nil
+	} else if c.HasConfigResolvers(context) {
+		c.reset()
+		c.value.Set(c.GetConfigResolverValue(context))
 	} else if len(c.defaultValues) > 0 {
 		c.reset()
 		for _, defaultValue := range c.defaultValues {
@@ -227,9 +249,33 @@ func (c *Clause) GetSplitEnvarValue() []string {
 	return values
 }
 
+func (c *Clause) HasConfigResolvers(context *ParseContext) bool {
+	if len(context.Resolvers) == 0 || c.noConfigResolver {
+		return false
+	}
+	return true
+}
+
+func (c *Clause) GetConfigResolverValue(context *ParseContext) string {
+	var key string
+	if c.resolverKey != "" {
+		key = c.resolverKey
+	} else {
+		key = c.name
+	}
+
+	for _, r := range context.Resolvers {
+		val := (*r).Resolve(key, context)
+		if val != "" {
+			return val
+		}
+	}
+
+	return ""
+}
+
 func (c *Clause) SetValue(value Value) {
 	c.value = value
-	c.setDefault()
 }
 
 // StringMap provides key=value parsing into a map.
