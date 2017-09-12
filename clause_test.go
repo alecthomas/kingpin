@@ -68,28 +68,85 @@ func TestFloat32(t *testing.T) {
 	assert.InEpsilon(t, 123.45, *v, 0.001)
 }
 
-func TestDefaultScalarValueIsSetBeforeParse(t *testing.T) {
-	app := newTestApp()
-	v := app.Flag("a", "").Default("123").Int()
-	assert.Equal(t, *v, 123)
-	_, err := app.Parse([]string{"--a", "456"})
-	assert.NoError(t, err)
-	assert.Equal(t, *v, 456)
-}
-
-func TestDefaultCumulativeValueIsSetBeforeParse(t *testing.T) {
-	app := newTestApp()
-	v := app.Flag("a", "").Default("123", "456").Ints()
-	assert.Equal(t, *v, []int{123, 456})
-	_, err := app.Parse([]string{"--a", "789", "--a", "123"})
-	assert.NoError(t, err)
-	assert.Equal(t, *v, []int{789, 123})
-}
-
 func TestUnicodeShortFlag(t *testing.T) {
 	app := newTestApp()
 	f := app.Flag("long", "").Short('ä').Bool()
 	_, err := app.Parse([]string{"-ä"})
 	assert.NoError(t, err)
 	assert.True(t, *f)
+}
+
+type TestResolver struct {
+	vals map[string]string
+}
+
+func (r *TestResolver) Resolve(key string, context *ParseContext) string {
+	return r.vals[key]
+}
+
+func TestResolverSimple(t *testing.T) {
+	app := newTestApp()
+	app.ConfigResolver(&TestResolver{vals: map[string]string{"hello": "world"}})
+	f := app.Flag("hello", "help").String()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "world", *f)
+}
+
+func TestResolverSatisfiesRequired(t *testing.T) {
+	app := newTestApp()
+	app.ConfigResolver(&TestResolver{vals: map[string]string{"hello": "world"}})
+	f := app.Flag("hello", "help").Required().String()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "world", *f)
+}
+
+func TestResolverKeyOverride(t *testing.T) {
+	app := newTestApp()
+	app.ConfigResolver(&TestResolver{vals: map[string]string{"foo": "world"}})
+	f := app.Flag("hello", "help").ConfigResolverKey("foo").String()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "world", *f)
+}
+
+func TestResolverDisable(t *testing.T) {
+	app := newTestApp()
+	app.ConfigResolver(&TestResolver{vals: map[string]string{"hello": "world"}})
+	f := app.Flag("hello", "help").NoConfigResolver().String()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "", *f)
+}
+
+func TestResolverLowerPriorityThanFlag(t *testing.T) {
+	app := newTestApp()
+	app.ConfigResolver(&TestResolver{vals: map[string]string{"hello": "world"}})
+	f := app.Flag("hello", "help").String()
+	_, err := app.Parse([]string{"--hello", "there"})
+	assert.NoError(t, err)
+	assert.Equal(t, "there", *f)
+}
+
+func TestResolverLowerPriorityThanEnvar(t *testing.T) {
+	os.Setenv("TEST_RESOLVER", "foo")
+	app := newTestApp()
+	app.ConfigResolver(&TestResolver{vals: map[string]string{"hello": "world"}})
+	f := app.Flag("hello", "help").Envar("TEST_RESOLVER").String()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "foo", *f)
+}
+
+func TestResolverFallbackWithMultipleResolvers(t *testing.T) {
+	app := newTestApp()
+	app.ConfigResolver(&TestResolver{vals: map[string]string{"hello": "world"}})
+	app.ConfigResolver(&TestResolver{vals: map[string]string{"hello": "there", "foo": "bar"}})
+	f1 := app.Flag("hello", "help").String()
+	f2 := app.Flag("foo", "help").String()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "world", *f1)
+	assert.Equal(t, "bar", *f2)
 }

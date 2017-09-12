@@ -119,6 +119,7 @@ func (p ParseElements) ArgMap() map[string]*ParseElement {
 // any).
 type ParseContext struct {
 	SelectedCommand *CmdClause
+	Resolvers       []*ConfigResolver
 	ignoreDefault   bool
 	argsOnly        bool
 	peek            []*Token
@@ -130,6 +131,11 @@ type ParseContext struct {
 	argumenti       int // Cursor into arguments
 	// Flags, arguments and commands encountered and collected during parse.
 	Elements ParseElements
+}
+
+// A ConfigResolver retrieves configuration from an external source
+type ConfigResolver interface {
+	Resolve(string, *ParseContext) string
 }
 
 // LastCmd returns true if the element is the last (sub)command

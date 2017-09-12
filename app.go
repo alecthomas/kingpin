@@ -29,6 +29,7 @@ type Application struct {
 	terminate      func(status int) // See Terminate()
 	noInterspersed bool             // can flags be interspersed with args (or must they come first)
 	defaultEnvars  bool
+	resolvers      []*ConfigResolver
 	completion     bool
 	helpFlag       *Clause
 	helpCommand    *CmdClause
@@ -46,6 +47,7 @@ func New(name, help string) *Application {
 		defaultUsage: &UsageContext{
 			Template: DefaultUsageTemplate,
 		},
+		resolvers: make([]*ConfigResolver, 0),
 	}
 	a.flagGroup = newFlagGroup()
 	a.argGroup = newArgGroup()
@@ -128,6 +130,14 @@ func (a *Application) DefaultEnvars() *Application {
 	return a
 }
 
+// ConfigResolver configures all flags, that are not given on the commandline
+// or as environment variables, to be looked up using the config resolver
+// given.
+func (a *Application) ConfigResolver(c ConfigResolver) *Application {
+	a.resolvers = append(a.resolvers, &c)
+	return a
+}
+
 // Terminate specifies the termination handler. Defaults to os.Exit(status).
 // If nil is passed, a no-op function will be used.
 func (a *Application) Terminate(terminate func(int)) *Application {
@@ -170,6 +180,7 @@ func (a *Application) parseContext(ignoreDefault bool, args []string) (*ParseCon
 		return nil, err
 	}
 	context := tokenize(args, ignoreDefault)
+	context.Resolvers = a.resolvers
 	err := parse(context, a)
 	return context, err
 }
@@ -382,7 +393,7 @@ func (a *Application) setDefaults(context *ParseContext) error {
 	// Check required flags and set defaults.
 	for _, flag := range context.flags.long {
 		if flagElements[flag.name] == nil {
-			if err := flag.setDefault(); err != nil {
+			if err := flag.setDefault(context); err != nil {
 				return err
 			}
 		} else {
@@ -392,7 +403,7 @@ func (a *Application) setDefaults(context *ParseContext) error {
 
 	for _, arg := range context.arguments.args {
 		if argElements[arg.name] == nil {
-			if err := arg.setDefault(); err != nil {
+			if err := arg.setDefault(context); err != nil {
 				return err
 			}
 		} else {
@@ -411,7 +422,7 @@ func (a *Application) validateRequired(context *ParseContext) error {
 	for _, flag := range context.flags.long {
 		if flagElements[flag.name] == nil {
 			// Check required flags were provided.
-			if flag.needsValue() {
+			if flag.needsValue(context) {
 				return TError("required flag --{{.Arg0}} not provided", V{"Arg0": flag.name})
 			}
 		}
@@ -419,7 +430,7 @@ func (a *Application) validateRequired(context *ParseContext) error {
 
 	for _, arg := range context.arguments.args {
 		if argElements[arg.name] == nil {
-			if arg.needsValue() {
+			if arg.needsValue(context) {
 				return TError("required argument '{{.Arg0}}' not provided", V{"Arg0": arg.name})
 			}
 		}
