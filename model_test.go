@@ -1,9 +1,6 @@
 package kingpin
 
 import (
-	"fmt"
-	"reflect"
-
 	"github.com/stretchr/testify/assert"
 
 	"testing"
@@ -43,6 +40,5 @@ func TestModelValue(t *testing.T) {
 	*value = true
 	model := app.Model()
 	flag := model.FlagByName("test")
-	fmt.Println(reflect.TypeOf(flag.Value))
 	assert.Equal(t, "true", flag.Value.String())
 }

@@ -2,6 +2,7 @@ package kingpin
 
 import (
 	"io/ioutil"
+	"os"
 
 	"github.com/stretchr/testify/assert"
 
@@ -223,13 +224,13 @@ func TestInterspersedTrue(t *testing.T) {
 
 func TestDefaultEnvars(t *testing.T) {
 	a := New("some-app", "").Terminate(nil).DefaultEnvars()
-	f0 := a.Flag("some-flag", "")
-	f0.Bool()
+	os.Setenv("SOME_APP_SOME_FLAG", "true")
+	f0 := a.Flag("some-flag", "").Bool()
 	f1 := a.Flag("some-other-flag", "").NoEnvar()
 	f1.Bool()
 	_, err := a.Parse([]string{})
 	assert.NoError(t, err)
-	assert.Equal(t, "SOME_APP_SOME_FLAG", f0.envar)
+	assert.Equal(t, true, *f0)
 	assert.Equal(t, "", f1.envar)
 }
 

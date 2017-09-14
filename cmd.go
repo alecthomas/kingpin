@@ -299,7 +299,7 @@ func (c *cmdMixin) checkArgCommandMixing() error {
 }
 
 func (c *CmdClause) init() error {
-	if err := c.flagGroup.init(c.app.defaultEnvarPrefix()); err != nil {
+	if err := c.flagGroup.init(); err != nil {
 		return err
 	}
 	if err := c.checkArgCommandMixing(); err != nil {

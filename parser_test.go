@@ -15,7 +15,7 @@ func cmdElem() *ParseElement {
 }
 
 func TestParseContextPush(t *testing.T) {
-	c := tokenize([]string{"foo", "bar"}, false)
+	c := tokenize([]string{"foo", "bar"}, false, nil)
 	a := c.Next()
 	assert.Equal(t, TokenArg, a.Type)
 	b := c.Next()

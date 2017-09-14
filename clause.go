@@ -2,39 +2,25 @@ package kingpin
 
 import (
 	"net/url"
-	"os"
-	"regexp"
 
 	"github.com/alecthomas/units"
 )
-
-var (
-	envVarValuesSeparator = "\r?\n"
-	envVarValuesTrimmer   = regexp.MustCompile(envVarValuesSeparator + "$")
-	envVarValuesSplitter  = regexp.MustCompile(envVarValuesSeparator)
-)
-
-type Settings interface {
-	SetValue(value Value)
-}
 
 // A Clause represents a flag or an argument passed by the user.
 type Clause struct {
 	actionMixin
 	completionsMixin
 
-	name             string
-	shorthand        rune
-	help             string
-	placeholder      string
-	hidden           bool
-	defaultValues    []string
-	value            Value
-	required         bool
-	envar            string
-	noEnvar          bool
-	resolverKey      string
-	noConfigResolver bool
+	name          string
+	shorthand     rune
+	help          string
+	placeholder   string
+	hidden        bool
+	defaultValues []string
+	value         Value
+	required      bool
+	envar         string
+	noEnvar       bool
 }
 
 func NewClause(name, help string) *Clause {
@@ -95,6 +81,23 @@ func (c *Clause) HintAction(action HintAction) *Clause {
 	return c
 }
 
+// Envar overrides the default value(s) for a flag from an environment variable,
+// if it is set. Several default values can be provided by using new lines to
+// separate them.
+func (c *Clause) Envar(name string) *Clause {
+	c.envar = name
+	c.noEnvar = false
+	return c
+}
+
+// NoEnvar forces environment variable defaults to be disabled for this flag.
+// Most useful in conjunction with PrefixedEnvarResolver.
+func (c *Clause) NoEnvar() *Clause {
+	c.envar = ""
+	c.noEnvar = true
+	return c
+}
+
 func (c *Clause) resolveCompletions() []string {
 	var hints []string
 
@@ -121,40 +124,6 @@ func (c *Clause) HintOptions(options ...string) *Clause {
 // Default values for this flag. They *must* be parseable by the value of the flag.
 func (c *Clause) Default(values ...string) *Clause {
 	c.defaultValues = values
-	return c
-}
-
-// Envar overrides the default value(s) for a flag from an environment variable,
-// if it is set. Several default values can be provided by using new lines to
-// separate them.
-func (c *Clause) Envar(name string) *Clause {
-	c.envar = name
-	c.noEnvar = false
-	return c
-}
-
-// NoEnvar forces environment variable defaults to be disabled for this flag.
-// Most useful in conjunction with app.DefaultEnvars().
-func (c *Clause) NoEnvar() *Clause {
-	c.envar = ""
-	c.noEnvar = true
-	return c
-}
-
-// ConfigResolverKey overrides the default value(s) for a flag from a config
-// file, if it is set. Several default values can be provided by using new
-// lines to separate them.
-func (c *Clause) ConfigResolverKey(key string) *Clause {
-	c.resolverKey = key
-	c.noConfigResolver = false
-	return c
-}
-
-// NoConfigResolver forces resolver variable defaults to be disabled for this flag.
-// Most useful in conjunction with app.ConfigResolver().
-func (c *Clause) NoConfigResolver() *Clause {
-	c.resolverKey = ""
-	c.noConfigResolver = true
 	return c
 }
 
@@ -185,8 +154,20 @@ func (c *Clause) Short(name rune) *Clause {
 }
 
 func (c *Clause) needsValue(context *ParseContext) bool {
-	haveDefault := len(c.defaultValues) > 0
-	return c.required && !(haveDefault || c.HasEnvarValue() || c.HasConfigResolvers(context))
+	return c.required && !c.canResolve(context)
+}
+
+func (c *Clause) canResolve(context *ParseContext) bool {
+	for _, resolver := range context.resolvers {
+		rvalues, err := resolver.Resolve(c.name, context)
+		if err != nil {
+			return false
+		}
+		if rvalues != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Clause) reset() {
@@ -196,82 +177,27 @@ func (c *Clause) reset() {
 }
 
 func (c *Clause) setDefault(context *ParseContext) error {
-	if c.HasEnvarValue() {
-		c.reset()
-		if v, ok := c.value.(cumulativeValue); !ok || !v.IsCumulative() {
-			// Use the value as-is
-			return c.value.Set(c.GetEnvarValue())
+	var values []string
+	for _, resolver := range context.resolvers {
+		rvalues, err := resolver.Resolve(c.name, context)
+		if err != nil {
+			return err
 		}
-		for _, value := range c.GetSplitEnvarValue() {
+		if rvalues != nil {
+			values = rvalues
+		}
+	}
+
+	if values != nil {
+		c.reset()
+		for _, value := range values {
 			if err := c.value.Set(value); err != nil {
 				return err
 			}
 		}
 		return nil
-	} else if c.HasConfigResolvers(context) {
-		c.reset()
-		c.value.Set(c.GetConfigResolverValue(context))
-	} else if len(c.defaultValues) > 0 {
-		c.reset()
-		for _, defaultValue := range c.defaultValues {
-			if err := c.value.Set(defaultValue); err != nil {
-				return err
-			}
-		}
-		return nil
 	}
-
 	return nil
-}
-
-func (c *Clause) HasEnvarValue() bool {
-	return c.GetEnvarValue() != ""
-}
-
-func (c *Clause) GetEnvarValue() string {
-	if c.noEnvar || c.envar == "" {
-		return ""
-	}
-	return os.Getenv(c.envar)
-}
-
-func (c *Clause) GetSplitEnvarValue() []string {
-	values := make([]string, 0)
-
-	envarValue := c.GetEnvarValue()
-	if envarValue == "" {
-		return values
-	}
-
-	// Split by new line to extract multiple values, if any.
-	trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
-	values = append(values, envVarValuesSplitter.Split(trimmed, -1)...)
-	return values
-}
-
-func (c *Clause) HasConfigResolvers(context *ParseContext) bool {
-	if len(context.Resolvers) == 0 || c.noConfigResolver {
-		return false
-	}
-	return true
-}
-
-func (c *Clause) GetConfigResolverValue(context *ParseContext) string {
-	var key string
-	if c.resolverKey != "" {
-		key = c.resolverKey
-	} else {
-		key = c.name
-	}
-
-	for _, r := range context.Resolvers {
-		val := (*r).Resolve(key, context)
-		if val != "" {
-			return val
-		}
-	}
-
-	return ""
 }
 
 func (c *Clause) SetValue(value Value) {

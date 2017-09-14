@@ -24,6 +24,7 @@
   - [Default Values](#default-values)
   - [Place-holders in Help](#place-holders-in-help)
   - [Consuming all remaining arguments](#consuming-all-remaining-arguments)
+  - [Configuration files and other external sources of flag/argument values](#configuration-files-and-other-external-sources-of-flagargument-values)
   - [Struct tag interpolation](#struct-tag-interpolation)
   - [Bash/ZSH Shell Completion](#bashzsh-shell-completion)
     - [Additional API](#additional-api)
@@ -513,6 +514,16 @@ And use it like so:
 ```go
 ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
 ```
+
+### Configuration files and other external sources of flag/argument values
+
+Kingpin v3 now supports
+[custom value resolvers](https://godoc.org/gopkg.in/alecthomas/kingpin.v3-unstable#Resolver)
+for flags and arguments. This is used internally to resolve default values and environment variables, but
+applications can define their own resolvers to load flags from configuration files, or elsewhere.
+
+Included is a [JSONResolver](https://godoc.org/gopkg.in/alecthomas/kingpin.v3-unstable#JSONResolver) that
+loads values from a JSON file, including multi-value flags.
 
 ### Struct tag interpolation
 

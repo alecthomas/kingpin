@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
 	"strings"
 )
 
 var (
 	errCommandNotSpecified = TError("command not specified")
-	envarTransformRegexp   = regexp.MustCompile(`[^a-zA-Z_]+`)
 )
 
 // An Application contains the definitions of flags, arguments and commands
@@ -28,8 +26,9 @@ type Application struct {
 	errors         io.Writer
 	terminate      func(status int) // See Terminate()
 	noInterspersed bool             // can flags be interspersed with args (or must they come first)
+	envarSeparator string
 	defaultEnvars  bool
-	resolvers      []*ConfigResolver
+	resolvers      []Resolver
 	completion     bool
 	helpFlag       *Clause
 	helpCommand    *CmdClause
@@ -39,15 +38,15 @@ type Application struct {
 // New creates a new Kingpin application instance.
 func New(name, help string) *Application {
 	a := &Application{
-		Name:      name,
-		Help:      help,
-		output:    os.Stdout,
-		errors:    os.Stderr,
-		terminate: os.Exit,
+		Name:           name,
+		Help:           help,
+		output:         os.Stdout,
+		errors:         os.Stderr,
+		terminate:      os.Exit,
+		envarSeparator: string(os.PathListSeparator),
 		defaultUsage: &UsageContext{
 			Template: DefaultUsageTemplate,
 		},
-		resolvers: make([]*ConfigResolver, 0),
 	}
 	a.flagGroup = newFlagGroup()
 	a.argGroup = newArgGroup()
@@ -130,11 +129,23 @@ func (a *Application) DefaultEnvars() *Application {
 	return a
 }
 
-// ConfigResolver configures all flags, that are not given on the commandline
-// or as environment variables, to be looked up using the config resolver
-// given.
-func (a *Application) ConfigResolver(c ConfigResolver) *Application {
-	a.resolvers = append(a.resolvers, &c)
+// EnvarSeparator sets the string that is used for separating values in environment variables.
+//
+// This defaults to the current OS's path list separator (typically : or ;).
+func (a *Application) EnvarSeparator(sep string) *Application {
+	a.envarSeparator = sep
+	return a
+
+}
+
+// Resolver adds an ordered set of flag/argument resolvers.
+//
+// Resolvers provide default flag/argument values, from environment variables, configuration files, etc. Multiple
+// resolvers may be added, and they are processed in order.
+//
+// The last Resolver to return a value always wins. Values returned from resolvers are not cumulative.
+func (a *Application) Resolver(resolvers ...Resolver) *Application {
+	a.resolvers = append(a.resolvers, resolvers...)
 	return a
 }
 
@@ -148,7 +159,7 @@ func (a *Application) Terminate(terminate func(int)) *Application {
 	return a
 }
 
-// Writer specifies the writer to use for usage and errors. Defaults to os.Stderr.
+// Writers specifies the writers to use for usage and errors. Defaults to os.Stderr.
 func (a *Application) Writers(out, err io.Writer) *Application {
 	a.output = out
 	a.errors = err
@@ -179,10 +190,25 @@ func (a *Application) parseContext(ignoreDefault bool, args []string) (*ParseCon
 	if err := a.init(); err != nil {
 		return nil, err
 	}
-	context := tokenize(args, ignoreDefault)
-	context.Resolvers = a.resolvers
+	context := tokenize(args, ignoreDefault, a.buildResolvers())
 	err := parse(context, a)
 	return context, err
+}
+
+// Build resolvers to emulate the envar and defaults behaviour that was previously hard-coded.
+func (a *Application) buildResolvers() []Resolver {
+
+	// .Default() has lowest priority...
+	resolvers := []Resolver{defaultsResolver()}
+	// Then custom resolvers...
+	resolvers = append(resolvers, a.resolvers...)
+	// Finally, envars are highest priority behind direct flag parsing.
+	if a.defaultEnvars {
+		resolvers = append(resolvers, PrefixedEnvarResolver(a.Name+"_", a.envarSeparator))
+	}
+	resolvers = append(resolvers, envarResolver(a.envarSeparator))
+
+	return resolvers
 }
 
 // Parse parses command-line arguments. It returns the selected command and an
@@ -286,13 +312,6 @@ func (a *Application) Interspersed(interspersed bool) *Application {
 	return a
 }
 
-func (a *Application) defaultEnvarPrefix() string {
-	if a.defaultEnvars {
-		return a.Name
-	}
-	return ""
-}
-
 func (a *Application) init() error {
 	if a.initialized {
 		return nil
@@ -319,7 +338,7 @@ func (a *Application) init() error {
 		a.commandOrder = append(a.commandOrder[l-1:l], a.commandOrder[:l-1]...)
 	}
 
-	if err := a.flagGroup.init(a.defaultEnvarPrefix()); err != nil {
+	if err := a.flagGroup.init(); err != nil {
 		return err
 	}
 	if err := a.cmdGroup.init(); err != nil {
@@ -655,8 +674,4 @@ func (a *Application) applyActions(context *ParseContext) error {
 		}
 	}
 	return nil
-}
-
-func envarTransform(name string) string {
-	return strings.ToUpper(envarTransformRegexp.ReplaceAllString(name, "_"))
 }
