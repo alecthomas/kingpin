@@ -25,7 +25,35 @@ func (c *cmdMixin) CmdCompletion(context *ParseContext) []string {
 		switch clause := el.Clause.(type) {
 		case *ArgClause:
 			if el.Value != nil && *el.Value != "" {
-				argsSatisfied++
+				if argsSatisfied < len(c.argGroup.args) - 1 {
+					// Mark all arguments but the last as satisfied
+					argsSatisfied++
+				} else {
+					// Handle completion of the last argument if it has been partially entered
+
+					// Get the list of valid options for the last argument
+					validOptions := c.argGroup.args[argsSatisfied].resolveCompletions()
+					if len(validOptions) == 0 {
+						// If there are no options for this argument,
+						// mark is as satisfied as we can't suggest anything
+						argsSatisfied++
+						continue
+					}
+
+					for _, opt := range validOptions {
+						if opt == *el.Value {
+							// We have an exact match
+							argsSatisfied++
+							break
+						}
+						if strings.HasPrefix(opt, *el.Value) {
+							// If the option match the partially entered argument, add it to the list
+							options = append(options, opt)
+						}
+					}
+					// Avoid further completion as we have done everything we could
+					argsSatisfied++
+				}
 			}
 		case *CmdClause:
 			options = append(options, clause.completionAlts...)
