@@ -50,6 +50,11 @@ func (c *Clause) init() error {
 	return nil
 }
 
+func (c *Clause) Help(help string) *Clause {
+	c.help = help
+	return c
+}
+
 // UsageAction adds a PreAction() that will display the given UsageContext.
 func (c *Clause) UsageAction(context *UsageContext) *Clause {
 	c.PreAction(func(a *Application, e *ParseElement, c *ParseContext) error {
