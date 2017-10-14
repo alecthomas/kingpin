@@ -461,7 +461,7 @@ Here are some examples of flags with various permutations:
 
     --name=NAME           // Flag(...).String()
     --name="Harry"        // Flag(...).Default("Harry").String()
-    --name=FULL-NAME      // flag(...).PlaceHolder("FULL-NAME").Default("Harry").String()
+    --name=FULL-NAME      // Flag(...).PlaceHolder("FULL-NAME").Default("Harry").String()
 
 ### Consuming all remaining arguments
 
