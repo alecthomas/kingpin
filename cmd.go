@@ -308,10 +308,7 @@ func (c *CmdClause) init() error {
 	if err := c.argGroup.init(); err != nil {
 		return err
 	}
-	if err := c.cmdGroup.init(); err != nil {
-		return err
-	}
-	return nil
+	return c.cmdGroup.init()
 }
 
 func (c *CmdClause) Hidden() *CmdClause {

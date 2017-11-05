@@ -1,6 +1,7 @@
 package kingpin
 
 import (
+	"net"
 	"net/url"
 
 	"github.com/alecthomas/units"
@@ -323,12 +324,12 @@ func (c *Clause) Enums(options ...string) (target *[]string) {
 	return
 }
 
-// EnumVar allows a value from a set of options.
+// EnumsVar allows a value from a set of options.
 func (c *Clause) EnumsVar(target *[]string, options ...string) {
 	c.SetValue(newEnumsFlag(target, options...))
 }
 
-// A Counter increments a number each time it is encountered.
+// Counter increments a number each time it is encountered.
 func (c *Clause) Counter() (target *int) {
 	target = new(int)
 	c.CounterVar(target)
@@ -337,4 +338,16 @@ func (c *Clause) Counter() (target *int) {
 
 func (c *Clause) CounterVar(target *int) {
 	c.SetValue(newCounterValue(target))
+}
+
+// IP provides a validated parsed *net.IP value.
+func (c *Clause) IP() (target *net.IP) {
+	target = new(net.IP)
+	c.IPVar(target)
+	return
+}
+
+// IPVar provides a validated parsed *net.IP value.
+func (c *Clause) IPVar(target *net.IP) {
+	c.SetValue(newIPValue(target))
 }

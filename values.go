@@ -4,6 +4,7 @@ package kingpin
 
 import (
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"reflect"
@@ -179,6 +180,30 @@ func (f *fileStatValue) Get() interface{} {
 
 func (f *fileStatValue) String() string {
 	return *f.path
+}
+
+// -- net.IP Value
+type ipValue net.IP
+
+func newIPValue(p *net.IP) *ipValue {
+	return (*ipValue)(p)
+}
+
+func (i *ipValue) Set(value string) error {
+	ip := net.ParseIP(value)
+	if ip == nil {
+		return fmt.Errorf("'%s' is not an IP address", value)
+	}
+	*i = *(*ipValue)(&ip)
+	return nil
+}
+
+func (i *ipValue) Get() interface{} {
+	return (net.IP)(*i)
+}
+
+func (i *ipValue) String() string {
+	return (*net.IP)(i).String()
 }
 
 // -- url.URL Value

@@ -1,6 +1,8 @@
 package kingpin
 
 import (
+	"net"
+
 	"github.com/stretchr/testify/assert"
 
 	"testing"
@@ -68,4 +70,29 @@ func TestSetValueDoesNotReset(t *testing.T) {
 	}
 	app.Flag("set", "").StringMapVar(&mapping)
 	assert.NotEmpty(t, mapping)
+}
+
+func TestIPv4Addr(t *testing.T) {
+	app := newTestApp()
+	flag := app.Flag("addr", "").IP()
+	_, err := app.Parse([]string{"--addr", net.IPv4(1, 2, 3, 4).String()})
+	assert.NoError(t, err)
+	assert.NotNil(t, *flag)
+	assert.Equal(t, net.IPv4(1, 2, 3, 4), *flag)
+}
+
+func TestInvalidIPv4Addr(t *testing.T) {
+	app := newTestApp()
+	app.Flag("addr", "").IP()
+	_, err := app.Parse([]string{"--addr", "1.2.3.256"})
+	assert.Error(t, err)
+}
+
+func TestIPv6Addr(t *testing.T) {
+	app := newTestApp()
+	flag := app.Flag("addr", "").IP()
+	_, err := app.Parse([]string{"--addr", net.IPv6interfacelocalallnodes.String()})
+	assert.NoError(t, err)
+	assert.NotNil(t, *flag)
+	assert.Equal(t, net.IPv6interfacelocalallnodes, *flag)
 }
