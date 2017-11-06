@@ -214,10 +214,15 @@ func (c *Clause) SetValue(value Value) {
 }
 
 // StringMap provides key=value parsing into a map.
-func (c *Clause) StringMap() (target *map[string]string) {
+func (c *Clause) StringMap(options ...AccumulatorOption) (target *map[string]string) {
 	target = &(map[string]string{})
-	c.StringMapVar(target)
+	c.StringMapVar(target, options...)
 	return
+}
+
+// StringMap provides key=value parsing into a map.
+func (c *Clause) StringMapVar(target *map[string]string, options ...AccumulatorOption) {
+	c.SetValue(newStringMapValue(target, options...))
 }
 
 // Bytes parses numeric byte units. eg. 1.5KB
@@ -253,11 +258,6 @@ func (c *Clause) URL() (target **url.URL) {
 	target = new(*url.URL)
 	c.URLVar(target)
 	return
-}
-
-// StringMap provides key=value parsing into a map.
-func (c *Clause) StringMapVar(target *map[string]string) {
-	c.SetValue(newStringMapValue(target))
 }
 
 // Float sets the parser to a float64 parser.

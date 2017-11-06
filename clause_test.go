@@ -34,6 +34,14 @@ func TestParseStringMap(t *testing.T) {
 	assert.Equal(t, map[string]string{"a": "b", "b": "c"}, *v)
 }
 
+func TestParseStringMapWithSeparator(t *testing.T) {
+	p := Clause{}
+	v := p.StringMap(Separator(";"))
+	p.value.Set("a:b")
+	p.value.Set("b:c;c:d")
+	assert.Equal(t, map[string]string{"a": "b", "b": "c", "c": "d"}, *v)
+}
+
 func TestParseURL(t *testing.T) {
 	p := Clause{}
 	v := p.URL()

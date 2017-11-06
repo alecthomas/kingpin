@@ -61,20 +61,31 @@ type cumulativeValue interface {
 	IsCumulative() bool
 }
 
-type AccumulatorOption func(a *accumulator)
+type accumulatorOptions struct {
+	separator string
+}
+
+func newAccumulatorOptions(options ...AccumulatorOption) (out accumulatorOptions) {
+	for _, option := range options {
+		option(&out)
+	}
+	return
+}
+
+type AccumulatorOption func(a *accumulatorOptions)
 
 // Separator configures an accumulating value to split on this value.
 func Separator(separator string) AccumulatorOption {
-	return func(a *accumulator) {
+	return func(a *accumulatorOptions) {
 		a.separator = separator
 	}
 }
 
 type accumulator struct {
-	element   func(value interface{}) Value
-	typ       reflect.Type
-	slice     reflect.Value
-	separator string
+	element func(value interface{}) Value
+	typ     reflect.Type
+	slice   reflect.Value
+	accumulatorOptions
 }
 
 func isBoolFlag(f Value) bool {
@@ -96,15 +107,12 @@ func newAccumulator(slice interface{}, options []AccumulatorOption, element func
 	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Slice {
 		panic(T("expected a pointer to a slice"))
 	}
-	a := &accumulator{
-		element: element,
-		typ:     typ.Elem().Elem(),
-		slice:   reflect.ValueOf(slice),
+	return &accumulator{
+		element:            element,
+		typ:                typ.Elem().Elem(),
+		slice:              reflect.ValueOf(slice),
+		accumulatorOptions: newAccumulatorOptions(options...),
 	}
-	for _, option := range options {
-		option(a)
-	}
-	return a
 }
 
 func (a *accumulator) String() string {
@@ -156,29 +164,43 @@ func (b *boolValue) BoolFlagIsNegatable() bool { return false }
 func (n *negatableBoolValue) BoolFlagIsNegatable() bool { return true }
 
 // -- map[string]string Value
-type stringMapValue map[string]string
+type stringMapValue struct {
+	values *map[string]string
+	accumulatorOptions
+}
 
-func newStringMapValue(p *map[string]string) *stringMapValue {
-	return (*stringMapValue)(p)
+func newStringMapValue(p *map[string]string, options ...AccumulatorOption) *stringMapValue {
+	return &stringMapValue{
+		values:             p,
+		accumulatorOptions: newAccumulatorOptions(options...),
+	}
 }
 
 var stringMapRegex = regexp.MustCompile("[:=]")
 
 func (s *stringMapValue) Set(value string) error {
-	parts := stringMapRegex.Split(value, 2)
-	if len(parts) != 2 {
-		return TError("expected KEY=VALUE got '{{.Arg0}}'", V{"Arg0": value})
+	values := []string{}
+	if s.separator == "" {
+		values = append(values, value)
+	} else {
+		values = append(values, strings.Split(value, s.separator)...)
 	}
-	(*s)[parts[0]] = parts[1]
+	for _, v := range values {
+		parts := stringMapRegex.Split(v, 2)
+		if len(parts) != 2 {
+			return TError("expected KEY=VALUE got '{{.Arg0}}'", V{"Arg0": v})
+		}
+		(*s.values)[parts[0]] = parts[1]
+	}
 	return nil
 }
 
 func (s *stringMapValue) Get() interface{} {
-	return (map[string]string)(*s)
+	return *s.values
 }
 
 func (s *stringMapValue) String() string {
-	return fmt.Sprintf("%s", map[string]string(*s))
+	return fmt.Sprintf("%s", *s.values)
 }
 
 func (s *stringMapValue) IsCumulative() bool {
@@ -186,7 +208,7 @@ func (s *stringMapValue) IsCumulative() bool {
 }
 
 func (s *stringMapValue) Reset() {
-	*s = map[string]string{}
+	*s.values = map[string]string{}
 }
 
 // -- existingFile Value
