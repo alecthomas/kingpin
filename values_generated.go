@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net"
+	"net/url"
 	"regexp"
 	"strconv"
 	"time"
@@ -149,6 +150,49 @@ func (p *Clause) IPListVar(target *[]net.IP, options ...AccumulatorOption) {
 	}))
 }
 
+// -- bool Value
+type negatableBoolValue struct{ v *bool }
+
+func newNegatableBoolValue(p *bool) *negatableBoolValue {
+	return &negatableBoolValue{p}
+}
+
+func (f *negatableBoolValue) Set(s string) error {
+	v, err := strconv.ParseBool(s)
+	if err == nil {
+		*f.v = (bool)(v)
+	}
+	return err
+}
+
+func (f *negatableBoolValue) Get() interface{} { return (bool)(*f.v) }
+
+func (f *negatableBoolValue) String() string { return fmt.Sprintf("%v", *f.v) }
+
+// NegatableBool parses the next command-line value as bool.
+func (p *Clause) NegatableBool() (target *bool) {
+	target = new(bool)
+	p.NegatableBoolVar(target)
+	return
+}
+
+func (p *Clause) NegatableBoolVar(target *bool) {
+	p.SetValue(newNegatableBoolValue(target))
+}
+
+// NegatableBoolList accumulates bool values into a slice.
+func (p *Clause) NegatableBoolList(options ...AccumulatorOption) (target *[]bool) {
+	target = new([]bool)
+	p.NegatableBoolListVar(target, options...)
+	return
+}
+
+func (p *Clause) NegatableBoolListVar(target *[]bool, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
+		return newNegatableBoolValue(v.(*bool))
+	}))
+}
+
 // -- *regexp.Regexp Value
 type regexpValue struct{ v **regexp.Regexp }
 
@@ -192,6 +236,49 @@ func (p *Clause) RegexpListVar(target *[]*regexp.Regexp, options ...AccumulatorO
 	}))
 }
 
+// -- *url.URL Value
+type uRLValue struct{ v **url.URL }
+
+func newURLValue(p **url.URL) *uRLValue {
+	return &uRLValue{p}
+}
+
+func (f *uRLValue) Set(s string) error {
+	v, err := url.Parse(s)
+	if err == nil {
+		*f.v = (*url.URL)(v)
+	}
+	return err
+}
+
+func (f *uRLValue) Get() interface{} { return (*url.URL)(*f.v) }
+
+func (f *uRLValue) String() string { return fmt.Sprintf("%v", *f.v) }
+
+// URL parses the next command-line value as *url.URL.
+func (p *Clause) URL() (target **url.URL) {
+	target = new(*url.URL)
+	p.URLVar(target)
+	return
+}
+
+func (p *Clause) URLVar(target **url.URL) {
+	p.SetValue(newURLValue(target))
+}
+
+// URLList accumulates *url.URL values into a slice.
+func (p *Clause) URLList(options ...AccumulatorOption) (target *[]*url.URL) {
+	target = new([]*url.URL)
+	p.URLListVar(target, options...)
+	return
+}
+
+func (p *Clause) URLListVar(target *[]*url.URL, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
+		return newURLValue(v.(**url.URL))
+	}))
+}
+
 // -- bool Value
 type boolValue struct{ v *bool }
 
@@ -232,49 +319,6 @@ func (p *Clause) BoolList(options ...AccumulatorOption) (target *[]bool) {
 func (p *Clause) BoolListVar(target *[]bool, options ...AccumulatorOption) {
 	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newBoolValue(v.(*bool))
-	}))
-}
-
-// -- bool Value
-type negatableBoolValue struct{ v *bool }
-
-func newNegatableBoolValue(p *bool) *negatableBoolValue {
-	return &negatableBoolValue{p}
-}
-
-func (f *negatableBoolValue) Set(s string) error {
-	v, err := strconv.ParseBool(s)
-	if err == nil {
-		*f.v = (bool)(v)
-	}
-	return err
-}
-
-func (f *negatableBoolValue) Get() interface{} { return (bool)(*f.v) }
-
-func (f *negatableBoolValue) String() string { return fmt.Sprintf("%v", *f.v) }
-
-// NegatableBool parses the next command-line value as bool.
-func (p *Clause) NegatableBool() (target *bool) {
-	target = new(bool)
-	p.NegatableBoolVar(target)
-	return
-}
-
-func (p *Clause) NegatableBoolVar(target *bool) {
-	p.SetValue(newNegatableBoolValue(target))
-}
-
-// NegatableBoolList accumulates bool values into a slice.
-func (p *Clause) NegatableBoolList(options ...AccumulatorOption) (target *[]bool) {
-	target = new([]bool)
-	p.NegatableBoolListVar(target, options...)
-	return
-}
-
-func (p *Clause) NegatableBoolListVar(target *[]bool, options ...AccumulatorOption) {
-	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
-		return newNegatableBoolValue(v.(*bool))
 	}))
 }
 

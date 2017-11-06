@@ -5,7 +5,6 @@ package kingpin
 import (
 	"fmt"
 	"net"
-	"net/url"
 	"os"
 	"reflect"
 	"regexp"
@@ -65,11 +64,19 @@ type accumulatorOptions struct {
 	separator string
 }
 
-func newAccumulatorOptions(options ...AccumulatorOption) (out accumulatorOptions) {
-	for _, option := range options {
-		option(&out)
+func (a *accumulatorOptions) split(value string) []string {
+	if a.separator == "" {
+		return []string{value}
 	}
-	return
+	return strings.Split(value, a.separator)
+}
+
+func newAccumulatorOptions(options ...AccumulatorOption) *accumulatorOptions {
+	out := &accumulatorOptions{}
+	for _, option := range options {
+		option(out)
+	}
+	return out
 }
 
 type AccumulatorOption func(a *accumulatorOptions)
@@ -111,7 +118,7 @@ func newAccumulator(slice interface{}, options []AccumulatorOption, element func
 		element:            element,
 		typ:                typ.Elem().Elem(),
 		slice:              reflect.ValueOf(slice),
-		accumulatorOptions: newAccumulatorOptions(options...),
+		accumulatorOptions: *newAccumulatorOptions(options...),
 	}
 }
 
@@ -172,7 +179,7 @@ type stringMapValue struct {
 func newStringMapValue(p *map[string]string, options ...AccumulatorOption) *stringMapValue {
 	return &stringMapValue{
 		values:             p,
-		accumulatorOptions: newAccumulatorOptions(options...),
+		accumulatorOptions: *newAccumulatorOptions(options...),
 	}
 }
 
@@ -269,63 +276,6 @@ func (i *ipValue) String() string {
 	return (*net.IP)(i).String()
 }
 
-// -- url.URL Value
-type urlValue struct {
-	u **url.URL
-}
-
-func newURLValue(p **url.URL) *urlValue {
-	return &urlValue{p}
-}
-
-func (u *urlValue) Set(value string) error {
-	url, err := url.Parse(value)
-	if err != nil {
-		return TError("invalid URL: {{.Arg0}}", V{"Arg0": err})
-	}
-	*u.u = url
-	return nil
-}
-
-func (u *urlValue) Get() interface{} {
-	return (*url.URL)(*u.u)
-}
-
-func (u *urlValue) String() string {
-	if *u.u == nil {
-		return T("<nil>")
-	}
-	return (*u.u).String()
-}
-
-// -- []*url.URL Value
-type urlListValue []*url.URL
-
-func newURLListValue(p *[]*url.URL) *urlListValue {
-	return (*urlListValue)(p)
-}
-
-func (u *urlListValue) Set(value string) error {
-	url, err := url.Parse(value)
-	if err != nil {
-		return TError("invalid URL: {{.Arg0}}", V{"Arg0": err})
-	}
-	*u = append(*u, url)
-	return nil
-}
-
-func (u *urlListValue) Get() interface{} {
-	return ([]*url.URL)(*u)
-}
-
-func (u *urlListValue) String() string {
-	out := []string{}
-	for _, url := range *u {
-		out = append(out, url.String())
-	}
-	return strings.Join(out, ",")
-}
-
 // A flag whose value must be in a set of options.
 type enumValue struct {
 	value   *string
@@ -361,6 +311,7 @@ func (e *enumValue) Get() interface{} {
 type enumsValue struct {
 	value   *[]string
 	options []string
+	accumulatorOptions
 }
 
 func newEnumsFlag(target *[]string, options ...string) *enumsValue {
@@ -371,13 +322,17 @@ func newEnumsFlag(target *[]string, options ...string) *enumsValue {
 }
 
 func (e *enumsValue) Set(value string) error {
-	for _, v := range e.options {
-		if v == value {
-			*e.value = append(*e.value, value)
-			return nil
+nextValue:
+	for _, v := range e.split(value) {
+		for _, o := range e.options {
+			if o == v {
+				*e.value = append(*e.value, v)
+				continue nextValue
+			}
 		}
+		return TError("enum value must be one of {{.Arg0}}, got '{{.Arg1}}'", V{"Arg0": strings.Join(e.options, T(",")), "Arg1": v})
 	}
-	return TError("enum value must be one of {{.Arg0}}, got '{{.Arg1}}'", V{"Arg0": strings.Join(e.options, T(",")), "Arg1": value})
+	return nil
 }
 
 func (e *enumsValue) Get() interface{} {

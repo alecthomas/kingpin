@@ -2,7 +2,6 @@ package kingpin
 
 import (
 	"net"
-	"net/url"
 
 	"github.com/alecthomas/units"
 )
@@ -253,13 +252,6 @@ func (c *Clause) ExistingFileOrDir() (target *string) {
 	return
 }
 
-// URL provides a valid, parsed url.URL.
-func (c *Clause) URL() (target **url.URL) {
-	target = new(*url.URL)
-	c.URLVar(target)
-	return
-}
-
 // Float sets the parser to a float64 parser.
 func (c *Clause) Float() (target *float64) {
 	return c.Float64()
@@ -288,23 +280,6 @@ func (c *Clause) ExistingDirVar(target *string) {
 // ExistingDir sets the parser to one that requires and returns an existing directory.
 func (c *Clause) ExistingFileOrDirVar(target *string) {
 	c.SetValue(newExistingFileOrDirValue(target))
-}
-
-// URL provides a valid, parsed url.URL.
-func (c *Clause) URLVar(target **url.URL) {
-	c.SetValue(newURLValue(target))
-}
-
-// URLList provides a parsed list of url.URL values.
-func (c *Clause) URLList() (target *[]*url.URL) {
-	target = new([]*url.URL)
-	c.URLListVar(target)
-	return
-}
-
-// URLListVar provides a parsed list of url.URL values.
-func (c *Clause) URLListVar(target *[]*url.URL) {
-	c.SetValue(newURLListValue(target))
 }
 
 // Enum allows a value from a set of options.
