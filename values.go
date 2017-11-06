@@ -61,10 +61,20 @@ type cumulativeValue interface {
 	IsCumulative() bool
 }
 
+type AccumulatorOption func(a *accumulator)
+
+// Separator configures an accumulating value to split on this value.
+func Separator(separator string) AccumulatorOption {
+	return func(a *accumulator) {
+		a.separator = separator
+	}
+}
+
 type accumulator struct {
-	element func(value interface{}) Value
-	typ     reflect.Type
-	slice   reflect.Value
+	element   func(value interface{}) Value
+	typ       reflect.Type
+	slice     reflect.Value
+	separator string
 }
 
 func isBoolFlag(f Value) bool {
@@ -81,16 +91,20 @@ func isBoolFlag(f Value) bool {
 // newAccumulator(&target, func (value interface{}) Value {
 //   return newStringValue(value.(*string))
 // })
-func newAccumulator(slice interface{}, element func(value interface{}) Value) *accumulator {
+func newAccumulator(slice interface{}, options []AccumulatorOption, element func(value interface{}) Value) *accumulator {
 	typ := reflect.TypeOf(slice)
 	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Slice {
 		panic(T("expected a pointer to a slice"))
 	}
-	return &accumulator{
+	a := &accumulator{
 		element: element,
 		typ:     typ.Elem().Elem(),
 		slice:   reflect.ValueOf(slice),
 	}
+	for _, option := range options {
+		option(a)
+	}
+	return a
 }
 
 func (a *accumulator) String() string {
@@ -103,12 +117,20 @@ func (a *accumulator) String() string {
 }
 
 func (a *accumulator) Set(value string) error {
-	e := reflect.New(a.typ)
-	if err := a.element(e.Interface()).Set(value); err != nil {
-		return err
+	values := []string{}
+	if a.separator == "" {
+		values = append(values, value)
+	} else {
+		values = append(values, strings.Split(value, a.separator)...)
 	}
-	slice := reflect.Append(a.slice.Elem(), e.Elem())
-	a.slice.Elem().Set(slice)
+	for _, v := range values {
+		e := reflect.New(a.typ)
+		if err := a.element(e.Interface()).Set(v); err != nil {
+			return err
+		}
+		slice := reflect.Append(a.slice.Elem(), e.Elem())
+		a.slice.Elem().Set(slice)
+	}
 	return nil
 }
 

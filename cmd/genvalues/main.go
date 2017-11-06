@@ -52,14 +52,14 @@ func (p *Clause) {{.|Name}}Var(target *{{.Type}}) {
 {{end}}
 {{if not .NoPlural}}
 // {{.|Plural}} accumulates {{.Type}} values into a slice.
-func (p *Clause) {{.|Plural}}() (target *[]{{.Type}}) {
+func (p *Clause) {{.|Plural}}(options...AccumulatorOption) (target *[]{{.Type}}) {
 	target = new([]{{.Type}})
-	p.{{.|Plural}}Var(target)
+	p.{{.|Plural}}Var(target, options...)
 	return
 }
 
-func (p *Clause) {{.|Plural}}Var(target *[]{{.Type}}) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) {{.|Plural}}Var(target *[]{{.Type}}, options...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return new{{.|Name}}Value(v.(*{{.Type}}))
 	}))
 }

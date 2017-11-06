@@ -10,11 +10,22 @@ import (
 
 func TestAccumulatorStrings(t *testing.T) {
 	target := []string{}
-	acc := newAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
+	acc := newAccumulator(&target, nil, func(v interface{}) Value { return newStringValue(v.(*string)) })
 	acc.Set("a")
 	assert.Equal(t, []string{"a"}, target)
 	acc.Set("b")
 	assert.Equal(t, []string{"a", "b"}, target)
+}
+
+func TestAccumulatorSeparator(t *testing.T) {
+	target := []string{}
+	acc := newAccumulator(&target, []AccumulatorOption{Separator(",")}, func(v interface{}) Value {
+		return newStringValue(v.(*string))
+	})
+	acc.Set("a,b")
+	assert.Equal(t, []string{"a", "b"}, target)
+	acc.Set("c,d")
+	assert.Equal(t, []string{"a", "b", "c", "d"}, target)
 }
 
 func TestStrings(t *testing.T) {

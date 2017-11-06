@@ -42,53 +42,53 @@ func (p *Clause) DurationVar(target *time.Duration) {
 }
 
 // DurationList accumulates time.Duration values into a slice.
-func (p *Clause) DurationList() (target *[]time.Duration) {
+func (p *Clause) DurationList(options ...AccumulatorOption) (target *[]time.Duration) {
 	target = new([]time.Duration)
-	p.DurationListVar(target)
+	p.DurationListVar(target, options...)
 	return
 }
 
-func (p *Clause) DurationListVar(target *[]time.Duration) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) DurationListVar(target *[]time.Duration, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newDurationValue(v.(*time.Duration))
 	}))
 }
 
 // ExistingDirs accumulates string values into a slice.
-func (p *Clause) ExistingDirs() (target *[]string) {
+func (p *Clause) ExistingDirs(options ...AccumulatorOption) (target *[]string) {
 	target = new([]string)
-	p.ExistingDirsVar(target)
+	p.ExistingDirsVar(target, options...)
 	return
 }
 
-func (p *Clause) ExistingDirsVar(target *[]string) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) ExistingDirsVar(target *[]string, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newExistingDirValue(v.(*string))
 	}))
 }
 
 // ExistingFiles accumulates string values into a slice.
-func (p *Clause) ExistingFiles() (target *[]string) {
+func (p *Clause) ExistingFiles(options ...AccumulatorOption) (target *[]string) {
 	target = new([]string)
-	p.ExistingFilesVar(target)
+	p.ExistingFilesVar(target, options...)
 	return
 }
 
-func (p *Clause) ExistingFilesVar(target *[]string) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) ExistingFilesVar(target *[]string, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newExistingFileValue(v.(*string))
 	}))
 }
 
 // ExistingFilesOrDirs accumulates string values into a slice.
-func (p *Clause) ExistingFilesOrDirs() (target *[]string) {
+func (p *Clause) ExistingFilesOrDirs(options ...AccumulatorOption) (target *[]string) {
 	target = new([]string)
-	p.ExistingFilesOrDirsVar(target)
+	p.ExistingFilesOrDirsVar(target, options...)
 	return
 }
 
-func (p *Clause) ExistingFilesOrDirsVar(target *[]string) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) ExistingFilesOrDirsVar(target *[]string, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newExistingFileOrDirValue(v.(*string))
 	}))
 }
@@ -124,27 +124,27 @@ func (p *Clause) HexBytesVar(target *[]byte) {
 }
 
 // HexBytesList accumulates []byte values into a slice.
-func (p *Clause) HexBytesList() (target *[][]byte) {
+func (p *Clause) HexBytesList(options ...AccumulatorOption) (target *[][]byte) {
 	target = new([][]byte)
-	p.HexBytesListVar(target)
+	p.HexBytesListVar(target, options...)
 	return
 }
 
-func (p *Clause) HexBytesListVar(target *[][]byte) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) HexBytesListVar(target *[][]byte, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newHexBytesValue(v.(*[]byte))
 	}))
 }
 
 // IPList accumulates net.IP values into a slice.
-func (p *Clause) IPList() (target *[]net.IP) {
+func (p *Clause) IPList(options ...AccumulatorOption) (target *[]net.IP) {
 	target = new([]net.IP)
-	p.IPListVar(target)
+	p.IPListVar(target, options...)
 	return
 }
 
-func (p *Clause) IPListVar(target *[]net.IP) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) IPListVar(target *[]net.IP, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newIPValue(v.(*net.IP))
 	}))
 }
@@ -180,14 +180,14 @@ func (p *Clause) RegexpVar(target **regexp.Regexp) {
 }
 
 // RegexpList accumulates *regexp.Regexp values into a slice.
-func (p *Clause) RegexpList() (target *[]*regexp.Regexp) {
+func (p *Clause) RegexpList(options ...AccumulatorOption) (target *[]*regexp.Regexp) {
 	target = new([]*regexp.Regexp)
-	p.RegexpListVar(target)
+	p.RegexpListVar(target, options...)
 	return
 }
 
-func (p *Clause) RegexpListVar(target *[]*regexp.Regexp) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) RegexpListVar(target *[]*regexp.Regexp, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newRegexpValue(v.(**regexp.Regexp))
 	}))
 }
@@ -223,14 +223,14 @@ func (p *Clause) BoolVar(target *bool) {
 }
 
 // BoolList accumulates bool values into a slice.
-func (p *Clause) BoolList() (target *[]bool) {
+func (p *Clause) BoolList(options ...AccumulatorOption) (target *[]bool) {
 	target = new([]bool)
-	p.BoolListVar(target)
+	p.BoolListVar(target, options...)
 	return
 }
 
-func (p *Clause) BoolListVar(target *[]bool) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) BoolListVar(target *[]bool, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newBoolValue(v.(*bool))
 	}))
 }
@@ -266,14 +266,14 @@ func (p *Clause) NegatableBoolVar(target *bool) {
 }
 
 // NegatableBoolList accumulates bool values into a slice.
-func (p *Clause) NegatableBoolList() (target *[]bool) {
+func (p *Clause) NegatableBoolList(options ...AccumulatorOption) (target *[]bool) {
 	target = new([]bool)
-	p.NegatableBoolListVar(target)
+	p.NegatableBoolListVar(target, options...)
 	return
 }
 
-func (p *Clause) NegatableBoolListVar(target *[]bool) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) NegatableBoolListVar(target *[]bool, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newNegatableBoolValue(v.(*bool))
 	}))
 }
@@ -309,14 +309,14 @@ func (p *Clause) Float32Var(target *float32) {
 }
 
 // Float32List accumulates float32 values into a slice.
-func (p *Clause) Float32List() (target *[]float32) {
+func (p *Clause) Float32List(options ...AccumulatorOption) (target *[]float32) {
 	target = new([]float32)
-	p.Float32ListVar(target)
+	p.Float32ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Float32ListVar(target *[]float32) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Float32ListVar(target *[]float32, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newFloat32Value(v.(*float32))
 	}))
 }
@@ -352,14 +352,14 @@ func (p *Clause) Float64Var(target *float64) {
 }
 
 // Float64List accumulates float64 values into a slice.
-func (p *Clause) Float64List() (target *[]float64) {
+func (p *Clause) Float64List(options ...AccumulatorOption) (target *[]float64) {
 	target = new([]float64)
-	p.Float64ListVar(target)
+	p.Float64ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Float64ListVar(target *[]float64) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Float64ListVar(target *[]float64, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newFloat64Value(v.(*float64))
 	}))
 }
@@ -395,14 +395,14 @@ func (p *Clause) IntVar(target *int) {
 }
 
 // Ints accumulates int values into a slice.
-func (p *Clause) Ints() (target *[]int) {
+func (p *Clause) Ints(options ...AccumulatorOption) (target *[]int) {
 	target = new([]int)
-	p.IntsVar(target)
+	p.IntsVar(target, options...)
 	return
 }
 
-func (p *Clause) IntsVar(target *[]int) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) IntsVar(target *[]int, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newIntValue(v.(*int))
 	}))
 }
@@ -438,14 +438,14 @@ func (p *Clause) Int16Var(target *int16) {
 }
 
 // Int16List accumulates int16 values into a slice.
-func (p *Clause) Int16List() (target *[]int16) {
+func (p *Clause) Int16List(options ...AccumulatorOption) (target *[]int16) {
 	target = new([]int16)
-	p.Int16ListVar(target)
+	p.Int16ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Int16ListVar(target *[]int16) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Int16ListVar(target *[]int16, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newInt16Value(v.(*int16))
 	}))
 }
@@ -481,14 +481,14 @@ func (p *Clause) Int32Var(target *int32) {
 }
 
 // Int32List accumulates int32 values into a slice.
-func (p *Clause) Int32List() (target *[]int32) {
+func (p *Clause) Int32List(options ...AccumulatorOption) (target *[]int32) {
 	target = new([]int32)
-	p.Int32ListVar(target)
+	p.Int32ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Int32ListVar(target *[]int32) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Int32ListVar(target *[]int32, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newInt32Value(v.(*int32))
 	}))
 }
@@ -524,14 +524,14 @@ func (p *Clause) Int64Var(target *int64) {
 }
 
 // Int64List accumulates int64 values into a slice.
-func (p *Clause) Int64List() (target *[]int64) {
+func (p *Clause) Int64List(options ...AccumulatorOption) (target *[]int64) {
 	target = new([]int64)
-	p.Int64ListVar(target)
+	p.Int64ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Int64ListVar(target *[]int64) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Int64ListVar(target *[]int64, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newInt64Value(v.(*int64))
 	}))
 }
@@ -567,14 +567,14 @@ func (p *Clause) Int8Var(target *int8) {
 }
 
 // Int8List accumulates int8 values into a slice.
-func (p *Clause) Int8List() (target *[]int8) {
+func (p *Clause) Int8List(options ...AccumulatorOption) (target *[]int8) {
 	target = new([]int8)
-	p.Int8ListVar(target)
+	p.Int8ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Int8ListVar(target *[]int8) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Int8ListVar(target *[]int8, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newInt8Value(v.(*int8))
 	}))
 }
@@ -610,14 +610,14 @@ func (p *Clause) StringVar(target *string) {
 }
 
 // Strings accumulates string values into a slice.
-func (p *Clause) Strings() (target *[]string) {
+func (p *Clause) Strings(options ...AccumulatorOption) (target *[]string) {
 	target = new([]string)
-	p.StringsVar(target)
+	p.StringsVar(target, options...)
 	return
 }
 
-func (p *Clause) StringsVar(target *[]string) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) StringsVar(target *[]string, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newStringValue(v.(*string))
 	}))
 }
@@ -653,14 +653,14 @@ func (p *Clause) UintVar(target *uint) {
 }
 
 // Uints accumulates uint values into a slice.
-func (p *Clause) Uints() (target *[]uint) {
+func (p *Clause) Uints(options ...AccumulatorOption) (target *[]uint) {
 	target = new([]uint)
-	p.UintsVar(target)
+	p.UintsVar(target, options...)
 	return
 }
 
-func (p *Clause) UintsVar(target *[]uint) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) UintsVar(target *[]uint, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newUintValue(v.(*uint))
 	}))
 }
@@ -696,14 +696,14 @@ func (p *Clause) Uint16Var(target *uint16) {
 }
 
 // Uint16List accumulates uint16 values into a slice.
-func (p *Clause) Uint16List() (target *[]uint16) {
+func (p *Clause) Uint16List(options ...AccumulatorOption) (target *[]uint16) {
 	target = new([]uint16)
-	p.Uint16ListVar(target)
+	p.Uint16ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Uint16ListVar(target *[]uint16) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Uint16ListVar(target *[]uint16, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newUint16Value(v.(*uint16))
 	}))
 }
@@ -739,14 +739,14 @@ func (p *Clause) Uint32Var(target *uint32) {
 }
 
 // Uint32List accumulates uint32 values into a slice.
-func (p *Clause) Uint32List() (target *[]uint32) {
+func (p *Clause) Uint32List(options ...AccumulatorOption) (target *[]uint32) {
 	target = new([]uint32)
-	p.Uint32ListVar(target)
+	p.Uint32ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Uint32ListVar(target *[]uint32) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Uint32ListVar(target *[]uint32, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newUint32Value(v.(*uint32))
 	}))
 }
@@ -782,14 +782,14 @@ func (p *Clause) Uint64Var(target *uint64) {
 }
 
 // Uint64List accumulates uint64 values into a slice.
-func (p *Clause) Uint64List() (target *[]uint64) {
+func (p *Clause) Uint64List(options ...AccumulatorOption) (target *[]uint64) {
 	target = new([]uint64)
-	p.Uint64ListVar(target)
+	p.Uint64ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Uint64ListVar(target *[]uint64) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Uint64ListVar(target *[]uint64, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newUint64Value(v.(*uint64))
 	}))
 }
@@ -825,14 +825,14 @@ func (p *Clause) Uint8Var(target *uint8) {
 }
 
 // Uint8List accumulates uint8 values into a slice.
-func (p *Clause) Uint8List() (target *[]uint8) {
+func (p *Clause) Uint8List(options ...AccumulatorOption) (target *[]uint8) {
 	target = new([]uint8)
-	p.Uint8ListVar(target)
+	p.Uint8ListVar(target, options...)
 	return
 }
 
-func (p *Clause) Uint8ListVar(target *[]uint8) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) Uint8ListVar(target *[]uint8, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return newUint8Value(v.(*uint8))
 	}))
 }
