@@ -4,6 +4,9 @@
 
 - [Overview](#overview)
 - [Features](#features)
+- [User-visible changes between v2 and v3](#user-visible-changes-between-v2-and-v3)
+  - [Some flag types have been removed.](#some-flag-types-have-been-removed)
+  - [Semantics around boolean flags have changed.](#semantics-around-boolean-flags-have-changed)
 - [User-visible changes between v1 and v2](#user-visible-changes-between-v1-and-v2)
   - [Flags can be used at any point after their definition.](#flags-can-be-used-at-any-point-after-their-definition)
   - [Short flags can be combined with their parameters](#short-flags-can-be-combined-with-their-parameters)
@@ -81,6 +84,22 @@ contextual help if `--help` is encountered at any point in the command line
 - Short-flag+parameter combining (`-a parm` -> `-aparm`).
 - Read command-line from files (`@<file>`).
 - Automatically generate man pages (`--help-man`).
+- Negatable boolean flags (`--[no-]flag`).
+
+## User-visible changes between v2 and v3
+
+### Some flag types have been removed.
+
+Some flag types had unintended side-effects, or poor usability. For example,
+flags that created/opened files could result in file-descriptor leaks. To avoid
+confusion these have been removed.
+
+### Semantics around boolean flags have changed.
+
+`Bool()` now creates a non-negatable flag.
+
+Use `NegatableBool()` to add a boolean flag that supports both `--flag` and
+`--no-flag`. This will be displayed in the help.
 
 ## User-visible changes between v1 and v2
 

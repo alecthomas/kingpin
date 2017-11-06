@@ -31,7 +31,11 @@ func (f *FlagGroupModel) FlagSummary() string {
 		}
 		if flag.Required {
 			if flag.IsBoolFlag() {
-				out = append(out, fmt.Sprintf("--[no-]%s", flag.Name))
+				if flag.IsNegatable() {
+					out = append(out, fmt.Sprintf("--[no-]%s", flag.Name))
+				} else {
+					out = append(out, fmt.Sprintf("--%s", flag.Name))
+				}
 			} else {
 				out = append(out, fmt.Sprintf("--%s=%s", flag.Name, flag.FormatPlaceHolder()))
 			}
@@ -60,10 +64,12 @@ func (c *ClauseModel) String() string {
 }
 
 func (c *ClauseModel) IsBoolFlag() bool {
-	if fl, ok := c.Value.(boolFlag); ok {
-		return fl.IsBoolFlag()
-	}
-	return false
+	return isBoolFlag(c.Value)
+}
+
+func (c *ClauseModel) IsNegatable() bool {
+	bf, ok := c.Value.(BoolFlag)
+	return ok && bf.BoolFlagIsNegatable()
 }
 
 func (c *ClauseModel) FormatPlaceHolder() string {

@@ -50,6 +50,7 @@ func (p *Clause) {{.|Name}}Var(target *{{.Type}}) {
 }
 
 {{end}}
+{{if not .NoPlural}}
 // {{.|Plural}} accumulates {{.Type}} values into a slice.
 func (p *Clause) {{.|Plural}}() (target *[]{{.Type}}) {
 	target = new([]{{.Type}})
@@ -62,6 +63,7 @@ func (p *Clause) {{.|Plural}}Var(target *[]{{.Type}}) {
 		return new{{.|Name}}Value(v.(*{{.Type}}))
 	}))
 }
+{{end}}
 
 {{end}}
 `
@@ -74,6 +76,7 @@ type Value struct {
 	Parser        string `json:"parser"`
 	Format        string `json:"format"`
 	Plural        string `json:"plural"`
+	NoPlural      bool   `json:"no_plural"`
 	Help          string `json:"help"`
 }
 

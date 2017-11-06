@@ -254,7 +254,7 @@ func (p *ParseContext) Next() *Token {
 		flag, ok := p.flags.short[short]
 		// Not a known short flag, we'll just return it anyway.
 		if !ok {
-		} else if fb, ok := flag.value.(boolFlag); ok && fb.IsBoolFlag() {
+		} else if isBoolFlag(flag.value) {
 			// Bool short flag.
 		} else {
 			// Short flag with combined argument: -fARG

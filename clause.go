@@ -70,12 +70,15 @@ func (c *Clause) UsageActionTemplate(template string) *Clause {
 	return c.UsageAction(&UsageContext{Template: template})
 }
 
+// Action adds a callback action to be executed after the command line is parsed and any
+// non-terminating builtin actions have completed (eg. help, completion, etc.).
 func (c *Clause) Action(action Action) *Clause {
 	c.actions = append(c.actions, action)
 	return c
 }
 
-// PreAction callback executed
+// PreAction adds a callback action to be executed after flag values are parsed but before
+// any other processing, such as help, completion, etc.
 func (c *Clause) PreAction(action Action) *Clause {
 	c.preActions = append(c.preActions, action)
 	return c

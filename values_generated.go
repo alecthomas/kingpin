@@ -235,6 +235,49 @@ func (p *Clause) BoolListVar(target *[]bool) {
 	}))
 }
 
+// -- bool Value
+type negatableBoolValue struct{ v *bool }
+
+func newNegatableBoolValue(p *bool) *negatableBoolValue {
+	return &negatableBoolValue{p}
+}
+
+func (f *negatableBoolValue) Set(s string) error {
+	v, err := strconv.ParseBool(s)
+	if err == nil {
+		*f.v = (bool)(v)
+	}
+	return err
+}
+
+func (f *negatableBoolValue) Get() interface{} { return (bool)(*f.v) }
+
+func (f *negatableBoolValue) String() string { return fmt.Sprintf("%v", *f.v) }
+
+// NegatableBool parses the next command-line value as bool.
+func (p *Clause) NegatableBool() (target *bool) {
+	target = new(bool)
+	p.NegatableBoolVar(target)
+	return
+}
+
+func (p *Clause) NegatableBoolVar(target *bool) {
+	p.SetValue(newNegatableBoolValue(target))
+}
+
+// NegatableBoolList accumulates bool values into a slice.
+func (p *Clause) NegatableBoolList() (target *[]bool) {
+	target = new([]bool)
+	p.NegatableBoolListVar(target)
+	return
+}
+
+func (p *Clause) NegatableBoolListVar(target *[]bool) {
+	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+		return newNegatableBoolValue(v.(*bool))
+	}))
+}
+
 // -- float32 Value
 type float32Value struct{ v *float32 }
 

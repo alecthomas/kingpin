@@ -40,9 +40,17 @@ type Getter interface {
 
 // Optional interface to indicate boolean flags that don't accept a value, and
 // implicitly have a --no-<x> negation counterpart.
+//
+// This is for compatibility with the stdlib.
 type boolFlag interface {
 	Value
 	IsBoolFlag() bool
+}
+
+// BoolFlag is an optional interface to specify that a flag is a boolean flag.
+type BoolFlag interface {
+	// Specify if the flag is negatable (ie. supports both --no-<name> and --name).
+	BoolFlagIsNegatable() bool
 }
 
 // Optional interface for values that cumulatively consume all remaining
@@ -57,6 +65,14 @@ type accumulator struct {
 	element func(value interface{}) Value
 	typ     reflect.Type
 	slice   reflect.Value
+}
+
+func isBoolFlag(f Value) bool {
+	if bf, ok := f.(boolFlag); ok {
+		return bf.IsBoolFlag()
+	}
+	_, ok := f.(BoolFlag)
+	return ok
 }
 
 // Use reflection to accumulate values into a slice.
@@ -112,7 +128,10 @@ func (a *accumulator) Reset() {
 	}
 }
 
-func (b *boolValue) IsBoolFlag() bool { return true }
+func (b *boolValue) BoolFlagIsNegatable() bool { return false }
+
+// -- A boolean flag that can not be negated.
+func (n *negatableBoolValue) BoolFlagIsNegatable() bool { return true }
 
 // -- map[string]string Value
 type stringMapValue map[string]string

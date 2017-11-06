@@ -1,6 +1,7 @@
 package kingpin
 
 import (
+	"bytes"
 	"os"
 	"testing"
 
@@ -15,10 +16,10 @@ func TestBool(t *testing.T) {
 	assert.True(t, *b)
 }
 
-func TestNoBool(t *testing.T) {
+func TestNegatableBool(t *testing.T) {
 	app := newTestApp()
 	f := app.Flag("b", "").Default("true")
-	b := f.Bool()
+	b := f.NegatableBool()
 	_, err := app.Parse([]string{})
 	assert.NoError(t, err)
 	assert.True(t, *b)
@@ -45,6 +46,35 @@ func TestNegativePrefixLongFlag(t *testing.T) {
 	_, err = app.Parse([]string{"--no-comment"})
 	assert.NoError(t, err)
 	assert.False(t, *b)
+}
+
+func TestNonNegatableBoolFlagCanNotBeNegated(t *testing.T) {
+	app := newTestApp()
+	nonNegatable := app.Flag("nonneg", "").Bool()
+
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.False(t, *nonNegatable)
+
+	_, err = app.Parse([]string{"--nonneg"})
+	assert.NoError(t, err)
+	assert.True(t, *nonNegatable)
+
+	_, err = app.Parse([]string{"--no-nonneg"})
+	assert.Error(t, err)
+}
+
+func TestHelpForBoolFlags(t *testing.T) {
+	app := newTestApp()
+	app.Flag("yes", "").Default("true").NegatableBool()
+	app.Flag("no", "").Default("false").NegatableBool()
+	app.Flag("nonneg", "").Bool()
+
+	w := bytes.NewBuffer(nil)
+	app.Writers(w, w).Usage(nil)
+	assert.Contains(t, w.String(), "--[no-]yes")
+	assert.Contains(t, w.String(), "--[no-]no")
+	assert.Contains(t, w.String(), "--nonneg")
 }
 
 func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {

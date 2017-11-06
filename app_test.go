@@ -13,7 +13,9 @@ import (
 )
 
 func newTestApp() *Application {
-	return New("test", "").Terminate(nil)
+	return New("test", "").
+		Terminate(nil).
+		Writers(ioutil.Discard, ioutil.Discard)
 }
 
 func TestCommander(t *testing.T) {

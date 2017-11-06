@@ -12,7 +12,7 @@ func TestFlagPreAction(t *testing.T) {
 	flag := a.Flag("flag", "").PreAction(func(_ *Application, e *ParseElement, c *ParseContext) error {
 		actual = *e.Value
 		return nil
-	}).Bool()
+	}).NegatableBool()
 
 	_, err := a.Parse([]string{})
 	require.NoError(t, err)
@@ -36,7 +36,7 @@ func TestFlagAction(t *testing.T) {
 	flag := a.Flag("flag", "").PreAction(func(_ *Application, e *ParseElement, c *ParseContext) error {
 		actual = *e.Value
 		return nil
-	}).Bool()
+	}).NegatableBool()
 
 	_, err := a.Parse([]string{})
 	require.NoError(t, err)

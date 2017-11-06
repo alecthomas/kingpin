@@ -7,6 +7,7 @@
   {"name": "IP", "type": "net.IP", "no_value_parser": true},
   {"name": "Regexp", "type": "*regexp.Regexp", "parser": "regexp.Compile(s)"},
   {"type": "bool", "parser": "strconv.ParseBool(s)"},
+  {"name": "NegatableBool", "type": "bool", "parser": "strconv.ParseBool(s)"},
   {"type": "float32", "parser": "strconv.ParseFloat(s, 32)"},
   {"type": "float64", "parser": "strconv.ParseFloat(s, 64)"},
   {"type": "int", "parser": "strconv.ParseFloat(s, 64)", "plural": "Ints"},
