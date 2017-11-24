@@ -51,9 +51,9 @@ func New(name, help string) *Application {
 	a.flagGroup = newFlagGroup()
 	a.argGroup = newArgGroup()
 	a.cmdGroup = newCmdGroup(a)
-	a.helpFlag = a.Flag("help", T("Show context-sensitive help.")).Action(func(a *Application, e *ParseElement, c *ParseContext) error {
-		a.UsageForContext(c)
-		a.terminate(0)
+	a.helpFlag = a.Flag("help", T("Show context-sensitive help.")).Action(func(e *ParseElement, c *ParseContext) error {
+		c.Application.UsageForContext(c)
+		c.Application.terminate(0)
 		return nil
 	})
 	a.helpFlag.Bool()
@@ -80,7 +80,7 @@ func (a *Application) Struct(v interface{}) error {
 	return a.fromStruct(nil, v)
 }
 
-func (a *Application) generateBashCompletionScript(_ *Application, e *ParseElement, c *ParseContext) error {
+func (a *Application) generateBashCompletionScript(e *ParseElement, c *ParseContext) error {
 	usageContext := &UsageContext{
 		Template: BashCompletionTemplate,
 	}
@@ -92,7 +92,7 @@ func (a *Application) generateBashCompletionScript(_ *Application, e *ParseEleme
 	return nil
 }
 
-func (a *Application) generateZSHCompletionScript(_ *Application, e *ParseElement, c *ParseContext) error {
+func (a *Application) generateZSHCompletionScript(e *ParseElement, c *ParseContext) error {
 	usageContext := &UsageContext{
 		Template: ZshCompletionTemplate,
 	}
@@ -191,6 +191,7 @@ func (a *Application) parseContext(ignoreDefault bool, args []string) (*ParseCon
 		return nil, err
 	}
 	context := tokenize(args, ignoreDefault, a.buildResolvers())
+	context.Application = a
 	err := parse(context, a)
 	return context, err
 }
@@ -284,7 +285,7 @@ func (a *Application) maybeHelp(context *ParseContext) {
 func (a *Application) Version(version string) *Application {
 	a.version = version
 	a.Flag("version", T("Show application version.")).
-		PreAction(func(*Application, *ParseElement, *ParseContext) error {
+		PreAction(func(*ParseElement, *ParseContext) error {
 			fmt.Fprintln(a.output, version)
 			a.terminate(0)
 			return nil
@@ -324,7 +325,7 @@ func (a *Application) init() error {
 	if a.cmdGroup.have() {
 		var command []string
 		a.helpCommand = a.Command("help", T("Show help.")).
-			PreAction(func(_ *Application, element *ParseElement, context *ParseContext) error {
+			PreAction(func(element *ParseElement, context *ParseContext) error {
 				a.Usage(command)
 				command = []string{}
 				a.terminate(0)
@@ -628,11 +629,11 @@ func (a *Application) applyPreActions(context *ParseContext, dispatch bool) erro
 	if !dispatch {
 		return nil
 	}
-	if err := a.actionMixin.applyPreActions(a, nil, context); err != nil {
+	if err := a.actionMixin.applyPreActions(nil, context); err != nil {
 		return err
 	}
 	for _, element := range context.Elements {
-		if err := a.actionMixin.applyPreActions(a, element, context); err != nil {
+		if err := a.actionMixin.applyPreActions(element, context); err != nil {
 			return err
 		}
 		var applier actionApplier
@@ -644,7 +645,7 @@ func (a *Application) applyPreActions(context *ParseContext, dispatch bool) erro
 		case element.OneOf.Cmd != nil:
 			applier = element.OneOf.Cmd
 		}
-		if err := applier.applyPreActions(a, element, context); err != nil {
+		if err := applier.applyPreActions(element, context); err != nil {
 			return err
 		}
 	}
@@ -652,12 +653,12 @@ func (a *Application) applyPreActions(context *ParseContext, dispatch bool) erro
 }
 
 func (a *Application) applyActions(context *ParseContext) error {
-	if err := a.actionMixin.applyActions(a, nil, context); err != nil {
+	if err := a.actionMixin.applyActions(nil, context); err != nil {
 		return err
 	}
 	// Dispatch to actions.
 	for _, element := range context.Elements {
-		if err := a.actionMixin.applyActions(a, element, context); err != nil {
+		if err := a.actionMixin.applyActions(element, context); err != nil {
 			return err
 		}
 		var applier actionApplier
@@ -669,7 +670,7 @@ func (a *Application) applyActions(context *ParseContext) error {
 		case element.OneOf.Cmd != nil:
 			applier = element.OneOf.Cmd
 		}
-		if err := applier.applyActions(a, element, context); err != nil {
+		if err := applier.applyActions(element, context); err != nil {
 			return err
 		}
 	}

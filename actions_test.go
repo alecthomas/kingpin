@@ -9,7 +9,7 @@ import (
 func TestFlagPreAction(t *testing.T) {
 	a := newTestApp()
 	actual := ""
-	flag := a.Flag("flag", "").PreAction(func(_ *Application, e *ParseElement, c *ParseContext) error {
+	flag := a.Flag("flag", "").PreAction(func(e *ParseElement, c *ParseContext) error {
 		actual = *e.Value
 		return nil
 	}).NegatableBool()
@@ -33,7 +33,7 @@ func TestFlagPreAction(t *testing.T) {
 func TestFlagAction(t *testing.T) {
 	a := newTestApp()
 	actual := ""
-	flag := a.Flag("flag", "").PreAction(func(_ *Application, e *ParseElement, c *ParseContext) error {
+	flag := a.Flag("flag", "").PreAction(func(e *ParseElement, c *ParseContext) error {
 		actual = *e.Value
 		return nil
 	}).NegatableBool()

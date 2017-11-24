@@ -118,6 +118,7 @@ func (p ParseElements) ArgMap() map[string]*ParseElement {
 // *ArgClause and *CmdClause values and their corresponding arguments (if
 // any).
 type ParseContext struct {
+	Application     *Application // May be nil in tests.
 	SelectedCommand *CmdClause
 	resolvers       []Resolver
 	ignoreDefault   bool

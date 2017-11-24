@@ -57,9 +57,9 @@ func (c *Clause) Help(help string) *Clause {
 
 // UsageAction adds a PreAction() that will display the given UsageContext.
 func (c *Clause) UsageAction(context *UsageContext) *Clause {
-	c.PreAction(func(a *Application, e *ParseElement, c *ParseContext) error {
-		a.UsageForContextWithTemplate(context, c)
-		a.terminate(0)
+	c.PreAction(func(e *ParseElement, c *ParseContext) error {
+		c.Application.UsageForContextWithTemplate(context, c)
+		c.Application.terminate(0)
 		return nil
 	})
 	return c

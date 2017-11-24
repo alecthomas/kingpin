@@ -134,7 +134,7 @@ type onActionStructTest struct {
 	called int
 }
 
-func (o *onActionStructTest) OnDebug(app *Application, element *ParseElement, context *ParseContext) error {
+func (o *onActionStructTest) OnDebug(element *ParseElement, context *ParseContext) error {
 	o.called++
 	return nil
 }
