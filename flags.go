@@ -127,6 +127,7 @@ loop:
 					if !flag.isMimicBoolFlag() {
 						return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
 					}
+					flag.isSetByUser()
 					if len(flag.defaultValues) > 0 {
 						defaultValue = flag.defaultValues[0]
 					}
@@ -159,6 +160,7 @@ type FlagClause struct {
 	placeholder   string
 	hidden        bool
 	asBool        bool
+	setByUser     *bool
 }
 
 func newFlag(name, help string) *FlagClause {
@@ -198,6 +200,12 @@ func (f *FlagClause) setDefault() error {
 
 func (f *FlagClause) isMimicBoolFlag() bool {
 	return f.asBool
+}
+
+func (f *FlagClause) isSetByUser() {
+	if f.setByUser != nil {
+		*f.setByUser = true
+	}
 }
 
 func (f *FlagClause) needsValue() bool {
@@ -258,8 +266,9 @@ func (a *FlagClause) Enum(options ...string) (target *string) {
 }
 
 // AsBool allow non bool flag behave as bool if no arguments given for this flag.
-func (f *FlagClause) AsBool() *FlagClause {
+func (f *FlagClause) AsBool(setByUserFlag *bool) *FlagClause {
 	f.asBool = true
+	f.setByUser = setByUserFlag
 	return f
 }
 
