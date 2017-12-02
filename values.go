@@ -79,6 +79,9 @@ func newAccumulatorOptions(options ...AccumulatorOption) *accumulatorOptions {
 	return out
 }
 
+// AccumulatorOption are used to modify the behaviour of values that accumulate into slices, maps, etc.
+//
+// eg. Separator(',')
 type AccumulatorOption func(a *accumulatorOptions)
 
 // Separator configures an accumulating value to split on this value.
