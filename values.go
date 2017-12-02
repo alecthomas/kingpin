@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/alecthomas/units"
 )
@@ -409,3 +410,51 @@ func (c *counterValue) IsBoolFlag() bool   { return true }
 func (c *counterValue) String() string     { return fmt.Sprintf("%d", *c) }
 func (c *counterValue) IsCumulative() bool { return true }
 func (c *counterValue) Reset()             { *c = 0 }
+
+// -- time.Time Value
+type timeValue struct {
+	format string
+	v      *time.Time
+}
+
+func newTimeValue(format string, p *time.Time) *timeValue {
+	return &timeValue{format, p}
+}
+
+func (f *timeValue) Set(s string) error {
+	v, err := time.Parse(f.format, s)
+	if err == nil {
+		*f.v = (time.Time)(v)
+	}
+	return err
+}
+
+func (f *timeValue) Get() interface{} { return (time.Time)(*f.v) }
+
+func (f *timeValue) String() string { return f.v.String() }
+
+// Time parses a time.Time.
+//
+// Format is the layout as specified at https://golang.org/pkg/time/#Parse
+func (p *Clause) Time(format string) (target *time.Time) {
+	target = new(time.Time)
+	p.TimeVar(format, target)
+	return
+}
+
+func (p *Clause) TimeVar(format string, target *time.Time) {
+	p.SetValue(newTimeValue(format, target))
+}
+
+// TimeList accumulates time.Time values into a slice.
+func (p *Clause) TimeList(format string, options ...AccumulatorOption) (target *[]time.Time) {
+	target = new([]time.Time)
+	p.TimeListVar(format, target, options...)
+	return
+}
+
+func (p *Clause) TimeListVar(format string, target *[]time.Time, options ...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
+		return newTimeValue(format, v.(*time.Time))
+	}))
+}
