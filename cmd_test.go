@@ -335,7 +335,7 @@ func TestDefaultCmdCompletion(t *testing.T) {
 	cmd2Sub2Sub1.Arg("cmd2-sub2-sub1-arg2", "").HintOptions("cmd2-sub2-sub1-arg2").String()
 
 	// Without args, should get:
-	//   - root cmds (incuding implicit "help")
+	//   - root cmds (including implicit "help")
 	//   - thread of default cmds
 	//   - first arg hints for the final default cmd
 	assert.Equal(t, []string{"cmd1", "cmd2", "cmd2-sub1", "cmd2-sub2", "cmd2-sub2-sub1", "cmd2-sub2-sub1-arg1", "help"}, complete(t, app))
