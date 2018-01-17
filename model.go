@@ -16,7 +16,7 @@ func (f *FlagGroupModel) FlagSummary() string {
 	out := []string{}
 	count := 0
 	for _, flag := range f.Flags {
-		if flag.Name != "help" {
+		if !strings.HasPrefix(flag.Name, "help") && !strings.HasPrefix(flag.Name, "completion") {
 			count++
 		}
 		if flag.Required {
