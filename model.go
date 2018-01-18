@@ -15,10 +15,22 @@ type FlagGroupModel struct {
 func (f *FlagGroupModel) FlagSummary() string {
 	out := []string{}
 	count := 0
+
 	for _, flag := range f.Flags {
-		if !strings.HasPrefix(flag.Name, "help") && !strings.HasPrefix(flag.Name, "completion") {
+
+		ignoreInCount := map[string]bool{
+			"help":                   true,
+			"help-long":              true,
+			"help-man":               true,
+			"completion-bash":        true,
+			"completion-script-bash": true,
+			"completion-script-zsh":  true,
+		}
+
+		if !ignoreInCount[flag.Name] {
 			count++
 		}
+
 		if flag.Required {
 			if flag.IsBoolFlag() {
 				out = append(out, fmt.Sprintf("--[no-]%s", flag.Name))
