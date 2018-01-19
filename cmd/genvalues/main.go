@@ -50,18 +50,20 @@ func (p *Clause) {{.|Name}}Var(target *{{.Type}}) {
 }
 
 {{end}}
+{{if not .NoPlural}}
 // {{.|Plural}} accumulates {{.Type}} values into a slice.
-func (p *Clause) {{.|Plural}}() (target *[]{{.Type}}) {
+func (p *Clause) {{.|Plural}}(options...AccumulatorOption) (target *[]{{.Type}}) {
 	target = new([]{{.Type}})
-	p.{{.|Plural}}Var(target)
+	p.{{.|Plural}}Var(target, options...)
 	return
 }
 
-func (p *Clause) {{.|Plural}}Var(target *[]{{.Type}}) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+func (p *Clause) {{.|Plural}}Var(target *[]{{.Type}}, options...AccumulatorOption) {
+	p.SetValue(newAccumulator(target, options, func(v interface{}) Value {
 		return new{{.|Name}}Value(v.(*{{.Type}}))
 	}))
 }
+{{end}}
 
 {{end}}
 `
@@ -74,6 +76,7 @@ type Value struct {
 	Parser        string `json:"parser"`
 	Format        string `json:"format"`
 	Plural        string `json:"plural"`
+	NoPlural      bool   `json:"no_plural"`
 	Help          string `json:"help"`
 }
 
@@ -105,7 +108,7 @@ func main() {
 			if v.Format != "" {
 				return v.Format
 			}
-			return "fmt.Sprintf(\"%v\", *f)"
+			return "fmt.Sprintf(\"%v\", *f.v)"
 		},
 		"ValueName": func(v *Value) string {
 			name := valueName(v)

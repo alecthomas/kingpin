@@ -38,7 +38,7 @@ func TestNestedCommands(t *testing.T) {
 	sub2.Flag("sub2", "")
 	sub2.Command("sub2sub1", "")
 
-	context := tokenize([]string{"sub1", "sub1sub1", "sub1sub1end"}, false)
+	context := tokenize([]string{"sub1", "sub1sub1", "sub1sub1end"}, false, nil)
 	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, context.EOL())
@@ -50,7 +50,7 @@ func TestNestedCommandsWithArgs(t *testing.T) {
 	cmd := app.Command("a", "").Command("b", "")
 	a := cmd.Arg("a", "").String()
 	b := cmd.Arg("b", "").String()
-	context := tokenize([]string{"a", "b", "c", "d"}, false)
+	context := tokenize([]string{"a", "b", "c", "d"}, false, nil)
 	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, context.EOL())
@@ -66,7 +66,7 @@ func TestNestedCommandsWithFlags(t *testing.T) {
 	b := cmd.Flag("bbb", "").Short('b').String()
 	err := app.init()
 	assert.NoError(t, err)
-	context := tokenize(strings.Fields("a b --aaa x -b x"), false)
+	context := tokenize(strings.Fields("a b --aaa x -b x"), false, nil)
 	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, context.EOL())
@@ -85,7 +85,7 @@ func TestNestedCommandWithMergedFlags(t *testing.T) {
 	cmd00f0 := cmd00.Flag("aaflag", "").Bool()
 	err := app.init()
 	assert.NoError(t, err)
-	context := tokenize(strings.Fields("a aa --aflag --aaflag"), false)
+	context := tokenize(strings.Fields("a aa --aflag --aaflag"), false, nil)
 	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, *cmd0f0)
@@ -112,7 +112,7 @@ func TestNestedCommandWithArgAndMergedFlags(t *testing.T) {
 	cmd00f0 := cmd00.Flag("aaflag", "").Bool()
 	err := app.init()
 	assert.NoError(t, err)
-	context := tokenize(strings.Fields("a aa hello --aflag --aaflag"), false)
+	context := tokenize(strings.Fields("a aa hello --aflag --aaflag"), false, nil)
 	selected, err := parseAndExecute(app, context)
 	assert.NoError(t, err)
 	assert.True(t, *cmd0f0)
@@ -352,7 +352,7 @@ func TestDefaultCmdCompletion(t *testing.T) {
 	cmd2Sub2Sub1.Arg("cmd2-sub2-sub1-arg2", "").HintOptions("cmd2-sub2-sub1-arg2").String()
 
 	// Without args, should get:
-	//   - root cmds (incuding implicit "help")
+	//   - root cmds (including implicit "help")
 	//   - thread of default cmds
 	//   - first arg hints for the final default cmd
 	result := complete(t, app)

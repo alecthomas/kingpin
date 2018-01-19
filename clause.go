@@ -1,22 +1,10 @@
 package kingpin
 
 import (
-	"net/url"
-	"os"
-	"regexp"
+	"net"
 
 	"github.com/alecthomas/units"
 )
-
-var (
-	envVarValuesSeparator = "\r?\n"
-	envVarValuesTrimmer   = regexp.MustCompile(envVarValuesSeparator + "$")
-	envVarValuesSplitter  = regexp.MustCompile(envVarValuesSeparator)
-)
-
-type Settings interface {
-	SetValue(value Value)
-}
 
 // A Clause represents a flag or an argument passed by the user.
 type Clause struct {
@@ -62,11 +50,16 @@ func (c *Clause) init() error {
 	return nil
 }
 
+func (c *Clause) Help(help string) *Clause {
+	c.help = help
+	return c
+}
+
 // UsageAction adds a PreAction() that will display the given UsageContext.
 func (c *Clause) UsageAction(context *UsageContext) *Clause {
-	c.PreAction(func(a *Application, e *ParseElement, c *ParseContext) error {
-		a.UsageForContextWithTemplate(context, c)
-		a.terminate(0)
+	c.PreAction(func(e *ParseElement, c *ParseContext) error {
+		c.Application.UsageForContextWithTemplate(context, c)
+		c.Application.terminate(0)
 		return nil
 	})
 	return c
@@ -76,12 +69,15 @@ func (c *Clause) UsageActionTemplate(template string) *Clause {
 	return c.UsageAction(&UsageContext{Template: template})
 }
 
+// Action adds a callback action to be executed after the command line is parsed and any
+// non-terminating builtin actions have completed (eg. help, completion, etc.).
 func (c *Clause) Action(action Action) *Clause {
 	c.actions = append(c.actions, action)
 	return c
 }
 
-// PreAction callback executed
+// PreAction adds a callback action to be executed after flag values are parsed but before
+// any other processing, such as help, completion, etc.
 func (c *Clause) PreAction(action Action) *Clause {
 	c.preActions = append(c.preActions, action)
 	return c
@@ -97,18 +93,6 @@ func (c *Clause) resolveCompletion() Completion {
 	return c.completionsMixin.resolveCompletion()
 }
 
-// HintOptions registers any number of options for the flag to provide completions
-func (c *Clause) HintOptions(options ...string) *Clause {
-	c.userCompletion.addWords(options...)
-	return c
-}
-
-// Default values for this flag. They *must* be parseable by the value of the flag.
-func (c *Clause) Default(values ...string) *Clause {
-	c.defaultValues = values
-	return c
-}
-
 // Envar overrides the default value(s) for a flag from an environment variable,
 // if it is set. Several default values can be provided by using new lines to
 // separate them.
@@ -119,10 +103,37 @@ func (c *Clause) Envar(name string) *Clause {
 }
 
 // NoEnvar forces environment variable defaults to be disabled for this flag.
-// Most useful in conjunction with app.DefaultEnvars().
+// Most useful in conjunction with PrefixedEnvarResolver.
 func (c *Clause) NoEnvar() *Clause {
 	c.envar = ""
 	c.noEnvar = true
+	return c
+}
+
+func (c *Clause) resolveCompletions() []string {
+	var hints []string
+
+	options := c.builtinHintActions
+	if len(c.hintActions) > 0 {
+		// User specified their own hintActions. Use those instead.
+		options = c.hintActions
+	}
+
+	for _, hintAction := range options {
+		hints = append(hints, hintAction()...)
+	}
+	return hints
+}
+
+// HintOptions registers any number of options for the flag to provide completions
+func (c *Clause) HintOptions(options ...string) *Clause {
+	c.userCompletion.addWords(options...)
+	return c
+}
+
+// Default values for this flag. They *must* be parseable by the value of the flag.
+func (c *Clause) Default(values ...string) *Clause {
+	c.defaultValues = values
 	return c
 }
 
@@ -152,9 +163,21 @@ func (c *Clause) Short(name rune) *Clause {
 	return c
 }
 
-func (c *Clause) needsValue() bool {
-	haveDefault := len(c.defaultValues) > 0
-	return c.required && !(haveDefault || c.HasEnvarValue())
+func (c *Clause) needsValue(context *ParseContext) bool {
+	return c.required && !c.canResolve(context)
+}
+
+func (c *Clause) canResolve(context *ParseContext) bool {
+	for _, resolver := range context.resolvers {
+		rvalues, err := resolver.Resolve(c.name, context)
+		if err != nil {
+			return false
+		}
+		if rvalues != nil {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Clause) reset() {
@@ -163,67 +186,44 @@ func (c *Clause) reset() {
 	}
 }
 
-func (c *Clause) setDefault() error {
-	if c.HasEnvarValue() {
-		c.reset()
-		if v, ok := c.value.(cumulativeValue); !ok || !v.IsCumulative() {
-			// Use the value as-is
-			return c.value.Set(c.GetEnvarValue())
+func (c *Clause) setDefault(context *ParseContext) error {
+	var values []string
+	for _, resolver := range context.resolvers {
+		rvalues, err := resolver.Resolve(c.name, context)
+		if err != nil {
+			return err
 		}
-		for _, value := range c.GetSplitEnvarValue() {
+		if rvalues != nil {
+			values = rvalues
+		}
+	}
+
+	if values != nil {
+		c.reset()
+		for _, value := range values {
 			if err := c.value.Set(value); err != nil {
 				return err
 			}
 		}
 		return nil
-	} else if len(c.defaultValues) > 0 {
-		c.reset()
-		for _, defaultValue := range c.defaultValues {
-			if err := c.value.Set(defaultValue); err != nil {
-				return err
-			}
-		}
-		return nil
 	}
-
 	return nil
-}
-
-func (c *Clause) HasEnvarValue() bool {
-	return c.GetEnvarValue() != ""
-}
-
-func (c *Clause) GetEnvarValue() string {
-	if c.noEnvar || c.envar == "" {
-		return ""
-	}
-	return os.Getenv(c.envar)
-}
-
-func (c *Clause) GetSplitEnvarValue() []string {
-	values := make([]string, 0)
-
-	envarValue := c.GetEnvarValue()
-	if envarValue == "" {
-		return values
-	}
-
-	// Split by new line to extract multiple values, if any.
-	trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
-	values = append(values, envVarValuesSplitter.Split(trimmed, -1)...)
-	return values
 }
 
 func (c *Clause) SetValue(value Value) {
 	c.value = value
-	c.setDefault()
 }
 
 // StringMap provides key=value parsing into a map.
-func (c *Clause) StringMap() (target *map[string]string) {
+func (c *Clause) StringMap(options ...AccumulatorOption) (target *map[string]string) {
 	target = &(map[string]string{})
-	c.StringMapVar(target)
+	c.StringMapVar(target, options...)
 	return
+}
+
+// StringMap provides key=value parsing into a map.
+func (c *Clause) StringMapVar(target *map[string]string, options ...AccumulatorOption) {
+	c.SetValue(newStringMapValue(target, options...))
 }
 
 // Bytes parses numeric byte units. eg. 1.5KB
@@ -252,18 +252,6 @@ func (c *Clause) ExistingFileOrDir() (target *string) {
 	target = new(string)
 	c.ExistingFileOrDirVar(target)
 	return
-}
-
-// URL provides a valid, parsed url.URL.
-func (c *Clause) URL() (target **url.URL) {
-	target = new(*url.URL)
-	c.URLVar(target)
-	return
-}
-
-// StringMap provides key=value parsing into a map.
-func (c *Clause) StringMapVar(target *map[string]string) {
-	c.SetValue(newStringMapValue(target))
 }
 
 // Float sets the parser to a float64 parser.
@@ -300,23 +288,6 @@ func (c *Clause) ExistingFileOrDirVar(target *string) {
 	c.SetValue(newExistingFileOrDirValue(target))
 }
 
-// URL provides a valid, parsed url.URL.
-func (c *Clause) URLVar(target **url.URL) {
-	c.SetValue(newURLValue(target))
-}
-
-// URLList provides a parsed list of url.URL values.
-func (c *Clause) URLList() (target *[]*url.URL) {
-	target = new([]*url.URL)
-	c.URLListVar(target)
-	return
-}
-
-// URLListVar provides a parsed list of url.URL values.
-func (c *Clause) URLListVar(target *[]*url.URL) {
-	c.SetValue(newURLListValue(target))
-}
-
 // Enum allows a value from a set of options.
 func (c *Clause) Enum(options ...string) (target *string) {
 	target = new(string)
@@ -337,12 +308,12 @@ func (c *Clause) Enums(options ...string) (target *[]string) {
 	return
 }
 
-// EnumVar allows a value from a set of options.
+// EnumsVar allows a value from a set of options.
 func (c *Clause) EnumsVar(target *[]string, options ...string) {
 	c.SetValue(newEnumsFlag(target, options...))
 }
 
-// A Counter increments a number each time it is encountered.
+// Counter increments a number each time it is encountered.
 func (c *Clause) Counter() (target *int) {
 	target = new(int)
 	c.CounterVar(target)
@@ -351,4 +322,16 @@ func (c *Clause) Counter() (target *int) {
 
 func (c *Clause) CounterVar(target *int) {
 	c.SetValue(newCounterValue(target))
+}
+
+// IP provides a validated parsed *net.IP value.
+func (c *Clause) IP() (target *net.IP) {
+	target = new(net.IP)
+	c.IPVar(target)
+	return
+}
+
+// IPVar provides a validated parsed *net.IP value.
+func (c *Clause) IPVar(target *net.IP) {
+	c.SetValue(newIPValue(target))
 }

@@ -118,7 +118,9 @@ func (p ParseElements) ArgMap() map[string]*ParseElement {
 // *ArgClause and *CmdClause values and their corresponding arguments (if
 // any).
 type ParseContext struct {
+	Application     *Application // May be nil in tests.
 	SelectedCommand *CmdClause
+	resolvers       []Resolver
 	ignoreDefault   bool
 	argsOnly        bool
 	peek            []*Token
@@ -132,8 +134,19 @@ type ParseContext struct {
 	Elements ParseElements
 }
 
-// LastCmd returns true if the element is the last (sub)command
-// being evaluated.
+func (p *ParseContext) CombinedFlagsAndArgs() []*Clause {
+	return append(p.Args(), p.Flags()...)
+}
+
+func (p *ParseContext) Args() []*Clause {
+	return p.arguments.args
+}
+
+func (p *ParseContext) Flags() []*Clause {
+	return p.flags.flagOrder
+}
+
+// LastCmd returns true if the element is the last (sub)command being evaluated.
 func (p *ParseContext) LastCmd(element *ParseElement) bool {
 	lastCmdIndex := -1
 	eIndex := -2
@@ -171,13 +184,14 @@ func (p *ParseContext) HasTrailingArgs() bool {
 	return len(p.args) > 0
 }
 
-func tokenize(args []string, ignoreDefault bool) *ParseContext {
+func tokenize(args []string, ignoreDefault bool, resolvers []Resolver) *ParseContext {
 	return &ParseContext{
 		ignoreDefault: ignoreDefault,
 		args:          args,
 		rawArgs:       args,
 		flags:         newFlagGroup(),
 		arguments:     newArgGroup(),
+		resolvers:     resolvers,
 	}
 }
 
@@ -241,7 +255,7 @@ func (p *ParseContext) Next() *Token {
 		flag, ok := p.flags.short[short]
 		// Not a known short flag, we'll just return it anyway.
 		if !ok {
-		} else if fb, ok := flag.value.(boolFlag); ok && fb.IsBoolFlag() {
+		} else if isBoolFlag(flag.value) {
 			// Bool short flag.
 		} else {
 			// Short flag with combined argument: -fARG

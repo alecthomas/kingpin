@@ -1,6 +1,7 @@
 package kingpin
 
 import (
+	"bytes"
 	"os"
 	"testing"
 
@@ -15,10 +16,10 @@ func TestBool(t *testing.T) {
 	assert.True(t, *b)
 }
 
-func TestNoBool(t *testing.T) {
+func TestNegatableBool(t *testing.T) {
 	app := newTestApp()
 	f := app.Flag("b", "").Default("true")
-	b := f.Bool()
+	b := f.NegatableBool()
 	_, err := app.Parse([]string{})
 	assert.NoError(t, err)
 	assert.True(t, *b)
@@ -45,6 +46,35 @@ func TestNegativePrefixLongFlag(t *testing.T) {
 	_, err = app.Parse([]string{"--no-comment"})
 	assert.NoError(t, err)
 	assert.False(t, *b)
+}
+
+func TestNonNegatableBoolFlagCanNotBeNegated(t *testing.T) {
+	app := newTestApp()
+	nonNegatable := app.Flag("nonneg", "").Bool()
+
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.False(t, *nonNegatable)
+
+	_, err = app.Parse([]string{"--nonneg"})
+	assert.NoError(t, err)
+	assert.True(t, *nonNegatable)
+
+	_, err = app.Parse([]string{"--no-nonneg"})
+	assert.Error(t, err)
+}
+
+func TestHelpForBoolFlags(t *testing.T) {
+	app := newTestApp()
+	app.Flag("yes", "").Default("true").NegatableBool()
+	app.Flag("no", "").Default("false").NegatableBool()
+	app.Flag("nonneg", "").Bool()
+
+	w := bytes.NewBuffer(nil)
+	app.Writers(w, w).Usage(nil)
+	assert.Contains(t, w.String(), "--[no-]yes")
+	assert.Contains(t, w.String(), "--[no-]no")
+	assert.Contains(t, w.String(), "--nonneg")
 }
 
 func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
@@ -193,16 +223,7 @@ func TestFlagMultipleValuesDefaultNonRepeatable(t *testing.T) {
 func TestFlagMultipleValuesDefaultEnvarUnix(t *testing.T) {
 	app := newTestApp()
 	a := app.Flag("a", "").Envar("TEST_MULTIPLE_VALUES").Strings()
-	os.Setenv("TEST_MULTIPLE_VALUES", "123\n456\n")
-	_, err := app.Parse([]string{})
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"123", "456"}, *a)
-}
-
-func TestFlagMultipleValuesDefaultEnvarWindows(t *testing.T) {
-	app := newTestApp()
-	a := app.Flag("a", "").Envar("TEST_MULTIPLE_VALUES").Strings()
-	os.Setenv("TEST_MULTIPLE_VALUES", "123\r\n456\r\n")
+	os.Setenv("TEST_MULTIPLE_VALUES", "123:456")
 	_, err := app.Parse([]string{})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"123", "456"}, *a)

@@ -86,18 +86,24 @@ func formatCmdUsage(app *ApplicationModel, cmd *CmdModel) string {
 	return strings.Join(s, " ")
 }
 
+// haveShort will be true if there are short flags present at all in the help. Useful for column alignment.
 func formatFlag(haveShort bool, flag *ClauseModel) string {
 	flagString := ""
+	name := flag.Name
+	isBool := flag.IsBoolFlag()
+	if flag.IsNegatable() {
+		name = "[no-]" + name
+	}
 	if flag.Short != 0 {
-		flagString += fmt.Sprintf("-%c, --%s", flag.Short, flag.Name)
+		flagString += fmt.Sprintf("-%c, --%s", flag.Short, name)
 	} else {
 		if haveShort {
-			flagString += fmt.Sprintf("    --%s", flag.Name)
+			flagString += fmt.Sprintf("    --%s", name)
 		} else {
-			flagString += fmt.Sprintf("--%s", flag.Name)
+			flagString += fmt.Sprintf("--%s", name)
 		}
 	}
-	if !flag.IsBoolFlag() {
+	if !isBool {
 		flagString += fmt.Sprintf("=%s", flag.FormatPlaceHolder())
 	}
 	if v, ok := flag.Value.(cumulativeValue); ok && v.IsCumulative() {

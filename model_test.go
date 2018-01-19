@@ -33,3 +33,12 @@ func TestCmdSummary(t *testing.T) {
 	cmdModel := model.FindModelForCommand(cmd)
 	assert.Equal(t, "cmd --flag=FLAG cmd2 <arg>", cmdModel.CmdSummary())
 }
+
+func TestModelValue(t *testing.T) {
+	app := newTestApp()
+	value := app.Flag("test", "").Bool()
+	*value = true
+	model := app.Model()
+	flag := model.FlagByName("test")
+	assert.Equal(t, "true", flag.Value.String())
+}

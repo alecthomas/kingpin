@@ -1,6 +1,8 @@
 package kingpin
 
 import (
+	"net"
+
 	"github.com/stretchr/testify/assert"
 
 	"testing"
@@ -8,11 +10,22 @@ import (
 
 func TestAccumulatorStrings(t *testing.T) {
 	target := []string{}
-	acc := newAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
+	acc := newAccumulator(&target, nil, func(v interface{}) Value { return newStringValue(v.(*string)) })
 	acc.Set("a")
 	assert.Equal(t, []string{"a"}, target)
 	acc.Set("b")
 	assert.Equal(t, []string{"a", "b"}, target)
+}
+
+func TestAccumulatorSeparator(t *testing.T) {
+	target := []string{}
+	acc := newAccumulator(&target, []AccumulatorOption{Separator(",")}, func(v interface{}) Value {
+		return newStringValue(v.(*string))
+	})
+	acc.Set("a,b")
+	assert.Equal(t, []string{"a", "b"}, target)
+	acc.Set("c,d")
+	assert.Equal(t, []string{"a", "b", "c", "d"}, target)
 }
 
 func TestStrings(t *testing.T) {
@@ -68,4 +81,29 @@ func TestSetValueDoesNotReset(t *testing.T) {
 	}
 	app.Flag("set", "").StringMapVar(&mapping)
 	assert.NotEmpty(t, mapping)
+}
+
+func TestIPv4Addr(t *testing.T) {
+	app := newTestApp()
+	flag := app.Flag("addr", "").IP()
+	_, err := app.Parse([]string{"--addr", net.IPv4(1, 2, 3, 4).String()})
+	assert.NoError(t, err)
+	assert.NotNil(t, *flag)
+	assert.Equal(t, net.IPv4(1, 2, 3, 4), *flag)
+}
+
+func TestInvalidIPv4Addr(t *testing.T) {
+	app := newTestApp()
+	app.Flag("addr", "").IP()
+	_, err := app.Parse([]string{"--addr", "1.2.3.256"})
+	assert.Error(t, err)
+}
+
+func TestIPv6Addr(t *testing.T) {
+	app := newTestApp()
+	flag := app.Flag("addr", "").IP()
+	_, err := app.Parse([]string{"--addr", net.IPv6interfacelocalallnodes.String()})
+	assert.NoError(t, err)
+	assert.NotNil(t, *flag)
+	assert.Equal(t, net.IPv6interfacelocalallnodes, *flag)
 }

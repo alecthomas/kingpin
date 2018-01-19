@@ -1,9 +1,12 @@
-# Kingpin - A Go (golang) command line and flag parser [![](https://godoc.org/github.com/alecthomas/kingpin?status.svg)](http://godoc.org/github.com/alecthomas/kingpin) [![Build Status](https://travis-ci.org/alecthomas/kingpin.png)](https://travis-ci.org/alecthomas/kingpin)
+# Kingpin - A Go (golang) command line and flag parser [![](https://godoc.org/github.com/alecthomas/kingpin?status.svg)](http://godoc.org/github.com/alecthomas/kingpin) [![Build Status](https://travis-ci.org/alecthomas/kingpin.png)](https://travis-ci.org/alecthomas/kingpin) [![Gitter chat](https://badges.gitter.im/alecthomas.png)](https://gitter.im/alecthomas/Lobby)
 
 <!-- MarkdownTOC -->
 
 - [Overview](#overview)
 - [Features](#features)
+- [User-visible changes between v2 and v3](#user-visible-changes-between-v2-and-v3)
+  - [Some flag types have been removed.](#some-flag-types-have-been-removed)
+  - [Semantics around boolean flags have changed.](#semantics-around-boolean-flags-have-changed)
 - [User-visible changes between v1 and v2](#user-visible-changes-between-v1-and-v2)
   - [Flags can be used at any point after their definition.](#flags-can-be-used-at-any-point-after-their-definition)
   - [Short flags can be combined with their parameters](#short-flags-can-be-combined-with-their-parameters)
@@ -24,6 +27,7 @@
   - [Default Values](#default-values)
   - [Place-holders in Help](#place-holders-in-help)
   - [Consuming all remaining arguments](#consuming-all-remaining-arguments)
+  - [Configuration files and other external sources of flag/argument values](#configuration-files-and-other-external-sources-of-flagargument-values)
   - [Struct tag interpolation](#struct-tag-interpolation)
   - [Bash/ZSH Shell Completion](#bashzsh-shell-completion)
     - [Additional API](#additional-api)
@@ -80,6 +84,22 @@ contextual help if `--help` is encountered at any point in the command line
 - Short-flag+parameter combining (`-a parm` -> `-aparm`).
 - Read command-line from files (`@<file>`).
 - Automatically generate man pages (`--help-man`).
+- Negatable boolean flags (`--[no-]flag`).
+
+## User-visible changes between v2 and v3
+
+### Some flag types have been removed.
+
+Some flag types had unintended side-effects, or poor usability. For example,
+flags that created/opened files could result in file-descriptor leaks. To avoid
+confusion these have been removed.
+
+### Semantics around boolean flags have changed.
+
+`Bool()` now creates a non-negatable flag.
+
+Use `NegatableBool()` to add a boolean flag that supports both `--flag` and
+`--no-flag`. This will be displayed in the help.
 
 ## User-visible changes between v1 and v2
 
@@ -513,6 +533,16 @@ And use it like so:
 ```go
 ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
 ```
+
+### Configuration files and other external sources of flag/argument values
+
+Kingpin v3 now supports
+[custom value resolvers](https://godoc.org/gopkg.in/alecthomas/kingpin.v3-unstable#Resolver)
+for flags and arguments. This is used internally to resolve default values and environment variables, but
+applications can define their own resolvers to load flags from configuration files, or elsewhere.
+
+Included is a [JSONResolver](https://godoc.org/gopkg.in/alecthomas/kingpin.v3-unstable#JSONResolver) that
+loads values from a JSON file, including multi-value flags.
 
 ### Struct tag interpolation
 

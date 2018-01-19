@@ -25,7 +25,7 @@ func (h *HTTPHeaderValue) String() string {
 	return ""
 }
 
-func HTTPHeader(s Settings) (target *http.Header) {
+func HTTPHeader(s *Clause) (target *http.Header) {
 	target = new(http.Header)
 	s.SetValue((*HTTPHeaderValue)(target))
 	return

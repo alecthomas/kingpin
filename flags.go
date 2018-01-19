@@ -31,14 +31,11 @@ func (f *flagGroup) Flag(name, help string) *Clause {
 	return flag
 }
 
-func (f *flagGroup) init(defaultEnvarPrefix string) error {
+func (f *flagGroup) init() error {
 	if err := f.checkDuplicates(); err != nil {
 		return err
 	}
 	for _, flag := range f.long {
-		if defaultEnvarPrefix != "" && !flag.noEnvar && flag.envar == "" {
-			flag.envar = envarTransform(defaultEnvarPrefix + "_" + flag.name)
-		}
 		if err := flag.init(); err != nil {
 			return err
 		}
@@ -90,8 +87,13 @@ loop:
 					if strings.HasPrefix(name, "no-") {
 						name = name[3:]
 						invert = true
+						flag, ok = f.long[name]
+						// Found an inverted flag. Check if the flag supports it.
+						if ok {
+							bf, bok := flag.value.(BoolFlag)
+							ok = bok && bf.BoolFlagIsNegatable()
+						}
 					}
-					flag, ok = f.long[name]
 				} else if strings.HasPrefix(name, "no-") {
 					invert = true
 				}
@@ -108,7 +110,7 @@ loop:
 			context.Next()
 
 			var defaultValue string
-			if fb, ok := flag.value.(boolFlag); ok && fb.IsBoolFlag() {
+			if isBoolFlag(flag.value) {
 				if invert {
 					defaultValue = "false"
 				} else {

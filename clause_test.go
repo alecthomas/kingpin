@@ -20,7 +20,7 @@ func TestParseStrings(t *testing.T) {
 
 func TestStringsStringer(t *testing.T) {
 	target := []string{}
-	v := newAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
+	v := newAccumulator(&target, nil, func(v interface{}) Value { return newStringValue(v.(*string)) })
 	v.Set("hello")
 	v.Set("world")
 	assert.Equal(t, "hello,world", v.String())
@@ -32,6 +32,14 @@ func TestParseStringMap(t *testing.T) {
 	p.value.Set("a:b")
 	p.value.Set("b:c")
 	assert.Equal(t, map[string]string{"a": "b", "b": "c"}, *v)
+}
+
+func TestParseStringMapWithSeparator(t *testing.T) {
+	p := Clause{}
+	v := p.StringMap(Separator(";"))
+	p.value.Set("a:b")
+	p.value.Set("b:c;c:d")
+	assert.Equal(t, map[string]string{"a": "b", "b": "c", "c": "d"}, *v)
 }
 
 func TestParseURL(t *testing.T) {
@@ -66,24 +74,6 @@ func TestFloat32(t *testing.T) {
 	err := p.value.Set("123.45")
 	assert.NoError(t, err)
 	assert.InEpsilon(t, 123.45, *v, 0.001)
-}
-
-func TestDefaultScalarValueIsSetBeforeParse(t *testing.T) {
-	app := newTestApp()
-	v := app.Flag("a", "").Default("123").Int()
-	assert.Equal(t, *v, 123)
-	_, err := app.Parse([]string{"--a", "456"})
-	assert.NoError(t, err)
-	assert.Equal(t, *v, 456)
-}
-
-func TestDefaultCumulativeValueIsSetBeforeParse(t *testing.T) {
-	app := newTestApp()
-	v := app.Flag("a", "").Default("123", "456").Ints()
-	assert.Equal(t, *v, []int{123, 456})
-	_, err := app.Parse([]string{"--a", "789", "--a", "123"})
-	assert.NoError(t, err)
-	assert.Equal(t, *v, []int{789, 123})
 }
 
 func TestUnicodeShortFlag(t *testing.T) {

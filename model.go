@@ -13,6 +13,15 @@ type FlagGroupModel struct {
 	Flags []*ClauseModel
 }
 
+func (f *FlagGroupModel) FlagByName(name string) *ClauseModel {
+	for _, flag := range f.Flags {
+		if flag.Name == name {
+			return flag
+		}
+	}
+	return nil
+}
+
 func (f *FlagGroupModel) FlagSummary() string {
 	out := []string{}
 	count := 0
@@ -22,7 +31,11 @@ func (f *FlagGroupModel) FlagSummary() string {
 		}
 		if flag.Required {
 			if flag.IsBoolFlag() {
-				out = append(out, fmt.Sprintf("--[no-]%s", flag.Name))
+				if flag.IsNegatable() {
+					out = append(out, fmt.Sprintf("--[no-]%s", flag.Name))
+				} else {
+					out = append(out, fmt.Sprintf("--%s", flag.Name))
+				}
 			} else {
 				out = append(out, fmt.Sprintf("--%s=%s", flag.Name, flag.FormatPlaceHolder()))
 			}
@@ -39,7 +52,6 @@ type ClauseModel struct {
 	Help        string
 	Short       rune
 	Default     []string
-	Envar       string
 	PlaceHolder string
 	Required    bool
 	Hidden      bool
@@ -52,10 +64,12 @@ func (c *ClauseModel) String() string {
 }
 
 func (c *ClauseModel) IsBoolFlag() bool {
-	if fl, ok := c.Value.(boolFlag); ok {
-		return fl.IsBoolFlag()
-	}
-	return false
+	return isBoolFlag(c.Value)
+}
+
+func (c *ClauseModel) IsNegatable() bool {
+	bf, ok := c.Value.(BoolFlag)
+	return ok && bf.BoolFlagIsNegatable()
 }
 
 func (c *ClauseModel) FormatPlaceHolder() string {
@@ -246,7 +260,6 @@ func (f *Clause) Model() *ClauseModel {
 		Help:        f.help,
 		Short:       f.shorthand,
 		Default:     f.defaultValues,
-		Envar:       f.envar,
 		PlaceHolder: f.placeholder,
 		Required:    f.required,
 		Hidden:      f.hidden,

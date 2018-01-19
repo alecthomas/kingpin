@@ -3,6 +3,7 @@ package kingpin
 import (
 	"io/ioutil"
 	"sort"
+	"os"
 
 	"github.com/stretchr/testify/assert"
 
@@ -12,7 +13,9 @@ import (
 )
 
 func newTestApp() *Application {
-	return New("test", "").Terminate(nil)
+	return New("test", "").
+		Terminate(nil).
+		Writers(ioutil.Discard, ioutil.Discard)
 }
 
 func TestCommander(t *testing.T) {
@@ -92,7 +95,7 @@ func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
 func TestDispatchCallbackIsCalled(t *testing.T) {
 	dispatched := false
 	c := newTestApp()
-	c.Command("cmd", "").Action(func(_ *Application, element *ParseElement, context *ParseContext) error {
+	c.Command("cmd", "").Action(func(element *ParseElement, context *ParseContext) error {
 		dispatched = true
 		return nil
 	})
@@ -223,13 +226,13 @@ func TestInterspersedTrue(t *testing.T) {
 
 func TestDefaultEnvars(t *testing.T) {
 	a := New("some-app", "").Terminate(nil).DefaultEnvars()
-	f0 := a.Flag("some-flag", "")
-	f0.Bool()
+	os.Setenv("SOME_APP_SOME_FLAG", "true")
+	f0 := a.Flag("some-flag", "").Bool()
 	f1 := a.Flag("some-other-flag", "").NoEnvar()
 	f1.Bool()
 	_, err := a.Parse([]string{})
 	assert.NoError(t, err)
-	assert.Equal(t, "SOME_APP_SOME_FLAG", f0.envar)
+	assert.Equal(t, true, *f0)
 	assert.Equal(t, "", f1.envar)
 }
 
@@ -429,12 +432,12 @@ func TestApplicationWideActions(t *testing.T) {
 	c.Arg("arg", "").String()
 
 	preValues := []string{}
-	a.PreAction(func(_ *Application, element *ParseElement, context *ParseContext) error {
+	a.PreAction(func(element *ParseElement, context *ParseContext) error {
 		preValues = append(preValues, *element.Value)
 		return nil
 	})
 	values := []string{}
-	a.Action(func(_ *Application, element *ParseElement, context *ParseContext) error {
+	a.Action(func(element *ParseElement, context *ParseContext) error {
 		values = append(values, *element.Value)
 		return nil
 	})
