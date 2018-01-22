@@ -122,12 +122,12 @@ loop:
 					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
 				}
 				token = context.Peek()
+				flag.isSetByUser()
 				if token.Type != TokenArg {
 					context.Push(token)
 					if !flag.isMimicBoolFlag() {
 						return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
 					}
-					flag.isSetByUser()
 					if len(flag.defaultValues) > 0 {
 						defaultValue = flag.defaultValues[0]
 					}
