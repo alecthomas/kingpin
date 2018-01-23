@@ -21,7 +21,7 @@ func TestParseStrings(t *testing.T) {
 
 func TestStringsStringer(t *testing.T) {
 	target := []string{}
-	v := newAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
+	v := NewAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
 	v.Set("hello")
 	v.Set("world")
 	assert.Equal(t, "hello,world", v.String())

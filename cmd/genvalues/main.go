@@ -59,7 +59,7 @@ func (p *parserMixin) {{.|Plural}}() (target *[]{{.Type}}) {
 }
 
 func (p *parserMixin) {{.|Plural}}Var(target *[]{{.Type}}) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return new{{.|Name}}Value(v.(*{{.Type}}))
 	}))
 }
