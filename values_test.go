@@ -10,7 +10,7 @@ import (
 
 func TestAccumulatorStrings(t *testing.T) {
 	target := []string{}
-	acc := newAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
+	acc := NewAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
 	acc.Set("a")
 	assert.Equal(t, []string{"a"}, target)
 	acc.Set("b")

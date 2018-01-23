@@ -49,7 +49,7 @@ func (p *parserMixin) BoolList() (target *[]bool) {
 }
 
 func (p *parserMixin) BoolListVar(target *[]bool) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newBoolValue(v.(*bool))
 	}))
 }
@@ -92,7 +92,7 @@ func (p *parserMixin) Strings() (target *[]string) {
 }
 
 func (p *parserMixin) StringsVar(target *[]string) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newStringValue(v.(*string))
 	}))
 }
@@ -135,7 +135,7 @@ func (p *parserMixin) Uints() (target *[]uint) {
 }
 
 func (p *parserMixin) UintsVar(target *[]uint) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newUintValue(v.(*uint))
 	}))
 }
@@ -178,7 +178,7 @@ func (p *parserMixin) Uint8List() (target *[]uint8) {
 }
 
 func (p *parserMixin) Uint8ListVar(target *[]uint8) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newUint8Value(v.(*uint8))
 	}))
 }
@@ -221,7 +221,7 @@ func (p *parserMixin) Uint16List() (target *[]uint16) {
 }
 
 func (p *parserMixin) Uint16ListVar(target *[]uint16) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newUint16Value(v.(*uint16))
 	}))
 }
@@ -264,7 +264,7 @@ func (p *parserMixin) Uint32List() (target *[]uint32) {
 }
 
 func (p *parserMixin) Uint32ListVar(target *[]uint32) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newUint32Value(v.(*uint32))
 	}))
 }
@@ -307,7 +307,7 @@ func (p *parserMixin) Uint64List() (target *[]uint64) {
 }
 
 func (p *parserMixin) Uint64ListVar(target *[]uint64) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newUint64Value(v.(*uint64))
 	}))
 }
@@ -350,7 +350,7 @@ func (p *parserMixin) Ints() (target *[]int) {
 }
 
 func (p *parserMixin) IntsVar(target *[]int) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newIntValue(v.(*int))
 	}))
 }
@@ -393,7 +393,7 @@ func (p *parserMixin) Int8List() (target *[]int8) {
 }
 
 func (p *parserMixin) Int8ListVar(target *[]int8) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newInt8Value(v.(*int8))
 	}))
 }
@@ -436,7 +436,7 @@ func (p *parserMixin) Int16List() (target *[]int16) {
 }
 
 func (p *parserMixin) Int16ListVar(target *[]int16) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newInt16Value(v.(*int16))
 	}))
 }
@@ -479,7 +479,7 @@ func (p *parserMixin) Int32List() (target *[]int32) {
 }
 
 func (p *parserMixin) Int32ListVar(target *[]int32) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newInt32Value(v.(*int32))
 	}))
 }
@@ -522,7 +522,7 @@ func (p *parserMixin) Int64List() (target *[]int64) {
 }
 
 func (p *parserMixin) Int64ListVar(target *[]int64) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newInt64Value(v.(*int64))
 	}))
 }
@@ -565,7 +565,7 @@ func (p *parserMixin) Float64List() (target *[]float64) {
 }
 
 func (p *parserMixin) Float64ListVar(target *[]float64) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newFloat64Value(v.(*float64))
 	}))
 }
@@ -608,7 +608,7 @@ func (p *parserMixin) Float32List() (target *[]float32) {
 }
 
 func (p *parserMixin) Float32ListVar(target *[]float32) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newFloat32Value(v.(*float32))
 	}))
 }
@@ -621,7 +621,7 @@ func (p *parserMixin) DurationList() (target *[]time.Duration) {
 }
 
 func (p *parserMixin) DurationListVar(target *[]time.Duration) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newDurationValue(v.(*time.Duration))
 	}))
 }
@@ -634,7 +634,7 @@ func (p *parserMixin) IPList() (target *[]net.IP) {
 }
 
 func (p *parserMixin) IPListVar(target *[]net.IP) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newIPValue(v.(*net.IP))
 	}))
 }
@@ -647,7 +647,7 @@ func (p *parserMixin) TCPList() (target *[]*net.TCPAddr) {
 }
 
 func (p *parserMixin) TCPListVar(target *[]*net.TCPAddr) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newTCPAddrValue(v.(**net.TCPAddr))
 	}))
 }
@@ -660,7 +660,7 @@ func (p *parserMixin) ExistingFiles() (target *[]string) {
 }
 
 func (p *parserMixin) ExistingFilesVar(target *[]string) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newExistingFileValue(v.(*string))
 	}))
 }
@@ -673,7 +673,7 @@ func (p *parserMixin) ExistingDirs() (target *[]string) {
 }
 
 func (p *parserMixin) ExistingDirsVar(target *[]string) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newExistingDirValue(v.(*string))
 	}))
 }
@@ -686,7 +686,7 @@ func (p *parserMixin) ExistingFilesOrDirs() (target *[]string) {
 }
 
 func (p *parserMixin) ExistingFilesOrDirsVar(target *[]string) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newExistingFileOrDirValue(v.(*string))
 	}))
 }
@@ -729,7 +729,7 @@ func (p *parserMixin) RegexpList() (target *[]*regexp.Regexp) {
 }
 
 func (p *parserMixin) RegexpListVar(target *[]*regexp.Regexp) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newRegexpValue(v.(**regexp.Regexp))
 	}))
 }
@@ -772,7 +772,7 @@ func (p *parserMixin) ResolvedIPList() (target *[]net.IP) {
 }
 
 func (p *parserMixin) ResolvedIPListVar(target *[]net.IP) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newResolvedIPValue(v.(*net.IP))
 	}))
 }
@@ -815,7 +815,7 @@ func (p *parserMixin) HexBytesList() (target *[][]byte) {
 }
 
 func (p *parserMixin) HexBytesListVar(target *[][]byte) {
-	p.SetValue(newAccumulator(target, func(v interface{}) Value {
+	p.SetValue(NewAccumulator(target, func(v interface{}) Value {
 		return newHexBytesValue(v.(*[]byte))
 	}))
 }
