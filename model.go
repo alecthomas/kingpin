@@ -8,6 +8,17 @@ import (
 
 // Data model for Kingpin command-line structure.
 
+var (
+	ignoreInCount = map[string]bool{
+		"help":                   true,
+		"help-long":              true,
+		"help-man":               true,
+		"completion-bash":        true,
+		"completion-script-bash": true,
+		"completion-script-zsh":  true,
+	}
+)
+
 type FlagGroupModel struct {
 	Flags []*FlagModel
 }
@@ -17,15 +28,6 @@ func (f *FlagGroupModel) FlagSummary() string {
 	count := 0
 
 	for _, flag := range f.Flags {
-
-		ignoreInCount := map[string]bool{
-			"help":                   true,
-			"help-long":              true,
-			"help-man":               true,
-			"completion-bash":        true,
-			"completion-script-bash": true,
-			"completion-script-zsh":  true,
-		}
 
 		if !ignoreInCount[flag.Name] {
 			count++
