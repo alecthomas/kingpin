@@ -122,12 +122,19 @@ loop:
 					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
 				}
 				token = context.Peek()
+				flag.isSetByUser()
 				if token.Type != TokenArg {
 					context.Push(token)
-					return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
+					if !flag.isMimicBoolFlag() {
+						return nil, fmt.Errorf("expected argument for flag '%s'", flagToken)
+					}
+					if len(flag.defaultValues) > 0 {
+						defaultValue = flag.defaultValues[0]
+					}
+				} else {
+					defaultValue = token.Value
 				}
 				context.Next()
-				defaultValue = token.Value
 			}
 
 			context.matchedFlag(flag, defaultValue)
@@ -152,6 +159,8 @@ type FlagClause struct {
 	defaultValues []string
 	placeholder   string
 	hidden        bool
+	asBool        bool
+	setByUser     *bool
 }
 
 func newFlag(name, help string) *FlagClause {
@@ -187,6 +196,16 @@ func (f *FlagClause) setDefault() error {
 	}
 
 	return nil
+}
+
+func (f *FlagClause) isMimicBoolFlag() bool {
+	return f.asBool
+}
+
+func (f *FlagClause) isSetByUser() {
+	if f.setByUser != nil {
+		*f.setByUser = true
+	}
 }
 
 func (f *FlagClause) needsValue() bool {
@@ -244,6 +263,13 @@ func (a *FlagClause) Enum(options ...string) (target *string) {
 		return options
 	})
 	return a.parserMixin.Enum(options...)
+}
+
+// AsBool allow non bool flag behave as bool if no arguments given for this flag.
+func (f *FlagClause) AsBool(setByUserFlag *bool) *FlagClause {
+	f.asBool = true
+	f.setByUser = setByUserFlag
+	return f
 }
 
 // Default values for this flag. They *must* be parseable by the value of the flag.
