@@ -2,6 +2,7 @@ package kingpin
 
 import (
 	"fmt"
+	"net/url"
 	"reflect"
 	"strings"
 	"time"
@@ -99,7 +100,9 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 			clause = clause.Envar(env)
 		}
 		ptr := field.Addr().Interface()
-		if ft.Type == reflect.TypeOf(time.Duration(0)) {
+		if ft.Type == reflect.TypeOf(&url.URL{}) {
+			clause.URLVar(ptr.(**url.URL))
+		} else if ft.Type == reflect.TypeOf(time.Duration(0)) {
 			clause.DurationVar(ptr.(*time.Duration))
 		} else {
 			switch ft.Type.Kind() {
@@ -141,7 +144,9 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 				clause.Uint64Var(ptr.(*uint64))
 
 			case reflect.Slice:
-				if ft.Type == reflect.TypeOf(time.Duration(0)) {
+				if ft.Type == reflect.TypeOf([]*url.URL{}) {
+					clause.URLListVar(ptr.(*[]*url.URL))
+				} else if ft.Type == reflect.TypeOf(time.Duration(0)) {
 					clause.DurationListVar(ptr.(*[]time.Duration))
 				} else {
 					switch ft.Type.Elem().Kind() {
