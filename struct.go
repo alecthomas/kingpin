@@ -12,8 +12,8 @@ import (
 func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolint: gocyclo
 	urv := reflect.ValueOf(v)
 	rv := reflect.Indirect(reflect.ValueOf(v))
-	if rv.Kind() != reflect.Struct {
-		return fmt.Errorf("expected a struct but received " + reflect.TypeOf(v).String())
+	if rv.Kind() != reflect.Struct || !rv.CanSet() {
+		return fmt.Errorf("expected a pointer to a struct but got a " + urv.Type().String())
 	}
 	for i := 0; i < rv.NumField(); i++ {
 		// Parse out tags
@@ -46,7 +46,7 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 		var action Action
 		onMethodName := "On" + strings.ToUpper(ft.Name[0:1]) + ft.Name[1:]
 		if actionMethod := urv.MethodByName(onMethodName); actionMethod.IsValid() {
-			action, _ = actionMethod.Interface().(func(*ParseElement, *ParseContext) error)
+			action, _ = actionMethod.Interface().(func(element *ParseElement, context *ParseContext) error)
 		}
 
 		if field.Kind() == reflect.Struct {

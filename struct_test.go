@@ -7,6 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestFlagsInvalidType(t *testing.T) {
+	type MyFlags struct {
+		Debug bool `help:"foo"`
+	}
+
+	a := newTestApp()
+	err := a.Struct(MyFlags{})
+	assert.Error(t, err)
+	err = a.Struct(&MyFlags{})
+	assert.NoError(t, err)
+}
+
 func TestFlagsStruct(t *testing.T) {
 	type MyFlags struct {
 		Debug bool     `help:"Enable debug mode."`
