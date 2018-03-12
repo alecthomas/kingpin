@@ -3,6 +3,7 @@ package kingpin
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -12,39 +13,34 @@ var (
 	envarTransformRegexp = regexp.MustCompile(`[^a-zA-Z_]+`)
 )
 
-// A Resolver retrieves flag values from an external source, such as a configuration file or environment variables.
+// A Resolver retrieves flag/arg values from an external source, such as a configuration file or environment variables.
 type Resolver interface {
-	// Resolve key in the given parse context.
+	// Resolve clause in the given parse context.
 	//
-	// A nil slice should be returned if the key can not be resolved.
-	Resolve(key string, context *ParseContext) ([]string, error)
+	// A nil slice should be returned if the clause can not be resolved.
+	Resolve(clause *ClauseModel, context *ParseContext) ([]string, error)
 }
 
 // ResolverFunc is a function that is also a Resolver.
-type ResolverFunc func(key string, context *ParseContext) ([]string, error)
+type ResolverFunc func(clause *ClauseModel, context *ParseContext) ([]string, error)
 
-func (r ResolverFunc) Resolve(key string, context *ParseContext) ([]string, error) {
-	return r(key, context)
+func (r ResolverFunc) Resolve(clause *ClauseModel, context *ParseContext) ([]string, error) {
+	return r(clause, context)
 }
 
 // A resolver that pulls values from the flag defaults. This resolver is always installed in the ParseContext.
 func defaultsResolver() Resolver {
-	return ResolverFunc(func(key string, context *ParseContext) ([]string, error) {
-		for _, clause := range context.CombinedFlagsAndArgs() {
-			if clause.name == key {
-				return clause.defaultValues, nil
-			}
-		}
-		return nil, nil
+	return ResolverFunc(func(clause *ClauseModel, context *ParseContext) ([]string, error) {
+		return clause.Default, nil
 	})
 }
 
-func parseEnvar(envar, sep string) []string {
+func parseEnvar(clause *ClauseModel, envar, sep string) []string {
 	value, ok := os.LookupEnv(envar)
 	if !ok {
 		return nil
 	}
-	if sep == "" {
+	if sep == "" || !clause.Cumulative {
 		return []string{value}
 	}
 	return strings.Split(value, sep)
@@ -52,30 +48,25 @@ func parseEnvar(envar, sep string) []string {
 
 // Resolves a clause value from the envar configured on that clause, if any.
 func envarResolver(sep string) Resolver {
-	return ResolverFunc(func(key string, context *ParseContext) ([]string, error) {
-		for _, clause := range context.CombinedFlagsAndArgs() {
-			if key == clause.name {
-				if clause.noEnvar || clause.envar == "" {
-					return nil, nil
-				}
-				return parseEnvar(clause.envar, sep), nil
-			}
+	return ResolverFunc(func(clause *ClauseModel, context *ParseContext) ([]string, error) {
+		if clause.Envar == "" {
+			return nil, nil
 		}
-		return nil, nil
+		return parseEnvar(clause, clause.Envar, sep), nil
 	})
 }
 
 // MapResolver resolves values from a static map.
 func MapResolver(values map[string][]string) Resolver {
-	return ResolverFunc(func(key string, context *ParseContext) ([]string, error) {
-		return values[key], nil
+	return ResolverFunc(func(clause *ClauseModel, context *ParseContext) ([]string, error) {
+		return values[clause.Name], nil
 	})
 }
 
 // JSONResolver returns a Resolver that retrieves values from a JSON source.
-func JSONResolver(data []byte) (Resolver, error) {
+func JSONResolver(r io.Reader) (Resolver, error) {
 	values := map[string]interface{}{}
-	err := json.Unmarshal(data, &values)
+	err := json.NewDecoder(r).Decode(&values)
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +79,30 @@ func JSONResolver(data []byte) (Resolver, error) {
 		mapping[key] = sub
 	}
 	return MapResolver(mapping), nil
+}
+
+// JSONConfigClause installs a JSONResolver into app that will be loaded by invocation of clause (typically a flag).
+//
+// eg.
+//
+//     JSONConfigClause(app, app.Flag("config", "Load configuration.").Required())
+func JSONConfigClause(app *Application, clause *Clause) *string {
+	// This is a bit convoluted...
+	var resolver Resolver
+	app.Resolver(ResolverFunc(func(clause *ClauseModel, context *ParseContext) ([]string, error) {
+		if resolver == nil {
+			return nil, nil
+		}
+		return resolver.Resolve(clause, context)
+	}))
+	return clause.PreAction(func(element *ParseElement, context *ParseContext) error {
+		r, err := os.Open(*element.Value)
+		if err != nil {
+			return err
+		}
+		resolver, err = JSONResolver(r)
+		return err
+	}).ExistingFile()
 }
 
 func jsonDecodeValue(value interface{}) ([]string, error) {
@@ -120,8 +135,11 @@ func jsonDecodeValue(value interface{}) ([]string, error) {
 // This is useful if your configuration file uses a naming convention that does not map directly to
 // flag names.
 func RenamingResolver(resolver Resolver, rename func(string) string) Resolver {
-	return ResolverFunc(func(key string, context *ParseContext) ([]string, error) {
-		return resolver.Resolve(rename(key), context)
+	return ResolverFunc(func(clause *ClauseModel, context *ParseContext) ([]string, error) {
+		clone := &ClauseModel{}
+		*clone = *clause
+		clone.Name = rename(clone.Name)
+		return resolver.Resolve(clone, context)
 	})
 }
 
@@ -132,9 +150,9 @@ func RenamingResolver(resolver Resolver, rename func(string) string) Resolver {
 //
 // With a prefix of APP_, flags in the form --some-flag will be transformed to APP_SOME_FLAG.
 func PrefixedEnvarResolver(prefix, separator string) Resolver {
-	return ResolverFunc(func(key string, context *ParseContext) ([]string, error) {
-		key = envarTransform(prefix + key)
-		return parseEnvar(key, separator), nil
+	return ResolverFunc(func(clause *ClauseModel, context *ParseContext) ([]string, error) {
+		key := envarTransform(prefix + clause.Name)
+		return parseEnvar(clause, key, separator), nil
 	})
 }
 
@@ -144,11 +162,11 @@ func DontResolve(resolver Resolver, keys ...string) Resolver {
 	for _, key := range keys {
 		disabled[key] = true
 	}
-	return ResolverFunc(func(key string, context *ParseContext) ([]string, error) {
-		if disabled[key] {
+	return ResolverFunc(func(clause *ClauseModel, context *ParseContext) ([]string, error) {
+		if disabled[clause.Name] {
 			return nil, nil
 		}
-		return resolver.Resolve(key, context)
+		return resolver.Resolve(clause, context)
 	})
 }
 

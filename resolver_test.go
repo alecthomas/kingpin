@@ -1,83 +1,120 @@
 package kingpin
 
 import (
+	"io/ioutil"
 	"os"
+	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestResolverSimple(t *testing.T) {
 	app := newTestApp()
-	app.Resolver(MapResolver(map[string][]string{"hello": []string{"world"}}))
+	app.Resolver(MapResolver(map[string][]string{"hello": {"world"}}))
 	f := app.Flag("hello", "help").String()
 	_, err := app.Parse([]string{})
-	assert.NoError(t, err)
-	assert.Equal(t, "world", *f)
+	require.NoError(t, err)
+	require.Equal(t, "world", *f)
 }
 
 func TestResolverSatisfiesRequired(t *testing.T) {
 	app := newTestApp()
-	app.Resolver(MapResolver(map[string][]string{"hello": []string{"world"}}))
+	app.Resolver(MapResolver(map[string][]string{"hello": {"world"}}))
 	f := app.Flag("hello", "help").Required().String()
 	_, err := app.Parse([]string{})
-	assert.NoError(t, err)
-	assert.Equal(t, "world", *f)
+	require.NoError(t, err)
+	require.Equal(t, "world", *f)
 }
 
 func TestResolverLowerPriorityThanFlag(t *testing.T) {
 	app := newTestApp()
-	app.Resolver(MapResolver(map[string][]string{"hello": []string{"world"}}))
+	app.Resolver(MapResolver(map[string][]string{"hello": {"world"}}))
 	f := app.Flag("hello", "help").String()
 	_, err := app.Parse([]string{"--hello", "there"})
-	assert.NoError(t, err)
-	assert.Equal(t, "there", *f)
+	require.NoError(t, err)
+	require.Equal(t, "there", *f)
 }
 
 func TestResolverFallbackWithMultipleResolvers(t *testing.T) {
 	app := newTestApp()
-	app.Resolver(MapResolver(map[string][]string{"hello": []string{"there"}, "foo": []string{"bar"}}))
-	app.Resolver(MapResolver(map[string][]string{"hello": []string{"world"}}))
+	app.Resolver(MapResolver(map[string][]string{"hello": {"there"}, "foo": {"bar"}}))
+	app.Resolver(MapResolver(map[string][]string{"hello": {"world"}}))
 	f1 := app.Flag("hello", "help").String()
 	f2 := app.Flag("foo", "help").String()
 	_, err := app.Parse([]string{})
-	assert.NoError(t, err)
-	assert.Equal(t, "world", *f1)
-	assert.Equal(t, "bar", *f2)
+	require.NoError(t, err)
+	require.Equal(t, "world", *f1)
+	require.Equal(t, "bar", *f2)
 }
 
 func TestResolverLowerPriorityThanEnvar(t *testing.T) {
 	os.Setenv("TEST_RESOLVER", "foo")
 	app := newTestApp()
-	app.Resolver(MapResolver(map[string][]string{"hello": []string{"world"}}))
+	app.Resolver(MapResolver(map[string][]string{"hello": {"world"}}))
 	f := app.Flag("hello", "help").Envar("TEST_RESOLVER").String()
 	_, err := app.Parse([]string{})
-	assert.NoError(t, err)
-	assert.Equal(t, "foo", *f)
+	require.NoError(t, err)
+	require.Equal(t, "foo", *f)
+}
+
+func TestEnvarResolverSplitting(t *testing.T) {
+	os.Setenv("TEST_RESOLVER", "foo,bar")
+	app := newTestApp()
+	scalar := app.Flag("scalar", "").Envar("TEST_RESOLVER").String()
+	vector := app.Flag("vector", "").Envar("TEST_RESOLVER").Strings(Separator(","))
+	_, err := app.Parse(nil)
+	require.NoError(t, err)
+	require.Equal(t, "foo,bar", *scalar)
+	require.Equal(t, []string{"foo", "bar"}, *vector)
 }
 
 func TestJSONResolver(t *testing.T) {
-	r, err := JSONResolver([]byte(`{
+	r, err := JSONResolver(strings.NewReader(`{
 		"str": "string",
 		"num": 1234,
 		"bool": true,
 		"array": ["a", "b"]
 	}`))
-	assert.NoError(t, err)
+	require.NoError(t, err)
+	app := newTestApp().Resolver(r)
+	strf := app.Flag("str", "").String()
+	numf := app.Flag("num", "").Int()
+	boolf := app.Flag("bool", "").Bool()
+	arrayf := app.Flag("array", "").Strings()
 
-	values, err := r.Resolve("str", nil)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"string"}, values)
+	_, err = app.Parse([]string{})
+	require.NoError(t, err)
 
-	values, err = r.Resolve("num", nil)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"1234"}, values)
+	require.Equal(t, "string", *strf)
+	require.Equal(t, 1234, *numf)
+	require.Equal(t, true, *boolf)
+	require.Equal(t, []string{"a", "b"}, *arrayf)
+}
 
-	values, err = r.Resolve("bool", nil)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"true"}, values)
+func TestJSONConfigClause(t *testing.T) {
+	w, err := ioutil.TempFile("", "kingpin-test-")
+	require.NoError(t, err)
+	w.WriteString(`{
+		"str": "string",
+		"num": 1234,
+		"bool": true,
+		"array": ["a", "b"]
+	}`)
+	defer os.Remove(w.Name())
 
-	values, err = r.Resolve("array", nil)
-	assert.NoError(t, err)
-	assert.Equal(t, []string{"a", "b"}, values)
+	app := newTestApp()
+	JSONConfigClause(app, app.Flag("config", "").Required())
+	strf := app.Flag("str", "").String()
+	numf := app.Flag("num", "").Int()
+	boolf := app.Flag("bool", "").Bool()
+	arrayf := app.Flag("array", "").Strings()
+
+	_, err = app.Parse([]string{"--config", w.Name()})
+	require.NoError(t, err)
+
+	require.Equal(t, "string", *strf)
+	require.Equal(t, 1234, *numf)
+	require.Equal(t, true, *boolf)
+	require.Equal(t, []string{"a", "b"}, *arrayf)
 }

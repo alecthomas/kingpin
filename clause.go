@@ -167,7 +167,7 @@ func (c *Clause) needsValue(context *ParseContext) bool {
 
 func (c *Clause) canResolve(context *ParseContext) bool {
 	for _, resolver := range context.resolvers {
-		rvalues, err := resolver.Resolve(c.name, context)
+		rvalues, err := resolver.Resolve(c.Model(), context)
 		if err != nil {
 			return false
 		}
@@ -186,8 +186,9 @@ func (c *Clause) reset() {
 
 func (c *Clause) setDefault(context *ParseContext) error {
 	var values []string
+	model := c.Model()
 	for _, resolver := range context.resolvers {
-		rvalues, err := resolver.Resolve(c.name, context)
+		rvalues, err := resolver.Resolve(model, context)
 		if err != nil {
 			return err
 		}

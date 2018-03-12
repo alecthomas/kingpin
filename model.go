@@ -57,6 +57,28 @@ type ClauseModel struct {
 	Hidden      bool
 	Value       Value
 	Cumulative  bool
+	Envar       string
+}
+
+func (f *Clause) Model() *ClauseModel {
+	_, cumulative := f.value.(cumulativeValue)
+	envar := f.envar
+	if f.noEnvar {
+		envar = ""
+	}
+	// TODO: How do we make the model reflect the envar transformations in the resolvers?
+	return &ClauseModel{
+		Name:        f.name,
+		Help:        f.help,
+		Short:       f.shorthand,
+		Default:     f.defaultValues,
+		PlaceHolder: f.placeholder,
+		Required:    f.required,
+		Hidden:      f.hidden,
+		Value:       f.value,
+		Cumulative:  cumulative,
+		Envar:       envar,
+	}
 }
 
 func (c *ClauseModel) String() string {
@@ -251,21 +273,6 @@ func (f *flagGroup) Model() *FlagGroupModel {
 		m.Flags = append(m.Flags, fl.Model())
 	}
 	return m
-}
-
-func (f *Clause) Model() *ClauseModel {
-	_, cumulative := f.value.(cumulativeValue)
-	return &ClauseModel{
-		Name:        f.name,
-		Help:        f.help,
-		Short:       f.shorthand,
-		Default:     f.defaultValues,
-		PlaceHolder: f.placeholder,
-		Required:    f.required,
-		Hidden:      f.hidden,
-		Value:       f.value,
-		Cumulative:  cumulative,
-	}
 }
 
 func (c *cmdGroup) Model(parent *CmdModel) *CmdGroupModel {

@@ -112,8 +112,11 @@ func (a *Application) Action(action Action) *Application {
 	return a
 }
 
-// PreAction is an application-wide callback. It is in two situations: first, with a nil "element"
-// parameter, and second, whenever a command, argument or flag is encountered.
+// PreAction adds a callback action to be executed after flag values are parsed but before
+// any other processing, such as help, completion, etc.
+//
+// It is called in two situations: first, with a nil "element" parameter, and second, whenever a command, argument or
+// flag is encountered.
 func (a *Application) PreAction(action Action) *Application {
 	a.addPreAction(action)
 	return a
@@ -226,15 +229,15 @@ func (a *Application) Parse(args []string) (command string, err error) {
 		return "", parseErr
 	}
 
+	if err = a.applyPreActions(context, !a.completion); err != nil {
+		return "", err
+	}
+
 	if err = a.setDefaults(context); err != nil {
 		return "", err
 	}
 
 	selected, setValuesErr := a.setValues(context)
-
-	if err = a.applyPreActions(context, !a.completion); err != nil {
-		return "", err
-	}
 
 	if a.completion {
 		a.generateBashCompletion(context)
