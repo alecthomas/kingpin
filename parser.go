@@ -214,7 +214,7 @@ func (p *ParseContext) Next() *Token {
 			p.args = append([]string{"-" + arg[size+1:]}, p.args...)
 		}
 		return &Token{p.argi, TokenShort, short}
-	} else if strings.HasPrefix(arg, "@") {
+	} else if EnableFileExpansion && strings.HasPrefix(arg, "@") {
 		expanded, err := ExpandArgsFromFile(arg[1:])
 		if err != nil {
 			return &Token{p.argi, TokenError, err.Error()}
