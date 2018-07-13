@@ -348,6 +348,7 @@ func TestDefaultCmdCompletion(t *testing.T) {
 	//   - default child-cmds
 	//   - first arg hints for the final default cmd
 	assert.Equal(t, []string{"cmd2-sub1", "cmd2-sub2", "cmd2-sub2-sub1", "cmd2-sub2-sub1-arg1"}, complete(t, app, "cmd2"))
+	assert.Equal(t, []string{"cmd2-sub2-sub1-arg1"}, complete(t, app, "cmd2", "cmd2"))
 
 	// Args should be completed when all preceding cmds are explicit, and when
 	// any of them are implicit (not listed). Check this by trying all possible
@@ -371,4 +372,38 @@ func TestDefaultCmdCompletion(t *testing.T) {
 
 	// With both args of a default sub cmd, should get no completions
 	assert.Empty(t, complete(t, app, "arg1", "arg2"))
+}
+
+func TestPartialCmdCompletion(t *testing.T) {
+	app := newTestApp()
+
+	cmd1 := app.Command("cmd1", "")
+	cmd1.Arg("cmd1-arg1", "").HintOptions("cmd1-arg1-opt1", "cmd1-arg1-opt2", "cmd1-arg1-opt3").String()
+	cmd2 := app.Command("cmd2", "")
+	cmd2.Arg("cmd2-arg1", "").HintOptions("cmd2-123456", "cmd2-123789", "cmd2-456789").String()
+	cmd3 := app.Command("cmd3", "")
+	cmd3.Arg("cmd3-arg1", "").String()
+	cmd4 := app.Command("cmd4", "")
+	cmd4.Arg("cmd4-arg1", "").HintOptions("cmd4-arg1").String()
+	cmd4.Arg("cmd4-arg2", "").HintOptions("cmd4-arg2").String()
+	cmd4.Arg("cmd4-arg3", "").HintOptions("cmd4-arg3").String()
+
+
+	// partial matches
+	assert.Equal(t, []string{"cmd1-arg1-opt1", "cmd1-arg1-opt2", "cmd1-arg1-opt3"}, complete(t, app, "cmd1", "cmd1-arg1-opt"))
+	assert.Equal(t, []string{"cmd2-123456", "cmd2-123789", "cmd2-456789"}, complete(t, app, "cmd2", "cmd2-"))
+	assert.Equal(t, []string{"cmd2-123456", "cmd2-123789"}, complete(t, app, "cmd2", "cmd2-123"))
+	assert.Equal(t, []string{"cmd2-456789"}, complete(t, app, "cmd2", "cmd2-4"))
+	assert.Equal(t, []string{"cmd4-arg1"}, complete(t, app, "cmd4"))
+	assert.Equal(t, []string{"cmd4-arg1"}, complete(t, app, "cmd4", "cmd4-"))
+	assert.Equal(t, []string{"cmd4-arg2"}, complete(t, app, "cmd4", "cmd4-arg1"))
+	assert.Equal(t, []string{"cmd4-arg2"}, complete(t, app, "cmd4", "cmd4-arg1", "cmd4-arg"))
+	assert.Equal(t, []string{"cmd4-arg3"}, complete(t, app, "cmd4", "cmd4-arg1", "cmd4-arg2"))
+	assert.Equal(t, []string{"cmd4-arg3"}, complete(t, app, "cmd4", "cmd4-arg1", "cmd4-arg2", "cmd"))
+
+	// exact match
+	assert.Empty(t, complete(t, app, "cmd2", "cmd2-123456"))
+
+	// no option
+	assert.Empty(t, complete(t, app, "cmd3", "cmd3-"))
 }
