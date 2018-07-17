@@ -86,6 +86,7 @@ loop:
 			var flag *FlagClause
 			var ok bool
 			invert := false
+			unknown := false
 
 			name := token.Value
 			if token.Type == TokenLong {
@@ -98,13 +99,34 @@ loop:
 					flag, ok = f.long[name]
 				}
 				if !ok {
-					return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+					if IgnoreUnknown {
+						unknown = true
+					} else {
+						return nil, fmt.Errorf("unknown long flag '%s'", flagToken)
+					}
 				}
 			} else {
 				flag, ok = f.short[name]
 				if !ok {
-					return nil, fmt.Errorf("unknown short flag '%s'", flagToken)
+					if IgnoreUnknown {
+						unknown = true
+					} else {
+						return nil, fmt.Errorf("unknown short flag '%s'", flagToken)
+					}
 				}
+			}
+
+			// Move beyond unknown
+			if unknown {
+				fmt.Printf("Ignoring unknown flag '%s'\n", flagToken)
+				context.Next()
+				switch context.Peek().Type {
+				case TokenEOL, TokenLong, TokenShort:
+					continue
+				default:
+					context.Next() // Moves beyond unknown token argument
+				}
+				continue
 			}
 
 			context.Next()
