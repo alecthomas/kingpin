@@ -119,14 +119,17 @@ loop:
 			// Move beyond unknown
 			if unknown {
 				fmt.Printf("Ignoring unknown flag '%s'\n", flagToken)
-				context.Next()
-				switch context.Peek().Type {
-				case TokenEOL, TokenLong, TokenShort:
-					continue
-				default:
-					context.Next() // Moves beyond unknown token argument
+
+				// Advance to next long or short flag, or EOL
+				for {
+					context.Next()
+					switch context.Peek().Type {
+					case TokenEOL, TokenLong, TokenShort:
+						continue loop
+					default:
+						context.Next() // Moves beyond unknown token argument
+					}
 				}
-				continue
 			}
 
 			context.Next()
