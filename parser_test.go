@@ -120,23 +120,3 @@ func TestParseContextPush(t *testing.T) {
 	b = c.Next()
 	assert.Equal(t, "bar", b.Value)
 }
-
-func TestParseRemainingArgs(t *testing.T) {
-	assert := assert.New(t)
-	app := New("test", "")
-	app.Command("foo", "").Command("bar", "")
-	c := tokenize([]string{"foo", "bar", "--baz=value", "-s"}, false)
-	err := parse(c, app)
-	assert.Error(err)
-	assert.ElementsMatch(c.RemainingArgs, []string{"--baz=value", "-s"})
-}
-
-func TestClearsRemainingArgsAfterSuccessfulParse(t *testing.T) {
-	assert := assert.New(t)
-	app := New("test", "")
-	app.Command("foo", "").Command("bar", "")
-	c := tokenize([]string{"foo", "bar"}, false)
-	err := parse(c, app)
-	assert.NoError(err)
-	assert.ElementsMatch(c.RemainingArgs, nil)
-}

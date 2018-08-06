@@ -195,6 +195,9 @@ type CmdClause struct {
 	validator      CmdClauseValidator
 	hidden         bool
 	completionAlts []string
+	// noInterspersed specifies whether this command allows flags to be interspersed with positional argumentss.
+	// Overrides the application setting.
+	noInterspersed bool
 }
 
 func newCommand(app *Application, name, help string) *CmdClause {
@@ -270,5 +273,14 @@ func (c *CmdClause) init() error {
 
 func (c *CmdClause) Hidden() *CmdClause {
 	c.hidden = true
+	return c
+}
+
+// Interspersed controls if flags can be interspersed with positional arguments.
+//
+// true (the default) means that they can, false means that all the flags must appear
+// before the first positional arguments.
+func (c *CmdClause) Interspersed(interspersed bool) *CmdClause {
+	c.noInterspersed = !interspersed
 	return c
 }

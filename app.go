@@ -290,7 +290,7 @@ func (a *Application) Command(name, help string) *CmdClause {
 	return a.addCommand(name, help)
 }
 
-// Interspersed control if flags can be interspersed with positional arguments
+// Interspersed controls if flags can be interspersed with positional arguments
 //
 // true (the default) means that they can, false means that all the flags must appear before the first positional arguments.
 func (a *Application) Interspersed(interspersed bool) *Application {

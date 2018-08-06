@@ -372,3 +372,40 @@ func TestDefaultCmdCompletion(t *testing.T) {
 	// With both args of a default sub cmd, should get no completions
 	assert.Empty(t, complete(t, app, "arg1", "arg2"))
 }
+
+func TestCommandInterspersedFalse(t *testing.T) {
+	app := newTestApp().Interspersed(false)
+	cmd := app.Command("run", "Run an arbitrary command").Interspersed(false)
+	a1 := cmd.Arg("a1", "").String()
+	a2 := cmd.Arg("a2", "").String()
+	f1 := cmd.Flag("flag", "").String()
+
+	_, err := app.Parse([]string{"run", "a1", "--flag=flag"})
+	assert.NoError(t, err)
+	assert.Equal(t, "a1", *a1)
+	assert.Equal(t, "--flag=flag", *a2)
+	assert.Equal(t, "", *f1)
+}
+
+func TestCommandInterspersedTrue(t *testing.T) {
+	// test once with the default value and once with explicit true
+	for i := 0; i < 2; i++ {
+		app := newTestApp()
+		cmd := app.Command("run", "Run arbitrary command")
+		if i != 0 {
+			t.Log("Setting explicit")
+			cmd.Interspersed(true)
+		} else {
+			t.Log("Using default")
+		}
+		a1 := cmd.Arg("a1", "").String()
+		a2 := cmd.Arg("a2", "").String()
+		f1 := cmd.Flag("flag", "").String()
+
+		_, err := app.Parse([]string{"run", "a1", "--flag=flag"})
+		assert.NoError(t, err)
+		assert.Equal(t, "a1", *a1)
+		assert.Equal(t, "", *a2)
+		assert.Equal(t, "flag", *f1)
+	}
+}
