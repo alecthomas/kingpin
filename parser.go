@@ -87,16 +87,22 @@ type ParseElement struct {
 // *ArgClause and *CmdClause values and their corresponding arguments (if
 // any).
 type ParseContext struct {
+	// SelectedCommand is the command parser has selected as the match so far
 	SelectedCommand *CmdClause
-	ignoreDefault   bool
-	argsOnly        bool
-	peek            []*Token
-	argi            int // Index of current command-line arg we're processing.
-	args            []string
-	rawArgs         []string
-	flags           *flagGroup
-	arguments       *argGroup
-	argumenti       int // Cursor into arguments
+	// RemainingArgs refers to the list of arguments before the peek operation has moved the pointer
+	// and parsed the next token.
+	// The position will be used to report raw remaining arguments after the parse has failed.
+	// The slice is supposed to be immutable and should not be modified.
+	RemainingArgs []string
+	ignoreDefault bool
+	argsOnly      bool
+	peek          []*Token
+	argi          int // Index of current command-line arg we're processing.
+	args          []string
+	rawArgs       []string
+	flags         *flagGroup
+	arguments     *argGroup
+	argumenti     int // Cursor into arguments
 	// Flags, arguments and commands encountered and collected during parse.
 	Elements []*ParseElement
 }
@@ -113,6 +119,7 @@ func (p *ParseContext) nextArg() *ArgClause {
 }
 
 func (p *ParseContext) next() {
+	p.RemainingArgs = p.args
 	p.argi++
 	p.args = p.args[1:]
 }
@@ -120,7 +127,7 @@ func (p *ParseContext) next() {
 // HasTrailingArgs returns true if there are unparsed command-line arguments.
 // This can occur if the parser can not match remaining arguments.
 func (p *ParseContext) HasTrailingArgs() bool {
-	return len(p.args) > 0
+	return len(p.RemainingArgs) > 0
 }
 
 func tokenize(args []string, ignoreDefault bool) *ParseContext {
@@ -392,5 +399,9 @@ loop:
 		}
 	}
 
-	return
+	if err == nil {
+		context.RemainingArgs = nil
+	}
+
+	return err
 }
