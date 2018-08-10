@@ -73,6 +73,20 @@ func TestFlagsStruct(t *testing.T) {
 	_, err = a.Parse([]string{"--elapsed=5s"})
 	assert.NoError(t, err)
 	assert.Equal(t, 5*time.Second, dflag.Elapsed)
+
+	type TimeFlag struct {
+		Timestamp time.Time `help:"Time"`
+		Formatted time.Time `help:"Formatted time" format:"Jan 2 15:04:05 2006"`
+	}
+
+	a = newTestApp()
+	tflag := &TimeFlag{}
+	err = a.Struct(tflag)
+	assert.NoError(t, err)
+	_, err = a.Parse([]string{"--timestamp=2018-08-08T08:08:08Z", "--formatted=Sep 9 09:09:09 2019"})
+	assert.NoError(t, err)
+	assert.Equal(t, time.Date(2018, 8, 8, 8, 8, 8, 0, time.UTC), tflag.Timestamp)
+	assert.Equal(t, time.Date(2019, 9, 9, 9, 9, 9, 0, time.UTC), tflag.Formatted)
 }
 
 func TestNestedStruct(t *testing.T) {

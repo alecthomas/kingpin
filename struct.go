@@ -42,6 +42,10 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 			name = tag.Get("long")
 		}
 		arg := tag.Get("arg")
+		format := tag.Get("format") // For time.Time only
+		if format == "" {
+			format = time.RFC3339
+		}
 
 		var action Action
 		onMethodName := "On" + strings.ToUpper(ft.Name[0:1]) + ft.Name[1:]
@@ -49,7 +53,7 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 			action, _ = actionMethod.Interface().(func(element *ParseElement, context *ParseContext) error)
 		}
 
-		if field.Kind() == reflect.Struct {
+		if field.Kind() == reflect.Struct && ft.Type != reflect.TypeOf(time.Time{}) {
 			if ft.Anonymous {
 				if err := c.fromStruct(clause, field.Addr().Interface()); err != nil {
 					return err
@@ -104,6 +108,8 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 			clause.URLVar(ptr.(**url.URL))
 		} else if ft.Type == reflect.TypeOf(time.Duration(0)) {
 			clause.DurationVar(ptr.(*time.Duration))
+		} else if ft.Type == reflect.TypeOf(time.Time{}) {
+			clause.TimeVar(format, ptr.(*time.Time))
 		} else {
 			switch ft.Type.Kind() {
 			case reflect.String:
@@ -148,6 +154,8 @@ func (c *cmdMixin) fromStruct(clause *CmdClause, v interface{}) error { // nolin
 					clause.URLListVar(ptr.(*[]*url.URL))
 				} else if ft.Type == reflect.TypeOf(time.Duration(0)) {
 					clause.DurationListVar(ptr.(*[]time.Duration))
+				} else if ft.Type == reflect.TypeOf(time.Time{}) {
+					clause.TimeListVar(format, ptr.(*[]time.Time))
 				} else {
 					switch ft.Type.Elem().Kind() {
 					case reflect.String:
