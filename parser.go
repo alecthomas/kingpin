@@ -248,7 +248,7 @@ func (p *ParseContext) Next() *Token {
 
 	if strings.HasPrefix(arg, "-") {
 		if len(arg) == 1 {
-			return &Token{Index: p.argi, Type: TokenShort}
+			return &Token{Index: p.argi, Type: TokenArg}
 		}
 		rn, size := utf8.DecodeRuneInString(arg[1:])
 		short := string(rn)
