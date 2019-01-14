@@ -250,6 +250,17 @@ func main() {
 }
 ```
 
+#### Reading arguments from a file
+Kingpin supports reading arguments from a file. 
+Creat a file with the corresponding arguments:
+```
+echo -t=5\n > args
+```
+And now supply it:
+```
+$ ping @args
+```
+
 ### Complex Example
 
 Kingpin can also produce complex command-line applications with global flags,
