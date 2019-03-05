@@ -47,6 +47,22 @@ func TestEnumVar(t *testing.T) {
 	assert.Equal(t, "one", a)
 }
 
+func TestEnums(t *testing.T) {
+	app := New("", "")
+	a := app.Arg("a", "").Enums("one", "two", "three")
+	_, err := app.Parse([]string{"moo"})
+	assert.Error(t, err)
+	// Check that we get the error even if only one value is not a valid enum option
+	_, err = app.Parse([]string{"one", "two", "moo"})
+	assert.Error(t, err)
+
+	app = New("", "")
+	a = app.Arg("a", "").Enums("one", "two", "three")
+	_, err = app.Parse([]string{"one", "two"})
+	assert.NoError(t, err)
+	assert.ElementsMatch(t, *a, []string{"one", "two"}, "elements %s", *a)
+}
+
 func TestCounter(t *testing.T) {
 	app := New("", "")
 	c := app.Flag("f", "").Counter()

@@ -381,13 +381,18 @@ func newEnumsFlag(target *[]string, options ...string) *enumsValue {
 }
 
 func (s *enumsValue) Set(value string) error {
-	for _, v := range s.options {
-		if v == value {
-			*s.value = append(*s.value, value)
-			return nil
+	vals := strings.Split(value, ",")
+
+	for _, val := range vals {
+		trimmedVal := strings.TrimSpace(val)
+		if enumOption(val, s.options) {
+			*s.value = append(*s.value, trimmedVal)
+		} else {
+			return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(s.options, ","), trimmedVal)
 		}
 	}
-	return fmt.Errorf("enum value must be one of %s, got '%s'", strings.Join(s.options, ","), value)
+
+	return nil
 }
 
 func (e *enumsValue) Get() interface{} {
@@ -400,6 +405,16 @@ func (s *enumsValue) String() string {
 
 func (s *enumsValue) IsCumulative() bool {
 	return true
+}
+
+func enumOption(value string, options []string) bool {
+	for _, v := range options {
+		if v == value {
+			return true
+		}
+	}
+
+	return false
 }
 
 // -- units.Base2Bytes Value
