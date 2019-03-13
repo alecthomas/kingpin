@@ -1,4 +1,4 @@
-module gopkg.in/alecthomas/kingpin.v2
+module github.com/alecthomas/kingpin
 
 require (
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc
