@@ -36,6 +36,19 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 	assert.Equal(t, expected, buf.String())
 }
 
+func TestWhiteNoise(t *testing.T) {
+	samples := [][2]string{
+		{strings.Repeat("x", 29), "29 chars"},
+		{strings.Repeat("x", 30), "30 chars"}}
+	buf := bytes.NewBuffer(nil)
+	formatTwoColumns(buf, 0, 2, 200, samples)
+	expected := `xxxxxxxxxxxxxxxxxxxxxxxxxxxxx29 chars
+xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+                             30 chars
+`
+	assert.Equal(t, expected, buf.String())
+}
+
 func TestHiddenCommand(t *testing.T) {
 	templates := []struct{ name, template string }{
 		{"default", DefaultUsageTemplate},
