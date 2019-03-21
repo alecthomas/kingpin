@@ -30,7 +30,11 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 		buf := bytes.NewBuffer(nil)
 		doc.ToText(buf, row[1], "", preIndent, width-s-padding-indent)
 		lines := strings.Split(strings.TrimRight(buf.String(), "\n"), "\n")
-		fmt.Fprintf(w, "%s%-*s%*s", indentStr, s, row[0], padding, "")
+		if len(row[0]) >= 30 {
+			fmt.Fprintf(w, "%s%-*s%*s", indentStr, s, row[0], 0, "")
+		} else {
+			fmt.Fprintf(w, "%s%-*s%*s", indentStr, s, row[0], padding, "")
+		}
 		if len(row[0]) >= 30 {
 			fmt.Fprintf(w, "\n%s%s", indentStr, offsetStr)
 		}
