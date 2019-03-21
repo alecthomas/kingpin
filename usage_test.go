@@ -42,9 +42,9 @@ func TestWhiteNoise(t *testing.T) {
 		{strings.Repeat("x", 30), "30 chars"}}
 	buf := bytes.NewBuffer(nil)
 	formatTwoColumns(buf, 0, 2, 200, samples)
-	expected := `xxxxxxxxxxxxxxxxxxxxxxxxxxxxx29 chars
+	expected := `xxxxxxxxxxxxxxxxxxxxxxxxxxxxx  29 chars
 xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-                             30 chars
+                               30 chars
 `
 	assert.Equal(t, expected, buf.String())
 }
