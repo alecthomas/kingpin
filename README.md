@@ -621,6 +621,22 @@ You can see an in depth example of the completion API within
 
 `kingpin.CommandLine.HelpFlag.Short('h')`
 
+Short help is also available when creating a more complicated app:
+
+```go
+var (
+	app = kingpin.New("chat", "A command-line chat application.")
+  // ...
+)
+
+func main() {
+	app.HelpFlag.Short('h')
+	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
+  // ...
+  }
+}
+```
+
 ### Custom help
 
 Kingpin v2 supports templatised help using the text/template library (actually, [a fork](https://github.com/alecthomas/template)).
