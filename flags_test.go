@@ -143,7 +143,7 @@ func TestEmptyShortFlagIsAnError(t *testing.T) {
 
 func TestRequiredWithEnvarMissingErrors(t *testing.T) {
 	app := newTestApp()
-	app.Flag("t", "").OverrideDefaultFromEnvar("TEST_ENVAR").Required().Int()
+	app.Flag("t", "").Envar("TEST_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
 	assert.Error(t, err)
 }
