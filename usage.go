@@ -190,6 +190,10 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			return string(c)
 		},
 	}
+	for k, v := range a.usageFuncs {
+		funcs[k] = v
+	}
+
 	t, err := template.New("usage").Funcs(funcs).Parse(tmpl)
 	if err != nil {
 		return err
