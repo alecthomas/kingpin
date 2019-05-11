@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -62,4 +63,17 @@ func TestHiddenCommand(t *testing.T) {
 		assert.NotContains(t, usage, "hidden")
 		assert.Contains(t, usage, "visible")
 	}
+}
+
+func TestUsageFuncs(t *testing.T) {
+	var buf bytes.Buffer
+	a := New("test", "Test").Writer(&buf).Terminate(nil)
+	tpl := `{{ add 2 1 }}`
+	a.UsageTemplate(tpl)
+	a.UsageFuncs(template.FuncMap{
+		"add": func(x, y int) int { return x + y },
+	})
+	a.Parse([]string{"--help"})
+	usage := buf.String()
+	assert.Equal(t, "3", usage)
 }
