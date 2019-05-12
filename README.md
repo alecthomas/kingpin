@@ -556,14 +556,14 @@ is improved for bug fixed.
 Alternatively, instruct your users to add an additional statement to
 their `bash_profile` (or equivalent):
 
-```
+```bash
 eval "$(your-cli-tool --completion-script-bash)"
 ```
 
 Or for ZSH
 
-```
-eval "$(your-cli-tool --completion-script-zsh)"
+```bash
+your-cli-tool --completion-script-zsh | source /dev/stdin
 ```
 
 #### Additional API
