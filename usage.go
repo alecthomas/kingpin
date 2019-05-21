@@ -64,11 +64,11 @@ func formatAppUsage(app *ApplicationModel) string {
 
 func formatCmdUsage(app *ApplicationModel, cmd *CmdModel) string {
 	s := []string{app.Name, cmd.String()}
-	if len(app.Flags) > 0 {
-		s = append(s, app.FlagSummary())
+	if len(cmd.Flags) > 0 {
+		s = append(s, cmd.FlagSummary())
 	}
-	if len(app.Args) > 0 {
-		s = append(s, app.ArgSummary())
+	if len(cmd.Args) > 0 {
+		s = append(s, cmd.ArgSummary())
 	}
 	return strings.Join(s, " ")
 }
