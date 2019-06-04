@@ -1,6 +1,7 @@
 package kingpin
 
 import (
+	"errors"
 	"io/ioutil"
 
 	"github.com/stretchr/testify/assert"
@@ -401,4 +402,25 @@ func TestBashCompletionOptions(t *testing.T) {
 		assert.Equal(t, c.ExpectedOptions, args, "Expected != Actual: [%v] != [%v]. \nInput was: [%v]", c.ExpectedOptions, args, c.Args)
 	}
 
+}
+
+func TestCmdValidation(t *testing.T) {
+	c := newTestApp()
+	cmd := c.Command("cmd", "")
+
+	var a, b string
+	cmd.Flag("a", "a").StringVar(&a)
+	cmd.Flag("b", "b").StringVar(&b)
+	cmd.Validate(func(*CmdClause) error {
+		if a == "" && b == "" {
+			return errors.New("must specify either a or b")
+		}
+		return nil
+	})
+
+	_, err := c.Parse([]string{"cmd"})
+	assert.Error(t, err)
+
+	_, err = c.Parse([]string{"cmd", "--a", "A"})
+	assert.NoError(t, err)
 }
