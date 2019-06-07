@@ -388,8 +388,8 @@ var (
 
 func main() {
   switch kingpin.Parse() {
-  case "delete user":
-  case "delete post":
+  case deleteUserCommand.FullCommand():
+  case deletePostCommand.FullCommand():
   }
 }
 ```
