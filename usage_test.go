@@ -77,3 +77,17 @@ func TestUsageFuncs(t *testing.T) {
 	usage := buf.String()
 	assert.Equal(t, "3", usage)
 }
+
+func TestCmdClause_HelpLong(t *testing.T) {
+	var buf bytes.Buffer
+	tpl := `{{define "FormatUsage"}}{{.HelpLong}}{{end}}\
+{{template "FormatUsage" .Context.SelectedCommand}}`
+
+	a := New("test", "Test").Writer(&buf).Terminate(nil)
+	a.UsageTemplate(tpl)
+	a.Command("command", "short help text").HelpLong("long help text")
+
+	a.Parse([]string{"command", "--help"})
+	usage := buf.String()
+	assert.Equal(t, "long help text", usage)
+}

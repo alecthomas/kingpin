@@ -221,6 +221,7 @@ type CmdClause struct {
 	name           string
 	aliases        []string
 	help           string
+	helpLong       string
 	isDefault      bool
 	validator      CmdClauseValidator
 	hidden         bool
@@ -300,5 +301,13 @@ func (c *CmdClause) init() error {
 
 func (c *CmdClause) Hidden() *CmdClause {
 	c.hidden = true
+	return c
+}
+
+// HelpLong adds a long help text, which can be used in usage templates.
+// For example, to use a longer help text in the command-specific help
+// than in the apps root help.
+func (c *CmdClause) HelpLong(help string) *CmdClause {
+	c.helpLong = help
 	return c
 }

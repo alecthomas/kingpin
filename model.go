@@ -137,6 +137,7 @@ type CmdModel struct {
 	Name        string
 	Aliases     []string
 	Help        string
+	HelpLong    string
 	FullCommand string
 	Depth       int
 	Hidden      bool
@@ -230,6 +231,7 @@ func (c *CmdClause) Model() *CmdModel {
 		Name:           c.name,
 		Aliases:        c.aliases,
 		Help:           c.help,
+		HelpLong:       c.helpLong,
 		Depth:          depth,
 		Hidden:         c.hidden,
 		Default:        c.isDefault,
