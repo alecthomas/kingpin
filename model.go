@@ -59,7 +59,7 @@ type FlagModel struct {
 	Value       Value
 }
 
-func (f *FlagModel) string {
+func (f *FlagModel) String() string {
 	if f.Value == nil {
 		return ""
 	}
