@@ -60,6 +60,9 @@ type FlagModel struct {
 }
 
 func (f *FlagModel) String() string {
+	if f.Value == nil {
+		return ""
+	}
 	return f.Value.String()
 }
 
@@ -116,6 +119,10 @@ type ArgModel struct {
 }
 
 func (a *ArgModel) String() string {
+	if a.Value == nil {
+		return ""
+	}
+
 	return a.Value.String()
 }
 
