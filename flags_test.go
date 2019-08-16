@@ -66,7 +66,7 @@ func TestRequiredFlag(t *testing.T) {
 	assert.NoError(t, err)
 	_, err = app.Parse([]string{})
 	assert.Error(t, err)
-	_, err = app.Parse([]string{"--version"})
+	app.Parse([]string{"--version"})
 	assert.Equal(t, 1, exits)
 }
 

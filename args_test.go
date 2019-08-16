@@ -38,7 +38,7 @@ func TestArgMultipleRequired(t *testing.T) {
 	assert.Error(t, err)
 	_, err = app.Parse([]string{"A", "B"})
 	assert.NoError(t, err)
-	_, err = app.Parse([]string{"--version"})
+	app.Parse([]string{"--version"})
 	assert.True(t, terminated)
 }
 
