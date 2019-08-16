@@ -28,15 +28,13 @@ func (e *envarMixin) GetEnvarValue() string {
 }
 
 func (e *envarMixin) GetSplitEnvarValue() []string {
-	values := make([]string, 0)
-
 	envarValue := e.GetEnvarValue()
 	if envarValue == "" {
-		return values
+		return []string{}
 	}
 
 	// Split by new line to extract multiple values, if any.
 	trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
 
-	return append(values, envVarValuesSplitter.Split(trimmed, -1)...)
+	return envVarValuesSplitter.Split(trimmed, -1)
 }
