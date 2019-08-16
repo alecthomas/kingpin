@@ -144,9 +144,7 @@ func (p *ParseContext) mergeFlags(flags *flagGroup) {
 }
 
 func (p *ParseContext) mergeArgs(args *argGroup) {
-	for _, arg := range args.args {
-		p.arguments.args = append(p.arguments.args, arg)
-	}
+	p.arguments.args = append(p.arguments.args, args.args...)
 }
 
 func (p *ParseContext) EOL() bool {
