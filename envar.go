@@ -37,9 +37,6 @@ func (e *envarMixin) GetSplitEnvarValue() []string {
 
 	// Split by new line to extract multiple values, if any.
 	trimmed := envVarValuesTrimmer.ReplaceAllString(envarValue, "")
-	for _, value := range envVarValuesSplitter.Split(trimmed, -1) {
-		values = append(values, value)
-	}
 
-	return values
+	return append(values, envVarValuesSplitter.Split(trimmed, -1)...)
 }
