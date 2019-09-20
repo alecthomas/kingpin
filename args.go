@@ -71,6 +71,7 @@ type ArgClause struct {
 	name          string
 	help          string
 	defaultValues []string
+	hidden        bool
 	required      bool
 }
 
@@ -118,6 +119,12 @@ func (a *ArgClause) consumesRemainder() bool {
 		return r.IsCumulative()
 	}
 	return false
+}
+
+// Hidden hides the argument from usage but still allows it to be used.
+func (a *ArgClause) Hidden() *ArgClause {
+	a.hidden = true
+	return a
 }
 
 // Required arguments must be input by the user. They can not have a Default() value provided.
