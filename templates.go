@@ -3,7 +3,7 @@ package kingpin
 // Default usage template.
 var DefaultUsageTemplate = `{{define "FormatCommand"}}\
 {{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
+{{range .Args}}{{if not .Hidden}} {{if not .Required}}[{{end}}{{if .PlaceHolder}}{{.PlaceHolder}}{{else}}<{{.Name}}>{{end}}{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}{{end}}\
 {{end}}\
 
 {{define "FormatCommands"}}\
@@ -50,7 +50,7 @@ Commands:
 // Usage template where command's optional flags are listed separately
 var SeparateOptionalFlagsUsageTemplate = `{{define "FormatCommand"}}\
 {{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
+{{range .Args}}{{if not .Hidden}} {{if not .Required}}[{{end}}{{if .PlaceHolder}}{{.PlaceHolder}}{{else}}<{{.Name}}>{{end}}{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}{{end}}\
 {{end}}\
 
 {{define "FormatCommands"}}\
@@ -101,7 +101,7 @@ Commands:
 // Usage template with compactly formatted commands.
 var CompactUsageTemplate = `{{define "FormatCommand"}}\
 {{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
+{{range .Args}}{{if not .Hidden}} {{if not .Required}}[{{end}}{{if .PlaceHolder}}{{.PlaceHolder}}{{else}}<{{.Name}}>{{end}}{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}{{end}}\
 {{end}}\
 
 {{define "FormatCommandList"}}\
@@ -158,7 +158,7 @@ var ManPageTemplate = `{{define "FormatFlags"}}\
 
 {{define "FormatCommand"}}\
 {{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}{{if .Default}}*{{end}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
+{{range .Args}}{{if not .Hidden}} {{if not .Required}}[{{end}}{{if .PlaceHolder}}{{.PlaceHolder}}{{else}}<{{.Name}}>{{end}}{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}{{end}}\
 {{end}}\
 
 {{define "FormatCommands"}}\
@@ -196,7 +196,7 @@ var ManPageTemplate = `{{define "FormatFlags"}}\
 // Default usage template.
 var LongHelpTemplate = `{{define "FormatCommand"}}\
 {{if .FlagSummary}} {{.FlagSummary}}{{end}}\
-{{range .Args}} {{if not .Required}}[{{end}}<{{.Name}}>{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}\
+{{range .Args}}{{if not .Hidden}} {{if not .Required}}[{{end}}{{if .PlaceHolder}}{{.PlaceHolder}}{{else}}<{{.Name}}>{{end}}{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}{{end}}\
 {{end}}\
 
 {{define "FormatCommands"}}\

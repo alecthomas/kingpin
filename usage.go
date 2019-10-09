@@ -163,7 +163,12 @@ func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent 
 			rows := [][2]string{}
 			for _, arg := range a {
 				if !arg.Hidden {
-					s := "<" + arg.Name + ">"
+					var s string
+					if arg.PlaceHolder != "" {
+						s = arg.PlaceHolder
+					} else {
+						s = "<" + arg.Name + ">"
+					}
 					if !arg.Required {
 						s = "[" + s + "]"
 					}

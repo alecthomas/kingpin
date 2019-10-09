@@ -71,6 +71,7 @@ type ArgClause struct {
 	name          string
 	help          string
 	defaultValues []string
+	placeholder   string
 	hidden        bool
 	required      bool
 }
@@ -124,6 +125,13 @@ func (a *ArgClause) consumesRemainder() bool {
 // Hidden hides the argument from usage but still allows it to be used.
 func (a *ArgClause) Hidden() *ArgClause {
 	a.hidden = true
+	return a
+}
+
+// PlaceHolder sets the place-holder string used for arg values in the help. The
+// default behaviour is to use the arg name between < > brackets.
+func (a *ArgClause) PlaceHolder(value string) *ArgClause {
+	a.placeholder = value
 	return a
 }
 
