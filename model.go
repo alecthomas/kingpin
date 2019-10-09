@@ -98,7 +98,12 @@ func (a *ArgGroupModel) ArgSummary() string {
 	depth := 0
 	out := []string{}
 	for _, arg := range a.Args {
-		h := "<" + arg.Name + ">"
+		var h string
+		if arg.PlaceHolder != "" {
+			h = arg.PlaceHolder
+		} else {
+			h = "<" + arg.Name + ">"
+		}
 		if !arg.Required {
 			h = "[" + h
 			depth++
@@ -110,13 +115,14 @@ func (a *ArgGroupModel) ArgSummary() string {
 }
 
 type ArgModel struct {
-	Name     string
-	Help     string
-	Default  []string
-	Envar    string
-	Required bool
-	Hidden   bool
-	Value    Value
+	Name        string
+	Help        string
+	Default     []string
+	Envar       string
+	PlaceHolder string
+	Required    bool
+	Hidden      bool
+	Value       Value
 }
 
 func (a *ArgModel) String() string {
@@ -191,13 +197,14 @@ func (a *argGroup) Model() *ArgGroupModel {
 
 func (a *ArgClause) Model() *ArgModel {
 	return &ArgModel{
-		Name:     a.name,
-		Help:     a.help,
-		Default:  a.defaultValues,
-		Envar:    a.envar,
-		Required: a.required,
-		Hidden:   a.hidden,
-		Value:    a.value,
+		Name:        a.name,
+		Help:        a.help,
+		Default:     a.defaultValues,
+		Envar:       a.envar,
+		PlaceHolder: a.placeholder,
+		Required:    a.required,
+		Hidden:      a.hidden,
+		Value:       a.value,
 	}
 }
 
