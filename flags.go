@@ -318,6 +318,12 @@ func (f *FlagClause) Short(name rune) *FlagClause {
 	return f
 }
 
+// Help sets the help message.
+func (f *FlagClause) Help(help string) *FlagClause {
+	f.help = help
+	return f
+}
+
 // Bool makes this flag a boolean flag.
 func (f *FlagClause) Bool() (target *bool) {
 	target = new(bool)

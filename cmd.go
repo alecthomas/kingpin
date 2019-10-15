@@ -283,6 +283,12 @@ func (c *CmdClause) PreAction(action Action) *CmdClause {
 	return c
 }
 
+// Help sets the help message.
+func (c *CmdClause) Help(help string) *CmdClause {
+	c.help = help
+	return c
+}
+
 func (c *CmdClause) init() error {
 	if err := c.flagGroup.init(c.app.defaultEnvarPrefix()); err != nil {
 		return err

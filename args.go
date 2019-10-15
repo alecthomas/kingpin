@@ -188,6 +188,12 @@ func (a *ArgClause) HintOptions(options ...string) *ArgClause {
 	return a
 }
 
+// Help sets the help message.
+func (a *ArgClause) Help(help string) *ArgClause {
+	a.help = help
+	return a
+}
+
 func (a *ArgClause) init() error {
 	if a.required && len(a.defaultValues) > 0 {
 		return fmt.Errorf("required argument '%s' with unusable default value", a.name)
