@@ -229,7 +229,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 
 		command, err = a.execute(context, selected)
 		if err == ErrCommandNotSpecified {
-			a.writeUsage(context, nil)
+			return "", nil
 		}
 	}
 	return command, err
