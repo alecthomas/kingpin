@@ -1,34 +1,87 @@
 package kingpin
 
+import (
+	"bytes"
+	"fmt"
+	"os"
+	"sort"
+	"strings"
+)
+
+type Completion struct {
+	Directories bool
+	Files       bool
+	WordActions []HintAction
+}
+
 // HintAction is a function type who is expected to return a slice of possible
-// command line arguments.
+// wordlist command line arguments.
 type HintAction func() []string
 
 type completionsMixin struct {
-	hintActions        []HintAction
-	builtinHintActions []HintAction
+	userCompletion    Completion
+	builtinCompletion Completion
 }
 
-func (a *completionsMixin) addHintAction(action HintAction) {
-	a.hintActions = append(a.hintActions, action)
+func (c *Completion) addWords(words ...string) {
+	c.WordActions = append(c.WordActions, func() []string { return words })
 }
 
-// Allow adding of HintActions which are added internally, ie, EnumVar
-func (a *completionsMixin) addHintActionBuiltin(action HintAction) {
-	a.builtinHintActions = append(a.builtinHintActions, action)
+func (c *Completion) empty() bool {
+	return !c.Directories && !c.Files && len(c.WordActions) == 0
 }
 
-func (a *completionsMixin) resolveCompletions() []string {
-	var hints []string
-
-	options := a.builtinHintActions
-	if len(a.hintActions) > 0 {
-		// User specified their own hintActions. Use those instead.
-		options = a.hintActions
+func (c *Completion) generateBashString() string {
+	if c.empty() {
+		return ""
 	}
 
-	for _, hintAction := range options {
-		hints = append(hints, hintAction()...)
+	result := &bytes.Buffer{}
+
+	if c.Directories {
+		fmt.Fprint(result, "-d ")
 	}
-	return hints
+
+	if c.Files {
+		fmt.Fprintf(result, "-f ")
+	}
+
+	if len(c.WordActions) > 0 {
+		fmt.Fprint(result, "-W ")
+
+		ifs := os.Getenv("IFS")
+		if ifs == "" || strings.ContainsRune(ifs, '\n') {
+			ifs = "\n"
+		} else {
+			ifs = ifs[:1]
+		}
+
+		fmt.Fprint(result, strings.Join(c.resolveWords(), ifs))
+	}
+
+	return result.String()
+}
+
+func mergeCompletions(c1, c2 Completion) Completion {
+	directories := c1.Directories || c2.Directories
+	files := c1.Files || c2.Files
+	wordActions := append(c1.WordActions, c2.WordActions...)
+
+	return Completion{Directories: directories, Files: files, WordActions: wordActions}
+}
+
+func (a *completionsMixin) resolveCompletion() Completion {
+	if !a.userCompletion.empty() {
+		return a.userCompletion
+	}
+	return a.builtinCompletion
+}
+
+func (c Completion) resolveWords() []string {
+	result := []string{}
+	for _, wordAction := range c.WordActions {
+		result = append(result, wordAction()...)
+	}
+	sort.Strings(result)
+	return result
 }

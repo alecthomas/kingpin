@@ -145,7 +145,7 @@ _{{.App.Name}}_bash_autocomplete() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     opts=$( ${COMP_WORDS[0]} --completion-bash ${COMP_WORDS[@]:1:$COMP_CWORD} )
-    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    COMPREPLY=( $(compgen "${opts}" -- ${cur}) )
     return 0
 }
 complete -F _{{.App.Name}}_bash_autocomplete {{.App.Name}}
@@ -162,7 +162,7 @@ _{{.App.Name}}_bash_autocomplete() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     opts=$( ${COMP_WORDS[0]} --completion-bash ${COMP_WORDS[@]:1:$COMP_CWORD} )
-    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+    COMPREPLY=( $(compgen "${opts}" -- ${cur}) )
     [[ $COMPREPLY ]] && return
     compgen -f
     return 0

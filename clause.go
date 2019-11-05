@@ -85,8 +85,12 @@ func (c *Clause) PreAction(action Action) *Clause {
 
 // HintAction registers a HintAction (function) for the flag to provide completions
 func (c *Clause) HintAction(action HintAction) *Clause {
-	c.addHintAction(action)
+	c.userCompletion.WordActions = append(c.userCompletion.WordActions, action)
 	return c
+}
+
+func (c *Clause) resolveCompletion() Completion {
+	return c.completionsMixin.resolveCompletion()
 }
 
 // Envar overrides the default value(s) for a flag from an environment variable,
@@ -123,9 +127,7 @@ func (c *Clause) resolveCompletions() []string {
 
 // HintOptions registers any number of options for the flag to provide completions
 func (c *Clause) HintOptions(options ...string) *Clause {
-	c.addHintAction(func() []string {
-		return options
-	})
+	c.userCompletion.addWords(options...)
 	return c
 }
 
@@ -270,16 +272,20 @@ func (c *Clause) BytesVar(target *units.Base2Bytes) {
 
 // ExistingFile sets the parser to one that requires and returns an existing file.
 func (c *Clause) ExistingFileVar(target *string) {
+	c.builtinCompletion.Files = true
 	c.SetValue(newExistingFileValue(target))
 }
 
 // ExistingDir sets the parser to one that requires and returns an existing directory.
 func (c *Clause) ExistingDirVar(target *string) {
+	c.builtinCompletion.Directories = true
 	c.SetValue(newExistingDirValue(target))
 }
 
 // ExistingDir sets the parser to one that requires and returns an existing directory.
 func (c *Clause) ExistingFileOrDirVar(target *string) {
+	c.builtinCompletion.Directories = true
+	c.builtinCompletion.Files = true
 	c.SetValue(newExistingFileOrDirValue(target))
 }
 
@@ -292,7 +298,7 @@ func (c *Clause) Enum(options ...string) (target *string) {
 
 // EnumVar allows a value from a set of options.
 func (c *Clause) EnumVar(target *string, options ...string) {
-	c.addHintActionBuiltin(func() []string { return options })
+	c.builtinCompletion.addWords(options...)
 	c.SetValue(newEnumFlag(target, options...))
 }
 

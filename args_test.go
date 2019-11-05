@@ -80,3 +80,15 @@ func TestSubcommandArgRequiredWithEnvar(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 123, *flag)
 }
+
+func TestArgCompletionEnum(t *testing.T) {
+	app := newTestApp()
+	cmd := app.Command("command", "")
+	arg := cmd.Arg("t", "").Required()
+	arg.Enum("a", "b", "c")
+
+	result := arg.resolveCompletion()
+	assert.False(t, result.Directories)
+	assert.False(t, result.Files)
+	assert.Equal(t, []string{"a", "b", "c"}, result.resolveWords())
+}
