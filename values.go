@@ -42,20 +42,17 @@ type Getter interface {
 // Optional interface to indicate boolean flags that don't accept a value, and
 // implicitly have a --no-<x> negation counterpart.
 type boolFlag interface {
-	Value
 	IsBoolFlag() bool
 }
 
 // Optional interface for arguments that cumulatively consume all remaining
 // input.
 type remainderArg interface {
-	Value
 	IsCumulative() bool
 }
 
 // Optional interface for flags that can be repeated.
 type repeatableFlag interface {
-	Value
 	IsCumulative() bool
 }
 
