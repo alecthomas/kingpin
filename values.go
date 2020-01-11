@@ -3,6 +3,7 @@ package kingpin
 //go:generate go run ./cmd/genvalues/main.go
 
 import (
+	"encoding"
 	"fmt"
 	"net"
 	"net/url"
@@ -54,6 +55,31 @@ type remainderArg interface {
 // Optional interface for flags that can be repeated.
 type repeatableFlag interface {
 	IsCumulative() bool
+}
+
+// Text is the interface to the dynamic value stored in a flag.
+// (The default value is represented as a string.)
+//
+// If a Text has an IsBoolFlag() bool method returning true, the command-line
+// parser makes --name equivalent to -name=true rather than using the next
+// command-line argument, and adds a --no-name counterpart for negating the
+// flag.
+type Text interface {
+	encoding.TextMarshaler
+	encoding.TextUnmarshaler
+}
+
+type wrapText struct {
+	text Text
+}
+
+func (w wrapText) String() string {
+	buf, _ := w.text.MarshalText()
+	return string(buf)
+}
+
+func (w *wrapText) Set(s string) error {
+	return w.text.UnmarshalText([]byte(s))
 }
 
 type accumulator struct {
