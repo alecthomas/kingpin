@@ -59,11 +59,6 @@ type repeatableFlag interface {
 
 // Text is the interface to the dynamic value stored in a flag.
 // (The default value is represented as a string.)
-//
-// If a Text has an IsBoolFlag() bool method returning true, the command-line
-// parser makes --name equivalent to -name=true rather than using the next
-// command-line argument, and adds a --no-name counterpart for negating the
-// flag.
 type Text interface {
 	encoding.TextMarshaler
 	encoding.TextUnmarshaler
