@@ -90,6 +90,13 @@ func (f *FlagModel) FormatPlaceHolder() string {
 	return strings.ToUpper(f.Name)
 }
 
+func (f *FlagModel) HelpWithEnvar() string {
+	if f.Envar == "" {
+		return f.Help
+	}
+	return fmt.Sprintf("%s ($%s)", f.Help, f.Envar)
+}
+
 type ArgGroupModel struct {
 	Args []*ArgModel
 }
@@ -112,6 +119,13 @@ func (a *ArgGroupModel) ArgSummary() string {
 	}
 	out[len(out)-1] = out[len(out)-1] + strings.Repeat("]", depth)
 	return strings.Join(out, " ")
+}
+
+func (a *ArgModel) HelpWithEnvar() string {
+	if a.Envar == "" {
+		return a.Help
+	}
+	return fmt.Sprintf("%s ($%s)", a.Help, a.Envar)
 }
 
 type ArgModel struct {
