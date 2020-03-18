@@ -36,8 +36,10 @@ ElementLoop:
 				if len(validOptions) == 0 {
 					// If there are no options for this argument,
 					// mark is as allSatisfied as we can't suggest anything
-					argsSatisfied++
-					allSatisfied = true
+					if !clause.consumesRemainder() {
+						argsSatisfied++
+						allSatisfied = true
+					}
 					continue ElementLoop
 				}
 
@@ -45,7 +47,9 @@ ElementLoop:
 					if opt == *el.Value {
 						// We have an exact match
 						// We don't need to suggest any option
-						argsSatisfied++
+						if !clause.consumesRemainder() {
+							argsSatisfied++
+						}
 						continue ElementLoop
 					}
 					if strings.HasPrefix(opt, *el.Value) {
@@ -54,8 +58,10 @@ ElementLoop:
 					}
 				}
 				// Avoid further completion as we have done everything we could
-				argsSatisfied++
-				allSatisfied = true
+				if !clause.consumesRemainder() {
+					argsSatisfied++
+					allSatisfied = true
+				}
 			}
 		case *CmdClause:
 			options = append(options, clause.completionAlts...)
