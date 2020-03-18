@@ -390,6 +390,16 @@ func TestBashCompletionOptions(t *testing.T) {
 			Args:            "--completion-bash three arg1 arg2 arg3 arg4",
 			ExpectedOptions: []string(nil),
 		},
+		{
+			// After a -- argument, no more flags should be suggested
+			Args:            "--completion-bash three --flag-0 -- --",
+			ExpectedOptions: []string(nil),
+		},
+		{
+			// After a -- argument, argument options should still be suggested
+			Args:            "--completion-bash three -- arg1 ",
+			ExpectedOptions: []string{"arg-2-opt-1", "arg-2-opt-2"},
+		},
 	}
 
 	for _, c := range cases {
