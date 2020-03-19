@@ -635,7 +635,7 @@ func (a *Application) completionOptions(context *ParseContext) []string {
 
 	if (currArg != "" && strings.HasPrefix(currArg, "--")) || strings.HasPrefix(prevArg, "--") {
 		if context.argsOnly {
-			return []string{}
+			return nil
 		}
 
 		// Perform completion for A flag. The last/current argument started with "-"
