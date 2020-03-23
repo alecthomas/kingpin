@@ -634,6 +634,10 @@ func (a *Application) completionOptions(context *ParseContext) []string {
 	}
 
 	if (currArg != "" && strings.HasPrefix(currArg, "--")) || strings.HasPrefix(prevArg, "--") {
+		if context.argsOnly {
+			return nil
+		}
+
 		// Perform completion for A flag. The last/current argument started with "-"
 		var (
 			flagName  string // The name of a flag if given (could be half complete)
