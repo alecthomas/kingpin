@@ -92,6 +92,18 @@ func TestCmdClause_HelpLong(t *testing.T) {
 	assert.Equal(t, "long help text", usage)
 }
 
+func TestFlagModel_Default(t *testing.T) {
+	var defaultValue bool
+	value := newBoolValue(&defaultValue)
+	f := FlagModel{
+		Default: []string{"false"},
+		Name:    "a-boolean-flag",
+		Help:    "help text",
+		Value:   value,
+	}
+	assert.Equal(t, "--a-boolean-flag=false", formatFlag(false, &f))
+}
+
 func TestArgEnvVar(t *testing.T) {
 	var buf bytes.Buffer
 
