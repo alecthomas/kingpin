@@ -19,8 +19,8 @@ func TestArgRemainder(t *testing.T) {
 
 func TestArgRemainderErrorsWhenNotLast(t *testing.T) {
 	a := newArgGroup()
-	a.Arg("test", "").Strings()
-	a.Arg("test2", "").String()
+	a.newArg("test", "", nil).Strings()
+	a.newArg("test2", "", nil).String()
 	assert.Error(t, a.init())
 }
 

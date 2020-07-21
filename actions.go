@@ -5,6 +5,19 @@ package kingpin
 // actions.
 type Action func(*ParseContext) error
 
+// ActionGroup provides access to define actions and pre-actions.
+type ActionGroup interface {
+	// AddAction callback to call when all values are populated and parsing is
+	// complete, but before any command, flag or argument actions.
+	//
+	// All Action() callbacks are called in the order they are encountered on the
+	// command line.
+	AddAction(action Action)
+
+	// AddPreAction called after parsing completes but before validation and execution.
+	AddPreAction(action Action)
+}
+
 type actionMixin struct {
 	actions    []Action
 	preActions []Action

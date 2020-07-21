@@ -5,6 +5,18 @@ import (
 	"strings"
 )
 
+// Cmd represents a defined command and provides access to
+// define flags, arguments, sub-commands and register actions.
+type Cmd interface {
+	FlagGroup
+	ArgGroup
+	CmdGroup
+	ActionGroup
+
+	// RegisterCommandsOf will execute a registrar for commands for this Cmd.
+	RegisterCommandsOf(registrars ...CmdRegistrar)
+}
+
 type cmdMixin struct {
 	*flagGroup
 	*argGroup
@@ -13,7 +25,7 @@ type cmdMixin struct {
 }
 
 // CmdCompletion returns completion options for arguments, if that's where
-// parsing left off, or commands if there aren't any unsatisfied args.
+// parsing left off, or commands if aren't any unsatisfied args.
 func (c *cmdMixin) CmdCompletion(context *ParseContext) []string {
 	var options []string
 
@@ -93,7 +105,7 @@ func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (choices []
 
 	for _, flag := range c.flagGroup.flagOrder {
 		// Loop through each flag and determine if a match exists
-		if flag.name == flagName {
+		if flag.getName() == flagName {
 			// User typed entire flag. Need to look for flag options.
 			options = flag.resolveCompletions()
 			if len(options) == 0 {
@@ -119,12 +131,24 @@ func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (choices []
 		}
 
 		if !flag.hidden {
-			options = append(options, "--"+flag.name)
+			options = append(options, "--"+flag.getName())
 		}
 	}
 	// No Flag directly matched.
 	return options, false, false
 
+}
+
+// CmdGroup provides access to defining and retrieving commands
+type CmdGroup interface {
+	// GetArg gets a command definition.
+	//
+	// This allows existing commands to be modified after definition but before parsing. Useful for
+	// modular applications.
+	GetCommand(name string) *CmdClause
+
+	// Command adds a new command.
+	Command(name, help string) *CmdClause
 }
 
 type cmdGroup struct {
@@ -260,7 +284,7 @@ func (c *CmdClause) Validate(validator CmdClauseValidator) *CmdClause {
 
 func (c *CmdClause) FullCommand() string {
 	out := []string{c.name}
-	for p := c.parent; p != nil; p = p.parent {
+	for p := c.cmdGroup.parent; p != nil; p = p.cmdGroup.parent {
 		out = append([]string{p.name}, out...)
 	}
 	return strings.Join(out, " ")
@@ -269,7 +293,7 @@ func (c *CmdClause) FullCommand() string {
 // Command adds a new sub-command.
 func (c *CmdClause) Command(name, help string) *CmdClause {
 	cmd := c.addCommand(name, help)
-	cmd.parent = c
+	cmd.cmdGroup.parent = c
 	return cmd
 }
 
@@ -279,20 +303,56 @@ func (c *CmdClause) Default() *CmdClause {
 	return c
 }
 
+// Action callback to call when all values are populated and parsing is complete
+// and this command should be executed.
 func (c *CmdClause) Action(action Action) *CmdClause {
 	c.addAction(action)
 	return c
 }
 
+// AddAction works like Action but does not return the current instance.
+// This will fulfill the common interface ActionGroup
+func (c *CmdClause) AddAction(action Action) {
+	c.Action(action)
+}
+
+// PreAction called after parsing completes but before validation and execution.
 func (c *CmdClause) PreAction(action Action) *CmdClause {
 	c.addPreAction(action)
 	return c
+}
+
+// AddPreAction works like PreAction but does not return the current instance.
+// This will fulfill the common interface ActionGroup
+func (c *CmdClause) AddPreAction(action Action) {
+	c.PreAction(action)
 }
 
 // Help sets the help message.
 func (c *CmdClause) Help(help string) *CmdClause {
 	c.help = help
 	return c
+}
+
+// Arg defines a new argument.
+func (c *CmdClause) Arg(name, help string) *ArgClause {
+	return c.newArg(name, help, c.resolveEnvarName)
+}
+
+// Flag defines a new flag with the given long name and help.
+func (c *CmdClause) Flag(name, help string) *FlagClause {
+	return c.newFlag(name, help, c, c.resolveEnvarName)
+}
+
+// FlagGroup create a new sub group at this FlagGroup with the given name.
+//
+// This allows grouping flags and prevents duplication of namings.
+func (c *CmdClause) FlagGroup(prefix string) *SubFlagGroup {
+	return c.newFlagGroup(prefix, c, c.GetEnvarPrefix)
+}
+
+func (c *CmdClause) resolveEnvarName(name string) string {
+	return c.GetEnvarPrefix() + name
 }
 
 func (c *CmdClause) init() error {
@@ -322,4 +382,46 @@ func (c *CmdClause) Hidden() *CmdClause {
 func (c *CmdClause) HelpLong(help string) *CmdClause {
 	c.helpLong = help
 	return c
+}
+
+// RegisterFlagsOf will execute a registrar for flags.
+// which will be executed before pre-actions and validation to register its flags.
+func (c *CmdClause) RegisterFlagsOf(registrars ...FlagRegistrar) {
+	registerFlagsOf(c, registrars...)
+}
+
+// FlagsOf will execute a registrar for flags for this CmdClause
+// which will be executed before pre-actions and validation to register its flags.
+func (c *CmdClause) FlagsOf(registrars ...FlagRegistrar) *CmdClause {
+	c.RegisterFlagsOf(registrars...)
+	return c
+}
+
+// CmdsOf will register a registrar for commands for this CmdClause
+// which will be executed before pre-actions and validation to register its commands.
+func (c *CmdClause) RegisterCommandsOf(registrars ...CmdRegistrar) {
+	registerCommandsOf(c, registrars...)
+}
+
+// CmdsOf will register a registrar for commands for this CmdClause
+// which will be executed before pre-actions and validation to register its commands.
+func (c *CmdClause) CmdsOf(registrars ...CmdRegistrar) *CmdClause {
+	c.RegisterCommandsOf(registrars...)
+	return c
+}
+
+// EnvarNamePrefix will set a prefix for environment variables for this CmdClause.
+// This will prevent for duplicating the prefixes for all environment variables.
+// This will inherit the prefix of any parent CmdClause or the Application.
+func (c *CmdClause) EnvarNamePrefix(prefix string) *CmdClause {
+	c.envarNamePrefix = prefix
+	return c
+}
+
+// GetEnvarPrefix will return the actual environment variable prefix.
+func (c *CmdClause) GetEnvarPrefix() string {
+	if p := c.cmdGroup.parent; p != nil {
+		return p.GetEnvarPrefix() + c.flagGroup.GetEnvarPrefix()
+	}
+	return c.app.GetEnvarPrefix() + c.flagGroup.GetEnvarPrefix()
 }

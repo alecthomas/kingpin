@@ -4,6 +4,18 @@ import (
 	"fmt"
 )
 
+// ArgGroup provides access to defining and retrieving arguments
+type ArgGroup interface {
+	// GetArg gets an argument definition.
+	//
+	// This allows existing arguments to be modified after definition but before parsing. Useful for
+	// modular applications.
+	GetArg(name string) *ArgClause
+
+	// Arg defines a new argument.
+	Arg(name, help string) *ArgClause
+}
+
 type argGroup struct {
 	args []*ArgClause
 }
@@ -29,8 +41,8 @@ func (a *argGroup) GetArg(name string) *ArgClause {
 	return nil
 }
 
-func (a *argGroup) Arg(name, help string) *ArgClause {
-	arg := newArg(name, help)
+func (a *argGroup) newArg(name, help string, envarNameResolver envarNameResolver) *ArgClause {
+	arg := newArg(name, help, envarNameResolver)
 	a.args = append(a.args, arg)
 	return arg
 }
@@ -76,11 +88,12 @@ type ArgClause struct {
 	required      bool
 }
 
-func newArg(name, help string) *ArgClause {
+func newArg(name, help string, envarNameResolver envarNameResolver) *ArgClause {
 	a := &ArgClause{
 		name: name,
 		help: help,
 	}
+	a.nameResolver = envarNameResolver
 	return a
 }
 
@@ -169,9 +182,21 @@ func (a *ArgClause) Action(action Action) *ArgClause {
 	return a
 }
 
+// AddAction works like Action but does not return the current instance.
+// This will fulfill the common interface ActionGroup
+func (a *ArgClause) AddAction(action Action) {
+	a.Action(action)
+}
+
 func (a *ArgClause) PreAction(action Action) *ArgClause {
 	a.addPreAction(action)
 	return a
+}
+
+// AddPreAction works like PreAction but does not return the current instance.
+// This will fulfill the common interface ActionGroup
+func (a *ArgClause) AddPreAction(action Action) {
+	a.PreAction(action)
 }
 
 // HintAction registers a HintAction (function) for the arg to provide completions

@@ -19,7 +19,7 @@ func TestBool(t *testing.T) {
 
 func TestNoBool(t *testing.T) {
 	fg := newFlagGroup()
-	f := fg.Flag("b", "").Default("true")
+	f := fg.newFlag("b", "", nil, nil).Default("true")
 	b := f.Bool()
 	fg.init("")
 	tokens := tokenize([]string{"--no-b"}, false)
@@ -30,7 +30,7 @@ func TestNoBool(t *testing.T) {
 
 func TestNegateNonBool(t *testing.T) {
 	fg := newFlagGroup()
-	f := fg.Flag("b", "")
+	f := fg.newFlag("b", "", nil, nil)
 	f.Int()
 	fg.init("")
 	tokens := tokenize([]string{"--no-b"}, false)
@@ -40,7 +40,7 @@ func TestNegateNonBool(t *testing.T) {
 
 func TestNegativePrefixLongFlag(t *testing.T) {
 	fg := newFlagGroup()
-	f := fg.Flag("no-comment", "")
+	f := fg.newFlag("no-comment", "", nil, nil)
 	b := f.Bool()
 	fg.init("")
 	tokens := tokenize([]string{"--no-comment"}, false)

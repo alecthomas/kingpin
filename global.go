@@ -33,6 +33,18 @@ func Arg(name, help string) *ArgClause {
 	return CommandLine.Arg(name, help)
 }
 
+// FlagsOf will register a registrar for flags for this Application
+// which will be executed before pre-actions and validation to register its flags.
+func FlagsOf(registrars ...FlagRegistrar) *Application {
+	return CommandLine.FlagsOf(registrars...)
+}
+
+// CmdsOf will register a registrar for commands for this Application
+// which will be executed before pre-actions and validation to register its commands.
+func CmdsOf(registrars ...CmdRegistrar) *Application {
+	return CommandLine.CmdsOf(registrars...)
+}
+
 // Parse and return the selected command. Will call the termination handler if
 // an error is encountered.
 func Parse() string {

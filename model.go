@@ -214,7 +214,7 @@ func (a *ArgClause) Model() *ArgModel {
 		Name:        a.name,
 		Help:        a.help,
 		Default:     a.defaultValues,
-		Envar:       a.envar,
+		Envar:       a.getEnvar(),
 		PlaceHolder: a.placeholder,
 		Required:    a.required,
 		Hidden:      a.hidden,
@@ -224,19 +224,26 @@ func (a *ArgClause) Model() *ArgModel {
 
 func (f *flagGroup) Model() *FlagGroupModel {
 	m := &FlagGroupModel{}
-	for _, fl := range f.flagOrder {
-		m.Flags = append(m.Flags, fl.Model())
-	}
+	f.modelRecursive(m)
 	return m
+}
+
+func (f *flagGroup) modelRecursive(target *FlagGroupModel) {
+	for _, fl := range f.flagOrder {
+		target.Flags = append(target.Flags, fl.Model())
+	}
+	for _, subGroup := range f.subGroups {
+		subGroup.modelRecursive(target)
+	}
 }
 
 func (f *FlagClause) Model() *FlagModel {
 	return &FlagModel{
-		Name:        f.name,
+		Name:        f.getName(),
 		Help:        f.help,
 		Short:       rune(f.shorthand),
 		Default:     f.defaultValues,
-		Envar:       f.envar,
+		Envar:       f.getEnvar(),
 		PlaceHolder: f.placeholder,
 		Required:    f.required,
 		Hidden:      f.hidden,

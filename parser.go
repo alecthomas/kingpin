@@ -138,8 +138,11 @@ func (p *ParseContext) mergeFlags(flags *flagGroup) {
 		if flag.shorthand != 0 {
 			p.flags.short[string(flag.shorthand)] = flag
 		}
-		p.flags.long[flag.name] = flag
+		p.flags.long[flag.getName()] = flag
 		p.flags.flagOrder = append(p.flags.flagOrder, flag)
+	}
+	for _, subGroup := range flags.subGroups {
+		p.mergeFlags(&subGroup.flagGroup)
 	}
 }
 

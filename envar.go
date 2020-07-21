@@ -12,19 +12,32 @@ var (
 )
 
 type envarMixin struct {
-	envar   string
-	noEnvar bool
+	nameResolver envarNameResolver
+	envar        string
+	noEnvar      bool
 }
+
+type envarNameResolver func(string) string
 
 func (e *envarMixin) HasEnvarValue() bool {
 	return e.GetEnvarValue() != ""
 }
 
 func (e *envarMixin) GetEnvarValue() string {
+	if n := e.getEnvar(); n != "" {
+		return os.Getenv(n)
+	}
+	return ""
+}
+
+func (e *envarMixin) getEnvar() string {
 	if e.noEnvar || e.envar == "" {
 		return ""
 	}
-	return os.Getenv(e.envar)
+	if r := e.nameResolver; r != nil {
+		return r(e.envar)
+	}
+	return e.envar
 }
 
 func (e *envarMixin) GetSplitEnvarValue() []string {

@@ -118,6 +118,13 @@ func (a *Application) DefaultEnvars() *Application {
 	return a
 }
 
+// EnvarNamePrefix will set a prefix for environment variables for this Application.
+// This will prevent for duplicating the prefixes for all environment variables.
+func (a *Application) EnvarNamePrefix(prefix string) *Application {
+	a.envarNamePrefix = prefix
+	return a
+}
+
 // Terminate specifies the termination handler. Defaults to os.Exit(status).
 // If nil is passed, a no-op function will be used.
 func (a *Application) Terminate(terminate func(int)) *Application {
@@ -287,15 +294,48 @@ func (a *Application) Action(action Action) *Application {
 	return a
 }
 
-// Action called after parsing completes but before validation and execution.
+// AddAction works like Action but does not return the current instance.
+// This will fulfill the common interface ActionGroup
+func (a *Application) AddAction(action Action) {
+	a.Action(action)
+}
+
+// PreAction called after parsing completes but before validation and execution.
 func (a *Application) PreAction(action Action) *Application {
 	a.addPreAction(action)
 	return a
 }
 
+// AddPreAction works like PreAction but does not return the current instance.
+// This will fulfill the common interface ActionGroup
+func (a *Application) AddPreAction(action Action) {
+	a.PreAction(action)
+}
+
 // Command adds a new top-level command.
 func (a *Application) Command(name, help string) *CmdClause {
 	return a.addCommand(name, help)
+}
+
+// Arg defines a new argument.
+func (a *Application) Arg(name, help string) *ArgClause {
+	return a.newArg(name, help, a.resolveEnvarName)
+}
+
+// Flag defines a new flag with the given long name and help.
+func (a *Application) Flag(name, help string) *FlagClause {
+	return a.newFlag(name, help, a, a.resolveEnvarName)
+}
+
+// FlagGroup create a new sub group at this FlagGroup with the given name.
+//
+// This allows grouping flags and prevents duplication of namings.
+func (a *Application) FlagGroup(prefix string) *SubFlagGroup {
+	return a.newFlagGroup(prefix, a, a.GetEnvarPrefix)
+}
+
+func (a *Application) resolveEnvarName(name string) string {
+	return a.GetEnvarPrefix() + name
 }
 
 // Interspersed control if flags can be interspersed with positional arguments
@@ -410,10 +450,10 @@ func (a *Application) setDefaults(context *ParseContext) error {
 	flagElements := map[string]*ParseElement{}
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok {
-			if flag.name == "help" {
+			if flag.getName() == "help" {
 				return nil
 			}
-			flagElements[flag.name] = element
+			flagElements[flag.getName()] = element
 		}
 	}
 
@@ -426,7 +466,7 @@ func (a *Application) setDefaults(context *ParseContext) error {
 
 	// Check required flags and set defaults.
 	for _, flag := range context.flags.long {
-		if flagElements[flag.name] == nil {
+		if flagElements[flag.getName()] == nil {
 			if err := flag.setDefault(); err != nil {
 				return err
 			}
@@ -448,7 +488,7 @@ func (a *Application) validateRequired(context *ParseContext) error {
 	flagElements := map[string]*ParseElement{}
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok {
-			flagElements[flag.name] = element
+			flagElements[flag.getName()] = element
 		}
 	}
 
@@ -461,10 +501,10 @@ func (a *Application) validateRequired(context *ParseContext) error {
 
 	// Check required flags and set defaults.
 	for _, flag := range context.flags.long {
-		if flagElements[flag.name] == nil {
+		if flagElements[flag.getName()] == nil {
 			// Check required flags were provided.
 			if flag.needsValue() {
-				return fmt.Errorf("required flag --%s not provided", flag.name)
+				return fmt.Errorf("required flag --%s not provided", flag.getName())
 			}
 		}
 	}
@@ -488,15 +528,15 @@ func (a *Application) setValues(context *ParseContext) (selected []string, err e
 	for _, element := range context.Elements {
 		switch clause := element.Clause.(type) {
 		case *FlagClause:
-			if _, ok := flagSet[clause.name]; ok {
+			if _, ok := flagSet[clause.getName()]; ok {
 				if v, ok := clause.value.(repeatableFlag); !ok || !v.IsCumulative() {
-					return nil, fmt.Errorf("flag '%s' cannot be repeated", clause.name)
+					return nil, fmt.Errorf("flag '%s' cannot be repeated", clause.getName())
 				}
 			}
 			if err = clause.value.Set(*element.Value); err != nil {
 				return
 			}
-			flagSet[clause.name] = struct{}{}
+			flagSet[clause.getName()] = struct{}{}
 
 		case *ArgClause:
 			if err = clause.value.Set(*element.Value); err != nil {
@@ -688,6 +728,32 @@ func (a *Application) completionOptions(context *ParseContext) []string {
 func (a *Application) generateBashCompletion(context *ParseContext) {
 	options := a.completionOptions(context)
 	fmt.Printf("%s", strings.Join(options, "\n"))
+}
+
+// RegisterFlagsOf will execute a registrar for flags.
+// which will be executed before pre-actions and validation to register its flags.
+func (a *Application) RegisterFlagsOf(registrars ...FlagRegistrar) {
+	registerFlagsOf(a, registrars...)
+}
+
+// FlagsOf will execute a registrar for flags for this Application
+// which will be executed before pre-actions and validation to register its flags.
+func (a *Application) FlagsOf(registrars ...FlagRegistrar) *Application {
+	a.RegisterFlagsOf(registrars...)
+	return a
+}
+
+// CmdsOf will register a registrar for commands for this Application
+// which will be executed before pre-actions and validation to register its commands.
+func (a *Application) RegisterCommandsOf(registrars ...CmdRegistrar) {
+	registerCommandsOf(a, registrars...)
+}
+
+// CmdsOf will register a registrar for commands for this Application
+// which will be executed before pre-actions and validation to register its commands.
+func (a *Application) CmdsOf(registrars ...CmdRegistrar) *Application {
+	a.RegisterCommandsOf(registrars...)
+	return a
 }
 
 func envarTransform(name string) string {
