@@ -24,7 +24,7 @@ func (e *envarMixin) GetEnvarValue() string {
 	if e.noEnvar || e.envar == "" {
 		return ""
 	}
-	return os.Getenv(e.envar)
+	return os.ExpandEnv(os.Getenv(e.envar))
 }
 
 func (e *envarMixin) GetSplitEnvarValue() []string {

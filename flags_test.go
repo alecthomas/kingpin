@@ -157,6 +157,18 @@ func TestRequiredWithEnvar(t *testing.T) {
 	assert.Equal(t, 123, *flag)
 }
 
+func TestExpandEnvar(t *testing.T) {
+	os.Setenv("TEST_PORT", "8080")
+	os.Setenv("TEST_HOST", "http://localhost")
+	os.Setenv("TEST_URL", "${TEST_HOST}:$TEST_PORT")
+
+	app := newTestApp()
+	flag := app.Flag("t", "").Envar("TEST_URL").Required().String()
+	_, err := app.Parse([]string{})
+	assert.NoError(t, err)
+	assert.Equal(t, "http://localhost:8080", *flag)
+}
+
 func TestSubcommandFlagRequiredWithEnvar(t *testing.T) {
 	os.Setenv("TEST_ENVAR", "123")
 	app := newTestApp()
