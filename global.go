@@ -16,6 +16,8 @@ var (
 	VersionFlag = CommandLine.VersionFlag
 	// Whether to file expansion with '@' is enabled.
 	EnableFileExpansion = true
+	// IgnoreUnknown ignores unrecognized tokens
+	IgnoreUnknown = false
 )
 
 // Command adds a new command to the default parser.
