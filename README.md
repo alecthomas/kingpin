@@ -4,7 +4,7 @@
 
 **Current status.** Kingpin is largely feature stable. There hasn't been a need to add new features in a while, but there are some bugs that should be fixed.
 
-**Why?** I no longer use Kingpin personally (I now use [kong](https://github.com/alecthomas/kong)). Rather than leave the project in a limbo of people filing issues and wondering why they're note being worked on, I believe this notice will more clearly set expectations.
+**Why?** I no longer use Kingpin personally (I now use [kong](https://github.com/alecthomas/kong)). Rather than leave the project in a limbo of people filing issues and wondering why they're not being worked on, I believe this notice will more clearly set expectations.
 
 # Kingpin - A Go (golang) command line and flag parser
 [![](https://godoc.org/github.com/alecthomas/kingpin?status.svg)](http://godoc.org/github.com/alecthomas/kingpin) [![Build Status](https://travis-ci.org/alecthomas/kingpin.svg?branch=master)](https://travis-ci.org/alecthomas/kingpin) [![Gitter chat](https://badges.gitter.im/alecthomas.png)](https://gitter.im/alecthomas/Lobby)
