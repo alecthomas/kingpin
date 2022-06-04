@@ -166,6 +166,7 @@ func newCmdGroup(app *Application) *cmdGroup {
 	}
 }
 
+//lint:ignore U1000 to be resolved in future
 func (c *cmdGroup) flattenedCommands() (out []*CmdClause) {
 	for _, cmd := range c.commandOrder {
 		if len(cmd.commands) == 0 {

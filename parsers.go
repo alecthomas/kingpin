@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/alecthomas/units"
+	"github.com/choria-io/fisk/units"
 )
 
 type Settings interface {

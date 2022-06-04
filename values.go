@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alecthomas/units"
+	"github.com/choria-io/fisk/units"
 )
 
 // NOTE: Most of the base type values were lifted from:

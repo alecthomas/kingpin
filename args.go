@@ -129,7 +129,7 @@ func (a *ArgClause) Hidden() *ArgClause {
 }
 
 // PlaceHolder sets the place-holder string used for arg values in the help. The
-// default behaviour is to use the arg name between < > brackets.
+// default behavior is to use the arg name between < > brackets.
 func (a *ArgClause) PlaceHolder(value string) *ArgClause {
 	a.placeholder = value
 	return a

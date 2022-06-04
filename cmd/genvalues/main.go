@@ -6,7 +6,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/alecthomas/template"
+	"github.com/choria-io/fisk/template"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -97,7 +99,7 @@ func main() {
 		if v.Name != "" {
 			return v.Name
 		}
-		return strings.Title(v.Type)
+		return cases.Title(language.Und).String(v.Type)
 	}
 
 	t, err := template.New("genvalues").Funcs(template.FuncMap{

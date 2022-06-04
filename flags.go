@@ -293,7 +293,7 @@ func (f *FlagClause) NoEnvar() *FlagClause {
 }
 
 // PlaceHolder sets the place-holder string used for flag values in the help. The
-// default behaviour is to use the value provided by Default() if provided,
+// default behavior is to use the value provided by Default() if provided,
 // then fall back on the capitalized flag name.
 func (f *FlagClause) PlaceHolder(placeholder string) *FlagClause {
 	f.placeholder = placeholder

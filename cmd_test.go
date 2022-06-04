@@ -388,7 +388,6 @@ func TestPartialCmdCompletion(t *testing.T) {
 	cmd4.Arg("cmd4-arg2", "").HintOptions("cmd4-arg2").String()
 	cmd4.Arg("cmd4-arg3", "").HintOptions("cmd4-arg3").String()
 
-
 	// partial matches
 	assert.Equal(t, []string{"cmd1-arg1-opt1", "cmd1-arg1-opt2", "cmd1-arg1-opt3"}, complete(t, app, "cmd1", "cmd1-arg1-opt"))
 	assert.Equal(t, []string{"cmd2-123456", "cmd2-123789", "cmd2-456789"}, complete(t, app, "cmd2", "cmd2-"))

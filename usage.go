@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/alecthomas/template"
+	"github.com/choria-io/fisk/template"
 )
 
 var (
