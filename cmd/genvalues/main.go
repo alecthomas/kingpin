@@ -5,8 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
-
-	"github.com/alecthomas/template"
+	"text/template"
 )
 
 const (
@@ -37,9 +36,9 @@ func (f *{{.|ValueName}}) String() string { return {{.|Format}} }
 
 {{if .Help}}
 // {{.Help}}
-{{else}}\
+{{else -}}
 // {{.|Name}} parses the next command-line value as {{.Type}}.
-{{end}}\
+{{end -}}
 func (p *parserMixin) {{.|Name}}() (target *{{.Type}}) {
 	target = new({{.Type}})
 	p.{{.|Name}}Var(target)

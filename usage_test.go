@@ -80,7 +80,7 @@ func TestUsageFuncs(t *testing.T) {
 
 func TestCmdClause_HelpLong(t *testing.T) {
 	var buf bytes.Buffer
-	tpl := `{{define "FormatUsage"}}{{.HelpLong}}{{end}}\
+	tpl := `{{define "FormatUsage"}}{{.HelpLong}}{{end -}}
 {{template "FormatUsage" .Context.SelectedCommand}}`
 
 	a := New("test", "Test").Writer(&buf).Terminate(nil)
