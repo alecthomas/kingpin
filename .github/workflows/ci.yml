@@ -1,0 +1,17 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+name: CI
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Init Hermit
+        run: ./bin/hermit env -r >> $GITHUB_ENV
+      - name: Test
+        run: go test ./...
