@@ -51,7 +51,7 @@ positional arguments.
 
 Install it with:
 
-    $ go get gopkg.in/alecthomas/kingpin.v2
+    $ go get github.com/alecthomas/kingpin/v2
 
 It looks like this:
 
@@ -126,16 +126,14 @@ be separated by a space. That is no longer the case.
 
 ## Versions
 
-Kingpin uses [gopkg.in](https://gopkg.in/alecthomas/kingpin) for versioning.
+The current stable version is [github.com/alecthomas/kingpin/v2](https://github.com/alecthomas/kingpin/v2). The previous version, [gopkg.in/alecthomas/kingpin.v1](https://gopkg.in/alecthomas/kingpin.v1), is deprecated and in maintenance mode.
 
-The current stable version is [gopkg.in/alecthomas/kingpin.v2](https://gopkg.in/alecthomas/kingpin.v2). The previous version, [gopkg.in/alecthomas/kingpin.v1](https://gopkg.in/alecthomas/kingpin.v1), is deprecated and in maintenance mode.
-
-### [V2](https://gopkg.in/alecthomas/kingpin.v2) is the current stable version
+### [V2](https://github.com/alecthomas/kingpin/v2) is the current stable version
 
 Installation:
 
 ```sh
-$ go get gopkg.in/alecthomas/kingpin.v2
+$ go get github.com/alecthomas/kingpin/v2
 ```
 
 ### [V1](https://gopkg.in/alecthomas/kingpin.v1) is the OLD stable version
@@ -243,7 +241,7 @@ package main
 import (
   "fmt"
 
-  "gopkg.in/alecthomas/kingpin.v2"
+  "github.com/alecthomas/kingpin/v2"
 )
 
 var (
@@ -321,7 +319,7 @@ package main
 import (
   "os"
   "strings"
-  "gopkg.in/alecthomas/kingpin.v2"
+  "github.com/alecthomas/kingpin/v2"
 )
 
 var (
@@ -651,7 +649,7 @@ func main() {
 
 Kingpin v2 supports templatised help using the text/template library (actually, [a fork](https://github.com/alecthomas/template)).
 
-You can specify the template to use with the [Application.UsageTemplate()](http://godoc.org/gopkg.in/alecthomas/kingpin.v2#Application.UsageTemplate) function.
+You can specify the template to use with the [Application.UsageTemplate()](http://godoc.org/github.com/alecthomas/kingpin/v2#Application.UsageTemplate) function.
 
 There are four included templates: `kingpin.DefaultUsageTemplate` is the default,
 `kingpin.CompactUsageTemplate` provides a more compact representation for more complex command-line structures,
