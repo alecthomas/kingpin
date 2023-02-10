@@ -139,7 +139,7 @@ func newDurationValue(p *time.Duration) *durationValue {
 }
 
 func (d *durationValue) Set(s string) error {
-	v, err := str2duration.Str2Duration(s)
+	v, err := str2duration.ParseDuration(s)
 	*d = durationValue(v)
 	return err
 }
