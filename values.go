@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/alecthomas/units"
-	"github.com/xhit/go-str2duration"
+	"github.com/xhit/go-str2duration/v2"
 )
 
 // NOTE: Most of the base type values were lifted from:
@@ -139,7 +139,7 @@ func newDurationValue(p *time.Duration) *durationValue {
 }
 
 func (d *durationValue) Set(s string) error {
-	v, err := str2duration.Str2Duration(s)
+	v, err := str2duration.ParseDuration(s)
 	*d = durationValue(v)
 	return err
 }
