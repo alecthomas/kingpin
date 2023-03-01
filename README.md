@@ -260,7 +260,7 @@ func main() {
 
 #### Reading arguments from a file
 Kingpin supports reading arguments from a file.
-Creat a file with the corresponding arguments:
+Create a file with the corresponding arguments:
 ```
 echo -t=5\n > args
 ```
