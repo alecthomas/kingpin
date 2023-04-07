@@ -434,3 +434,14 @@ func TestCmdValidation(t *testing.T) {
 	_, err = c.Parse([]string{"cmd", "--a", "A"})
 	assert.NoError(t, err)
 }
+
+func TestVersion(t *testing.T) {
+	c := newTestApp()
+	c.Flag("config", "path to config file").Default("config.yaml").ExistingFile()
+	c.Version("1.0.0")
+
+	// the pre-action for version should be executed without running validation
+	// for ExistingFile
+	_, err := c.Parse([]string{"--version"})
+	assert.NoError(t, err)
+}
