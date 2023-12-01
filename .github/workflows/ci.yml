@@ -8,10 +8,15 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go_version: ["1.20.x", "1.21.x"]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-      - name: Init Hermit
-        run: ./bin/hermit env -r >> $GITHUB_ENV
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      - name: Install Go ${{ matrix.go_version }}
+        uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.5.0
+        with:
+          go-version: ${{ matrix.go_version }}
       - name: Test
         run: go test ./...
