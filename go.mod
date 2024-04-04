@@ -2,7 +2,7 @@ module github.com/alecthomas/kingpin/v2
 
 require (
 	github.com/alecthomas/units v0.0.0-20231202071711-9a357b53e9c9
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/xhit/go-str2duration/v2 v2.1.0
 )
 
