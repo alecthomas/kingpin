@@ -87,12 +87,13 @@ type accumulator struct {
 // Use reflection to accumulate values into a slice.
 //
 // target := []string{}
-// newAccumulator(&target, func (value interface{}) Value {
-//   return newStringValue(value.(*string))
-// })
+//
+//	newAccumulator(&target, func (value interface{}) Value {
+//	  return newStringValue(value.(*string))
+//	})
 func newAccumulator(slice interface{}, element func(value interface{}) Value) *accumulator {
 	typ := reflect.TypeOf(slice)
-	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Slice {
+	if typ.Kind() != reflect.Pointer || typ.Elem().Kind() != reflect.Slice {
 		panic("expected a pointer to a slice")
 	}
 	return &accumulator{
@@ -131,7 +132,7 @@ func (a *accumulator) IsCumulative() bool {
 
 func (b *boolValue) IsBoolFlag() bool { return true }
 
-// -- time.Duration Value
+// -- time.Duration Value.
 type durationValue time.Duration
 
 func newDurationValue(p *time.Duration) *durationValue {
@@ -148,7 +149,7 @@ func (d *durationValue) Get() interface{} { return time.Duration(*d) }
 
 func (d *durationValue) String() string { return (*time.Duration)(d).String() }
 
-// -- map[string]string Value
+// -- map[string]string Value.
 type stringMapValue map[string]string
 
 func newStringMapValue(p *map[string]string) *stringMapValue {
@@ -178,7 +179,7 @@ func (s *stringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- net.IP Value
+// -- net.IP Value.
 type ipValue net.IP
 
 func newIPValue(p *net.IP) *ipValue {
@@ -195,14 +196,14 @@ func (i *ipValue) Set(value string) error {
 }
 
 func (i *ipValue) Get() interface{} {
-	return (net.IP)(*i)
+	return net.IP(*i)
 }
 
 func (i *ipValue) String() string {
 	return (*net.IP)(i).String()
 }
 
-// -- *net.TCPAddr Value
+// -- *net.TCPAddr Value.
 type tcpAddrValue struct {
 	addr **net.TCPAddr
 }
@@ -255,7 +256,7 @@ func (e *fileStatValue) Set(value string) error {
 }
 
 func (f *fileStatValue) Get() interface{} {
-	return (string)(*f.path)
+	return string(*f.path)
 }
 
 func (e *fileStatValue) String() string {
@@ -275,6 +276,8 @@ func newFileValue(p **os.File, flag int, perm os.FileMode) *fileValue {
 }
 
 func (f *fileValue) Set(value string) error {
+	// #nosec G703 -- opening the user-specified file is the point of the
+	// --file flag.
 	if fd, err := os.OpenFile(value, f.flag, f.perm); err != nil {
 		return err
 	} else {
@@ -294,7 +297,7 @@ func (f *fileValue) String() string {
 	return (*f.f).Name()
 }
 
-// -- url.URL Value
+// -- url.URL Value.
 type urlValue struct {
 	u **url.URL
 }
@@ -323,7 +326,7 @@ func (u *urlValue) String() string {
 	return (*u.u).String()
 }
 
-// -- []*url.URL Value
+// -- []*url.URL Value.
 type urlListValue []*url.URL
 
 func newURLListValue(p *[]*url.URL) *urlListValue {
@@ -344,7 +347,7 @@ func (u *urlListValue) Get() interface{} {
 }
 
 func (u *urlListValue) String() string {
-	out := []string{}
+	out := make([]string, 0, len(*u))
 	for _, url := range *u {
 		out = append(out, url.String())
 	}
@@ -383,10 +386,10 @@ func (a *enumValue) Set(value string) error {
 }
 
 func (e *enumValue) Get() interface{} {
-	return (string)(*e.value)
+	return string(*e.value)
 }
 
-// -- []string Enum Value
+// -- []string Enum Value.
 type enumsValue struct {
 	value   *[]string
 	options []string
@@ -421,7 +424,7 @@ func (s *enumsValue) IsCumulative() bool {
 	return true
 }
 
-// -- units.Base2Bytes Value
+// -- units.Base2Bytes Value.
 type bytesValue units.Base2Bytes
 
 func newBytesValue(p *units.Base2Bytes) *bytesValue {
@@ -471,7 +474,7 @@ func (c *counterValue) Set(s string) error {
 	return nil
 }
 
-func (c *counterValue) Get() interface{}   { return (int)(*c) }
+func (c *counterValue) Get() interface{}   { return int(*c) }
 func (c *counterValue) IsBoolFlag() bool   { return true }
 func (c *counterValue) String() string     { return fmt.Sprintf("%d", *c) }
 func (c *counterValue) IsCumulative() bool { return true }

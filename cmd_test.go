@@ -3,10 +3,9 @@ package kingpin
 import (
 	"sort"
 	"strings"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"testing"
 )
 
 func parseAndExecute(app *Application, context *ParseContext) (string, error) {
@@ -23,6 +22,7 @@ func parseAndExecute(app *Application, context *ParseContext) (string, error) {
 }
 
 func complete(t *testing.T, app *Application, args ...string) []string {
+	t.Helper()
 	context, err := app.ParseContext(args)
 	assert.NoError(t, err)
 	if err != nil {
@@ -36,6 +36,7 @@ func complete(t *testing.T, app *Application, args ...string) []string {
 }
 
 func TestNestedCommands(t *testing.T) {
+	t.Parallel()
 	app := New("app", "")
 	sub1 := app.Command("sub1", "")
 	sub1.Flag("sub1", "")
@@ -54,6 +55,7 @@ func TestNestedCommands(t *testing.T) {
 }
 
 func TestNestedCommandsWithArgs(t *testing.T) {
+	t.Parallel()
 	app := New("app", "")
 	cmd := app.Command("a", "").Command("b", "")
 	a := cmd.Arg("a", "").String()
@@ -68,6 +70,7 @@ func TestNestedCommandsWithArgs(t *testing.T) {
 }
 
 func TestNestedCommandsWithFlags(t *testing.T) {
+	t.Parallel()
 	app := New("app", "")
 	cmd := app.Command("a", "").Command("b", "")
 	a := cmd.Flag("aaa", "").Short('a').String()
@@ -84,6 +87,7 @@ func TestNestedCommandsWithFlags(t *testing.T) {
 }
 
 func TestNestedCommandWithMergedFlags(t *testing.T) {
+	t.Parallel()
 	app := New("app", "")
 	cmd0 := app.Command("a", "")
 	cmd0f0 := cmd0.Flag("aflag", "").Bool()
@@ -102,6 +106,7 @@ func TestNestedCommandWithMergedFlags(t *testing.T) {
 }
 
 func TestNestedCommandWithDuplicateFlagErrors(t *testing.T) {
+	t.Parallel()
 	app := New("app", "")
 	app.Flag("test", "").Bool()
 	app.Command("cmd0", "").Flag("test", "").Bool()
@@ -110,6 +115,7 @@ func TestNestedCommandWithDuplicateFlagErrors(t *testing.T) {
 }
 
 func TestNestedCommandWithArgAndMergedFlags(t *testing.T) {
+	t.Parallel()
 	app := New("app", "")
 	cmd0 := app.Command("a", "")
 	cmd0f0 := cmd0.Flag("aflag", "").Bool()
@@ -130,6 +136,7 @@ func TestNestedCommandWithArgAndMergedFlags(t *testing.T) {
 }
 
 func TestDefaultSubcommandEOL(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	c0 := app.Command("c0", "").Default()
 	c0.Command("c01", "").Default()
@@ -141,6 +148,7 @@ func TestDefaultSubcommandEOL(t *testing.T) {
 }
 
 func TestDefaultSubcommandWithArg(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	c0 := app.Command("c0", "").Default()
 	c01 := c0.Command("c01", "").Default()
@@ -155,6 +163,7 @@ func TestDefaultSubcommandWithArg(t *testing.T) {
 }
 
 func TestDefaultSubcommandWithFlags(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	c0 := app.Command("c0", "").Default()
 	_ = c0.Flag("f0", "").Int()
@@ -169,6 +178,7 @@ func TestDefaultSubcommandWithFlags(t *testing.T) {
 }
 
 func TestMultipleDefaultCommands(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Command("c0", "").Default()
 	app.Command("c1", "").Default()
@@ -177,6 +187,7 @@ func TestMultipleDefaultCommands(t *testing.T) {
 }
 
 func TestAliasedCommand(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Command("one", "").Alias("two")
 	selected, _ := app.Parse([]string{"one"})
@@ -188,6 +199,7 @@ func TestAliasedCommand(t *testing.T) {
 }
 
 func TestDuplicateAlias(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Command("one", "")
 	app.Command("two", "").Alias("one")
@@ -196,6 +208,7 @@ func TestDuplicateAlias(t *testing.T) {
 }
 
 func TestFlagCompletion(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Command("one", "")
 	two := app.Command("two", "")
@@ -204,12 +217,12 @@ func TestFlagCompletion(t *testing.T) {
 	two.Flag("flag-3", "")
 
 	cases := []struct {
-		target              cmdMixin
 		flagName            string
 		flagValue           string
+		target              cmdMixin
+		expectedFlags       []string
 		expectedFlagMatch   bool
 		expectedOptionMatch bool
-		expectedFlags       []string
 	}{
 		{
 			// Test top level flags
@@ -275,10 +288,10 @@ func TestFlagCompletion(t *testing.T) {
 		assert.Equal(t, c.expectedFlagMatch, flagMatch, "Test case %d: expectedFlagMatch != flagMatch", i+1)
 		assert.Equal(t, c.expectedOptionMatch, optionMatch, "Test case %d: expectedOptionMatch != optionMatch", i+1)
 	}
-
 }
 
 func TestCmdCompletion(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Command("one", "")
 	two := app.Command("two", "")
@@ -290,6 +303,7 @@ func TestCmdCompletion(t *testing.T) {
 }
 
 func TestHiddenCmdCompletion(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 
 	// top level visible & hidden cmds, with no sub-cmds
@@ -317,6 +331,7 @@ func TestHiddenCmdCompletion(t *testing.T) {
 }
 
 func TestDefaultCmdCompletion(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 
 	cmd1 := app.Command("cmd1", "")
@@ -375,6 +390,7 @@ func TestDefaultCmdCompletion(t *testing.T) {
 }
 
 func TestPartialCmdCompletion(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 
 	cmd1 := app.Command("cmd1", "")
@@ -387,7 +403,6 @@ func TestPartialCmdCompletion(t *testing.T) {
 	cmd4.Arg("cmd4-arg1", "").HintOptions("cmd4-arg1").String()
 	cmd4.Arg("cmd4-arg2", "").HintOptions("cmd4-arg2").String()
 	cmd4.Arg("cmd4-arg3", "").HintOptions("cmd4-arg3").String()
-
 
 	// partial matches
 	assert.Equal(t, []string{"cmd1-arg1-opt1", "cmd1-arg1-opt2", "cmd1-arg1-opt3"}, complete(t, app, "cmd1", "cmd1-arg1-opt"))

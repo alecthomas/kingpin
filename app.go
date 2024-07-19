@@ -10,10 +10,7 @@ import (
 
 var (
 	ErrCommandNotSpecified = fmt.Errorf("command not specified")
-)
-
-var (
-	envarTransformRegexp = regexp.MustCompile(`[^a-zA-Z0-9_]+`)
+	envarTransformRegexp   = regexp.MustCompile(`[^a-zA-Z0-9_]+`)
 )
 
 type ApplicationValidator func(*Application) error
@@ -21,33 +18,30 @@ type ApplicationValidator func(*Application) error
 // An Application contains the definitions of flags, arguments and commands
 // for an application.
 type Application struct {
-	cmdMixin
-	initialized bool
-
-	Name string
-	Help string
-
-	author           string
-	version          string
 	errorWriter      io.Writer // Destination for errors.
 	usageWriter      io.Writer // Destination for usage
-	hiddenHelpWriter io.Writer // Destination for hidden help commands.
-	usageTemplate    string
-	usageFuncs       map[string]interface{}
+	hiddenHelpWriter io.Writer
 	templateRenderer func(a *Application, context *ParseContext, indent int, tmpl string) error
-	usageRenderer    UsageRenderer
-	validator        ApplicationValidator
-	terminate        func(status int) // See Terminate()
-	noInterspersed   bool             // can flags be interspersed with args (or must they come first)
-	defaultEnvars    bool
-	completion       bool
-
-	// Help flag. Exposed for user customisation.
-	HelpFlag *FlagClause
-	// Help command. Exposed for user customisation. May be nil.
-	HelpCommand *CmdClause
 	// Version flag. Exposed for user customisation. May be nil.
 	VersionFlag *FlagClause
+	// Help command. Exposed for user customisation. May be nil.
+	HelpCommand *CmdClause
+	// Help flag. Exposed for user customisation.
+	HelpFlag      *FlagClause
+	terminate     func(status int) // See Terminate().
+	validator     ApplicationValidator
+	usageRenderer UsageRenderer
+	usageFuncs    map[string]interface{}
+	version       string
+	usageTemplate string
+	author        string
+	Help          string
+	Name          string
+	cmdMixin
+	noInterspersed bool // can flags be interspersed with args (or must they come first)
+	defaultEnvars  bool
+	completion     bool
+	initialized    bool
 }
 
 // New creates a new Kingpin application instance.
@@ -153,7 +147,8 @@ func (a *Application) Terminate(terminate func(int)) *Application {
 }
 
 // Writer specifies the writer to use for usage and errors. Defaults to os.Stderr.
-// DEPRECATED: See ErrorWriter and UsageWriter.
+//
+// Deprecated: See ErrorWriter and UsageWriter.
 func (a *Application) Writer(w io.Writer) *Application {
 	a.errorWriter = w
 	a.usageWriter = w
@@ -238,9 +233,8 @@ func (a *Application) parseContext(ignoreDefault bool, args []string) (*ParseCon
 // This will populate all flag and argument values, call all callbacks, and so
 // on.
 func (a *Application) Parse(args []string) (command string, err error) {
-
 	context, parseErr := a.ParseContext(args)
-	selected := []string{}
+	var selected []string
 	var setValuesErr error
 
 	if context == nil {
@@ -288,8 +282,8 @@ func (a *Application) writeUsage(context *ParseContext, err error) {
 	if err != nil {
 		a.Errorf("%s", err)
 	}
-	if err := a.UsageForContext(context); err != nil {
-		panic(err)
+	if errUsage := a.UsageForContext(context); errUsage != nil {
+		panic(errUsage)
 	}
 	if err != nil {
 		a.terminate(1)

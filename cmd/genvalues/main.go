@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"os/exec"
 	"strings"
 	"text/template"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -15,7 +19,7 @@ const (
 
 {{range .}}
 {{if not .NoValueParser}}
-// -- {{.Type}} Value
+// -- {{.Type}} Value.
 type {{.|ValueName}} struct { v *{{.Type}} }
 
 func new{{.|Name}}Value(p *{{.Type}}) *{{.|ValueName}} {
@@ -23,14 +27,19 @@ func new{{.|Name}}Value(p *{{.Type}}) *{{.|ValueName}} {
 }
 
 func (f *{{.|ValueName}}) Set(s string) error {
+{{- if .Raw}}
+	*f.v = {{Cast .Type "s"}}
+	return nil
+{{- else}}
 	v, err := {{.Parser}}
 	if err == nil {
-		*f.v = ({{.Type}})(v)
+		*f.v = {{Cast .Type "v"}}
 	}
 	return err
+{{- end}}
 }
 
-func (f *{{.|ValueName}}) Get() interface{} { return ({{.Type}})(*f.v) }
+func (f *{{.|ValueName}}) Get() interface{} { return {{Cast .Type "*f.v"}} }
 
 func (f *{{.|ValueName}}) String() string { return {{.|Format}} }
 
@@ -69,12 +78,13 @@ func (p *parserMixin) {{.|Plural}}Var(target *[]{{.Type}}) {
 
 type Value struct {
 	Name          string `json:"name"`
-	NoValueParser bool   `json:"no_value_parser"`
 	Type          string `json:"type"`
 	Parser        string `json:"parser"`
 	Format        string `json:"format"`
 	Plural        string `json:"plural"`
 	Help          string `json:"help"`
+	Raw           bool   `json:"raw"`
+	NoValueParser bool   `json:"no_value_parser"`
 }
 
 func fatalIfError(err error) {
@@ -92,15 +102,22 @@ func main() {
 	err = json.NewDecoder(r).Decode(&v)
 	fatalIfError(err)
 
+	c := cases.Title(language.English)
 	valueName := func(v *Value) string {
 		if v.Name != "" {
 			return v.Name
 		}
-		return strings.Title(v.Type)
+		return c.String(v.Type)
 	}
 
 	t, err := template.New("genvalues").Funcs(template.FuncMap{
 		"Lower": strings.ToLower,
+		"Cast": func(typ, expr string) string {
+			if strings.HasPrefix(typ, "*") || strings.HasPrefix(typ, "[") {
+				return "(" + typ + ")(" + expr + ")"
+			}
+			return typ + "(" + expr + ")"
+		},
 		"Format": func(v *Value) string {
 			if v.Format != "" {
 				return v.Format
@@ -128,6 +145,6 @@ func main() {
 	err = t.Execute(w, v)
 	fatalIfError(err)
 
-	err = exec.Command("goimports", "-w", "values_generated.go").Run()
+	err = exec.CommandContext(context.Background(), "goimports", "-w", "values_generated.go").Run()
 	fatalIfError(err)
 }
