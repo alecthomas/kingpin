@@ -35,14 +35,12 @@ func (t TokenType) String() string {
 	return "?"
 }
 
-var (
-	TokenEOLMarker = Token{-1, TokenEOL, ""}
-)
+var TokenEOLMarker = Token{Value: "", Index: -1, Type: TokenEOL}
 
 type Token struct {
+	Value string
 	Index int
 	Type  TokenType
-	Value string
 }
 
 func (t *Token) Equal(o *Token) bool {
@@ -88,17 +86,16 @@ type ParseElement struct {
 // any).
 type ParseContext struct {
 	SelectedCommand *CmdClause
-	ignoreDefault   bool
-	argsOnly        bool
-	peek            []*Token
-	argi            int // Index of current command-line arg we're processing.
-	args            []string
-	rawArgs         []string
 	flags           *flagGroup
 	arguments       *argGroup
-	argumenti       int // Cursor into arguments
-	// Flags, arguments and commands encountered and collected during parse.
-	Elements []*ParseElement
+	peek            []*Token
+	args            []string
+	rawArgs         []string
+	Elements        []*ParseElement
+	argi            int
+	argumenti       int
+	ignoreDefault   bool
+	argsOnly        bool
 }
 
 func (p *ParseContext) nextArg() *ArgClause {
@@ -174,7 +171,7 @@ func (p *ParseContext) Next() *Token {
 	p.next()
 
 	if p.argsOnly {
-		return &Token{p.argi, TokenArg, arg}
+		return &Token{Index: p.argi, Type: TokenArg, Value: arg}
 	}
 
 	if arg == "--" {
@@ -183,9 +180,9 @@ func (p *ParseContext) Next() *Token {
 
 	if strings.HasPrefix(arg, "--") {
 		parts := strings.SplitN(arg[2:], "=", 2)
-		token := &Token{p.argi, TokenLong, parts[0]}
+		token := &Token{Index: p.argi, Type: TokenLong, Value: parts[0]}
 		if len(parts) == 2 {
-			p.Push(&Token{p.argi, TokenArg, parts[1]})
+			p.Push(&Token{Index: p.argi, Type: TokenArg, Value: parts[1]})
 		}
 		return token
 	}
@@ -203,9 +200,9 @@ func (p *ParseContext) Next() *Token {
 			// Bool short flag.
 		} else {
 			// Short flag with combined argument: -fARG
-			token := &Token{p.argi, TokenShort, short}
+			token := &Token{Index: p.argi, Type: TokenShort, Value: short}
 			if len(arg) > size+1 {
-				p.Push(&Token{p.argi, TokenArg, arg[size+1:]})
+				p.Push(&Token{Index: p.argi, Type: TokenArg, Value: arg[size+1:]})
 			}
 			return token
 		}
@@ -213,11 +210,11 @@ func (p *ParseContext) Next() *Token {
 		if len(arg) > size+1 {
 			p.args = append([]string{"-" + arg[size+1:]}, p.args...)
 		}
-		return &Token{p.argi, TokenShort, short}
+		return &Token{Index: p.argi, Type: TokenShort, Value: short}
 	} else if EnableFileExpansion && strings.HasPrefix(arg, "@") {
 		expanded, err := ExpandArgsFromFile(arg[1:])
 		if err != nil {
-			return &Token{p.argi, TokenError, err.Error()}
+			return &Token{Index: p.argi, Type: TokenError, Value: err.Error()}
 		}
 		if len(p.args) == 0 {
 			p.args = expanded
@@ -227,7 +224,7 @@ func (p *ParseContext) Next() *Token {
 		return p.Next()
 	}
 
-	return &Token{p.argi, TokenArg, arg}
+	return &Token{Index: p.argi, Type: TokenArg, Value: arg}
 }
 
 func (p *ParseContext) Peek() *Token {
@@ -321,7 +318,8 @@ loop:
 			}
 
 		case TokenArg:
-			if cmds.have() {
+			switch {
+			case cmds.have():
 				selectedDefault := false
 				cmd, ok := cmds.commands[token.String()]
 				if !ok {
@@ -344,7 +342,7 @@ loop:
 				if !selectedDefault {
 					context.Next()
 				}
-			} else if context.arguments.have() {
+			case context.arguments.have():
 				if app.noInterspersed {
 					// no more flags
 					context.argsOnly = true
@@ -355,7 +353,7 @@ loop:
 				}
 				context.matchedArg(arg, token.String())
 				context.Next()
-			} else {
+			default:
 				break loop
 			}
 

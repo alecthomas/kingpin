@@ -64,14 +64,14 @@ func (a *argGroup) init() error {
 }
 
 type ArgClause struct {
-	actionMixin
 	parserMixin
+	name        string
+	help        string
+	placeholder string
+	actionMixin
 	completionsMixin
 	envarMixin
-	name          string
-	help          string
 	defaultValues []string
-	placeholder   string
 	hidden        bool
 	required      bool
 }
@@ -129,7 +129,7 @@ func (a *ArgClause) Hidden() *ArgClause {
 }
 
 // PlaceHolder sets the place-holder string used for arg values in the help. The
-// default behaviour is to use the arg name between < > brackets.
+// default behavior is to use the arg name between < > brackets.
 func (a *ArgClause) PlaceHolder(value string) *ArgClause {
 	a.placeholder = value
 	return a
@@ -174,13 +174,13 @@ func (a *ArgClause) PreAction(action Action) *ArgClause {
 	return a
 }
 
-// HintAction registers a HintAction (function) for the arg to provide completions
+// HintAction registers a HintAction (function) for the arg to provide completions.
 func (a *ArgClause) HintAction(action HintAction) *ArgClause {
 	a.addHintAction(action)
 	return a
 }
 
-// HintOptions registers any number of options for the flag to provide completions
+// HintOptions registers any number of options for the flag to provide completions.
 func (a *ArgClause) HintOptions(options ...string) *ArgClause {
 	a.addHintAction(func() []string {
 		return options

@@ -9,9 +9,7 @@ import (
 	"text/template"
 )
 
-var (
-	preIndent = "  "
-)
+var preIndent = "  "
 
 func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string) {
 	// Find size of first column.
@@ -104,8 +102,8 @@ type templateParseContext struct {
 
 type templateContext struct {
 	App     *ApplicationModel
-	Width   int
 	Context *templateParseContext
+	Width   int
 }
 
 // UsageForContext displays usage information from a ParseContext (obtained from
