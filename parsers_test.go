@@ -1,17 +1,16 @@
 package kingpin
 
 import (
-	"io/ioutil"
 	"net"
 	"net/url"
 	"os"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"testing"
 )
 
 func TestParseStrings(t *testing.T) {
+	t.Parallel()
 	p := parserMixin{}
 	v := p.Strings()
 	p.value.Set("a")
@@ -20,6 +19,7 @@ func TestParseStrings(t *testing.T) {
 }
 
 func TestStringsStringer(t *testing.T) {
+	t.Parallel()
 	target := []string{}
 	v := newAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
 	v.Set("hello")
@@ -28,6 +28,7 @@ func TestStringsStringer(t *testing.T) {
 }
 
 func TestParseStringMap(t *testing.T) {
+	t.Parallel()
 	p := parserMixin{}
 	v := p.StringMap()
 	p.value.Set("a:b")
@@ -36,6 +37,7 @@ func TestParseStringMap(t *testing.T) {
 }
 
 func TestParseIP(t *testing.T) {
+	t.Parallel()
 	p := parserMixin{}
 	v := p.IP()
 	p.value.Set("10.1.1.2")
@@ -44,6 +46,7 @@ func TestParseIP(t *testing.T) {
 }
 
 func TestParseURL(t *testing.T) {
+	t.Parallel()
 	p := parserMixin{}
 	v := p.URL()
 	p.value.Set("http://w3.org")
@@ -53,7 +56,8 @@ func TestParseURL(t *testing.T) {
 }
 
 func TestParseExistingFile(t *testing.T) {
-	f, err := ioutil.TempFile("", "")
+	t.Parallel()
+	f, err := os.CreateTemp("", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -70,6 +74,7 @@ func TestParseExistingFile(t *testing.T) {
 }
 
 func TestParseTCPAddr(t *testing.T) {
+	t.Parallel()
 	p := parserMixin{}
 	v := p.TCP()
 	err := p.value.Set("127.0.0.1:1234")
@@ -80,6 +85,7 @@ func TestParseTCPAddr(t *testing.T) {
 }
 
 func TestParseTCPAddrList(t *testing.T) {
+	t.Parallel()
 	p := parserMixin{}
 	_ = p.TCPList()
 	err := p.value.Set("127.0.0.1:1234")
@@ -90,6 +96,7 @@ func TestParseTCPAddrList(t *testing.T) {
 }
 
 func TestFloat32(t *testing.T) {
+	t.Parallel()
 	p := parserMixin{}
 	v := p.Float32()
 	err := p.value.Set("123.45")

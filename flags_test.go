@@ -1,15 +1,14 @@
 package kingpin
 
 import (
-	"io/ioutil"
-	"os"
+	"io"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"testing"
 )
 
 func TestBool(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	b := app.Flag("b", "").Bool()
 	_, err := app.Parse([]string{"--b"})
@@ -18,6 +17,7 @@ func TestBool(t *testing.T) {
 }
 
 func TestNoBool(t *testing.T) {
+	t.Parallel()
 	fg := newFlagGroup()
 	f := fg.Flag("b", "").Default("true")
 	b := f.Bool()
@@ -29,6 +29,7 @@ func TestNoBool(t *testing.T) {
 }
 
 func TestNegateNonBool(t *testing.T) {
+	t.Parallel()
 	fg := newFlagGroup()
 	f := fg.Flag("b", "")
 	f.Int()
@@ -39,6 +40,7 @@ func TestNegateNonBool(t *testing.T) {
 }
 
 func TestNegativePrefixLongFlag(t *testing.T) {
+	t.Parallel()
 	fg := newFlagGroup()
 	f := fg.Flag("no-comment", "")
 	b := f.Bool()
@@ -50,6 +52,7 @@ func TestNegativePrefixLongFlag(t *testing.T) {
 }
 
 func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Flag("a", "").Default("invalid").Bool()
 	_, err := app.Parse([]string{})
@@ -57,8 +60,9 @@ func TestInvalidFlagDefaultCanBeOverridden(t *testing.T) {
 }
 
 func TestRequiredFlag(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
-	app.Version("0.0.0").Writer(ioutil.Discard)
+	app.Version("0.0.0").Writer(io.Discard)
 	exits := 0
 	app.Terminate(func(int) { exits++ })
 	app.Flag("a", "").Required().Bool()
@@ -71,6 +75,7 @@ func TestRequiredFlag(t *testing.T) {
 }
 
 func TestShortFlag(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	f := app.Flag("long", "").Short('s').Bool()
 	_, err := app.Parse([]string{"-s"})
@@ -79,6 +84,7 @@ func TestShortFlag(t *testing.T) {
 }
 
 func TestUnicodeShortFlag(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	f := app.Flag("aaa", "").Short('ä').Bool()
 	_, err := app.Parse([]string{"-ä"})
@@ -87,6 +93,7 @@ func TestUnicodeShortFlag(t *testing.T) {
 }
 
 func TestCombinedShortFlags(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	a := app.Flag("short0", "").Short('0').Bool()
 	b := app.Flag("short1", "").Short('1').Bool()
@@ -99,6 +106,7 @@ func TestCombinedShortFlags(t *testing.T) {
 }
 
 func TestCombinedUnicodeShortFlags(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	a := app.Flag("short0", "").Short('0').Bool()
 	b := app.Flag("short1", "").Short('1').Bool()
@@ -113,6 +121,7 @@ func TestCombinedUnicodeShortFlags(t *testing.T) {
 }
 
 func TestCombinedShortFlagArg(t *testing.T) {
+	t.Parallel()
 	a := newTestApp()
 	n := a.Flag("short", "").Short('s').Int()
 	_, err := a.Parse([]string{"-s10"})
@@ -121,6 +130,7 @@ func TestCombinedShortFlagArg(t *testing.T) {
 }
 
 func TestCombinedUnicodeShortFlagArg(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	a := app.Flag("short", "").Short('ä').Int()
 	_, err := app.Parse([]string{"-ä10"})
@@ -129,6 +139,7 @@ func TestCombinedUnicodeShortFlagArg(t *testing.T) {
 }
 
 func TestCombinedUnicodeShortFlagUnicodeArg(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	a := app.Flag("short", "").Short('ä').String()
 	_, err := app.Parse([]string{"-äöö"})
@@ -137,11 +148,13 @@ func TestCombinedUnicodeShortFlagUnicodeArg(t *testing.T) {
 }
 
 func TestEmptyShortFlagIsAnError(t *testing.T) {
+	t.Parallel()
 	_, err := newTestApp().Parse([]string{"-"})
 	assert.Error(t, err)
 }
 
 func TestRequiredWithEnvarMissingErrors(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Flag("t", "").Envar("TEST_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
@@ -149,7 +162,7 @@ func TestRequiredWithEnvarMissingErrors(t *testing.T) {
 }
 
 func TestRequiredWithEnvar(t *testing.T) {
-	os.Setenv("TEST_ENVAR", "123")
+	t.Setenv("TEST_ENVAR", "123")
 	app := newTestApp()
 	flag := app.Flag("t", "").Envar("TEST_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
@@ -158,7 +171,7 @@ func TestRequiredWithEnvar(t *testing.T) {
 }
 
 func TestSubcommandFlagRequiredWithEnvar(t *testing.T) {
-	os.Setenv("TEST_ENVAR", "123")
+	t.Setenv("TEST_ENVAR", "123")
 	app := newTestApp()
 	cmd := app.Command("command", "")
 	flag := cmd.Flag("t", "").Envar("TEST_ENVAR").Required().Int()
@@ -168,6 +181,7 @@ func TestSubcommandFlagRequiredWithEnvar(t *testing.T) {
 }
 
 func TestRegexp(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	flag := app.Flag("reg", "").Regexp()
 	_, err := app.Parse([]string{"--reg", "^abc$"})
@@ -179,6 +193,7 @@ func TestRegexp(t *testing.T) {
 }
 
 func TestDuplicateShortFlag(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Flag("a", "").Short('a').String()
 	app.Flag("b", "").Short('a').String()
@@ -187,6 +202,7 @@ func TestDuplicateShortFlag(t *testing.T) {
 }
 
 func TestDuplicateLongFlag(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Flag("a", "").String()
 	app.Flag("a", "").String()
@@ -195,6 +211,7 @@ func TestDuplicateLongFlag(t *testing.T) {
 }
 
 func TestGetFlagAndOverrideDefault(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	a := app.Flag("a", "").Default("default").String()
 	_, err := app.Parse([]string{})
@@ -207,7 +224,7 @@ func TestGetFlagAndOverrideDefault(t *testing.T) {
 }
 
 func TestEnvarOverrideDefault(t *testing.T) {
-	os.Setenv("TEST_ENVAR", "123")
+	t.Setenv("TEST_ENVAR", "123")
 	app := newTestApp()
 	flag := app.Flag("t", "").Default("default").Envar("TEST_ENVAR").String()
 	_, err := app.Parse([]string{})
@@ -216,6 +233,7 @@ func TestEnvarOverrideDefault(t *testing.T) {
 }
 
 func TestFlagMultipleValuesDefault(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	a := app.Flag("a", "").Default("default1", "default2").Strings()
 	_, err := app.Parse([]string{})
@@ -224,6 +242,7 @@ func TestFlagMultipleValuesDefault(t *testing.T) {
 }
 
 func TestFlagMultipleValuesDefaultNonRepeatable(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	c.Flag("foo", "foo").Default("a", "b").String()
 	_, err := c.Parse([]string{})
@@ -233,7 +252,7 @@ func TestFlagMultipleValuesDefaultNonRepeatable(t *testing.T) {
 func TestFlagMultipleValuesDefaultEnvarUnix(t *testing.T) {
 	app := newTestApp()
 	a := app.Flag("a", "").Envar("TEST_MULTIPLE_VALUES").Strings()
-	os.Setenv("TEST_MULTIPLE_VALUES", "123\n456\n")
+	t.Setenv("TEST_MULTIPLE_VALUES", "123\n456\n")
 	_, err := app.Parse([]string{})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"123", "456"}, *a)
@@ -242,7 +261,7 @@ func TestFlagMultipleValuesDefaultEnvarUnix(t *testing.T) {
 func TestFlagMultipleValuesDefaultEnvarWindows(t *testing.T) {
 	app := newTestApp()
 	a := app.Flag("a", "").Envar("TEST_MULTIPLE_VALUES").Strings()
-	os.Setenv("TEST_MULTIPLE_VALUES", "123\r\n456\r\n")
+	t.Setenv("TEST_MULTIPLE_VALUES", "123\r\n456\r\n")
 	_, err := app.Parse([]string{})
 	assert.NoError(t, err)
 	assert.Equal(t, []string{"123", "456"}, *a)
@@ -251,13 +270,14 @@ func TestFlagMultipleValuesDefaultEnvarWindows(t *testing.T) {
 func TestFlagMultipleValuesDefaultEnvarNonRepeatable(t *testing.T) {
 	c := newTestApp()
 	a := c.Flag("foo", "foo").Envar("TEST_MULTIPLE_VALUES_NON_REPEATABLE").String()
-	os.Setenv("TEST_MULTIPLE_VALUES_NON_REPEATABLE", "123\n456")
+	t.Setenv("TEST_MULTIPLE_VALUES_NON_REPEATABLE", "123\n456")
 	_, err := c.Parse([]string{})
 	assert.NoError(t, err)
 	assert.Equal(t, "123\n456", *a)
 }
 
 func TestFlagHintAction(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 
 	action := func() []string {
@@ -270,6 +290,7 @@ func TestFlagHintAction(t *testing.T) {
 }
 
 func TestFlagHintOptions(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 
 	a := c.Flag("foo", "foo").HintOptions("opt1", "opt2")
@@ -278,6 +299,7 @@ func TestFlagHintOptions(t *testing.T) {
 }
 
 func TestFlagEnumVar(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	var bar string
 
@@ -294,13 +316,16 @@ func TestFlagEnumVar(t *testing.T) {
 }
 
 func TestMultiHintOptions(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 
 	a := c.Flag("foo", "foo").HintOptions("opt1").HintOptions("opt2")
 	args := a.resolveCompletions()
 	assert.Equal(t, []string{"opt1", "opt2"}, args)
 }
+
 func TestMultiHintActions(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 
 	a := c.Flag("foo", "foo").
@@ -315,6 +340,7 @@ func TestMultiHintActions(t *testing.T) {
 }
 
 func TestCombinationHintActionsOptions(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 
 	a := c.Flag("foo", "foo").HintAction(func() []string {
@@ -325,6 +351,7 @@ func TestCombinationHintActionsOptions(t *testing.T) {
 }
 
 func TestCombinationEnumActions(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	var foo string
 
@@ -349,6 +376,7 @@ func TestCombinationEnumActions(t *testing.T) {
 }
 
 func TestCombinationEnumOptions(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	var foo string
 
@@ -364,10 +392,10 @@ func TestCombinationEnumOptions(t *testing.T) {
 
 	args = b.resolveCompletions()
 	assert.Equal(t, []string{"opt5", "opt6"}, args)
-
 }
 
 func TestIsSetByUser(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	var isSet bool
 	b := app.Flag("b", "").IsSetByUser(&isSet).Bool()

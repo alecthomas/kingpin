@@ -82,7 +82,7 @@ loop:
 
 		case TokenLong, TokenShort:
 			flagToken := token
-			defaultValue := ""
+			var defaultValue string
 			var flag *FlagClause
 			var ok bool
 			invert := false
@@ -144,17 +144,17 @@ loop:
 
 // FlagClause is a fluid interface used to build flags.
 type FlagClause struct {
+	setByUser *bool
 	parserMixin
+	name        string
+	help        string
+	placeholder string
 	actionMixin
 	completionsMixin
 	envarMixin
-	name          string
-	shorthand     rune
-	help          string
 	defaultValues []string
-	placeholder   string
+	shorthand     rune
 	hidden        bool
-	setByUser     *bool
 }
 
 func newFlag(name, help string) *FlagClause {
@@ -227,13 +227,13 @@ func (f *FlagClause) PreAction(action Action) *FlagClause {
 	return f
 }
 
-// HintAction registers a HintAction (function) for the flag to provide completions
+// HintAction registers a HintAction (function) for the flag to provide completions.
 func (a *FlagClause) HintAction(action HintAction) *FlagClause {
 	a.addHintAction(action)
 	return a
 }
 
-// HintOptions registers any number of options for the flag to provide completions
+// HintOptions registers any number of options for the flag to provide completions.
 func (a *FlagClause) HintOptions(options ...string) *FlagClause {
 	a.addHintAction(func() []string {
 		return options
@@ -255,7 +255,7 @@ func (a *FlagClause) Enum(options ...string) (target *string) {
 	return a.parserMixin.Enum(options...)
 }
 
-// IsSetByUser let to know if the flag was set by the user
+// IsSetByUser let to know if the flag was set by the user.
 func (f *FlagClause) IsSetByUser(setByUser *bool) *FlagClause {
 	if setByUser != nil {
 		*setByUser = false
@@ -270,7 +270,7 @@ func (f *FlagClause) Default(values ...string) *FlagClause {
 	return f
 }
 
-// DEPRECATED: Use Envar(name) instead.
+// Deprecated: Use Envar(name) instead.
 func (f *FlagClause) OverrideDefaultFromEnvar(envar string) *FlagClause {
 	return f.Envar(envar)
 }
@@ -293,7 +293,7 @@ func (f *FlagClause) NoEnvar() *FlagClause {
 }
 
 // PlaceHolder sets the place-holder string used for flag values in the help. The
-// default behaviour is to use the value provided by Default() if provided,
+// default behavior is to use the value provided by Default() if provided,
 // then fall back on the capitalized flag name.
 func (f *FlagClause) PlaceHolder(placeholder string) *FlagClause {
 	f.placeholder = placeholder

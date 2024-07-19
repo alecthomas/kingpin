@@ -87,9 +87,10 @@ type accumulator struct {
 // Use reflection to accumulate values into a slice.
 //
 // target := []string{}
-// newAccumulator(&target, func (value interface{}) Value {
-//   return newStringValue(value.(*string))
-// })
+//
+//	newAccumulator(&target, func (value interface{}) Value {
+//	  return newStringValue(value.(*string))
+//	})
 func newAccumulator(slice interface{}, element func(value interface{}) Value) *accumulator {
 	typ := reflect.TypeOf(slice)
 	if typ.Kind() != reflect.Ptr || typ.Elem().Kind() != reflect.Slice {
@@ -131,7 +132,7 @@ func (a *accumulator) IsCumulative() bool {
 
 func (b *boolValue) IsBoolFlag() bool { return true }
 
-// -- time.Duration Value
+// -- time.Duration Value.
 type durationValue time.Duration
 
 func newDurationValue(p *time.Duration) *durationValue {
@@ -148,7 +149,7 @@ func (d *durationValue) Get() interface{} { return time.Duration(*d) }
 
 func (d *durationValue) String() string { return (*time.Duration)(d).String() }
 
-// -- map[string]string Value
+// -- map[string]string Value.
 type stringMapValue map[string]string
 
 func newStringMapValue(p *map[string]string) *stringMapValue {
@@ -178,7 +179,7 @@ func (s *stringMapValue) IsCumulative() bool {
 	return true
 }
 
-// -- net.IP Value
+// -- net.IP Value.
 type ipValue net.IP
 
 func newIPValue(p *net.IP) *ipValue {
@@ -202,7 +203,7 @@ func (i *ipValue) String() string {
 	return (*net.IP)(i).String()
 }
 
-// -- *net.TCPAddr Value
+// -- *net.TCPAddr Value.
 type tcpAddrValue struct {
 	addr **net.TCPAddr
 }
@@ -294,7 +295,7 @@ func (f *fileValue) String() string {
 	return (*f.f).Name()
 }
 
-// -- url.URL Value
+// -- url.URL Value.
 type urlValue struct {
 	u **url.URL
 }
@@ -323,7 +324,7 @@ func (u *urlValue) String() string {
 	return (*u.u).String()
 }
 
-// -- []*url.URL Value
+// -- []*url.URL Value.
 type urlListValue []*url.URL
 
 func newURLListValue(p *[]*url.URL) *urlListValue {
@@ -386,7 +387,7 @@ func (e *enumValue) Get() interface{} {
 	return (string)(*e.value)
 }
 
-// -- []string Enum Value
+// -- []string Enum Value.
 type enumsValue struct {
 	value   *[]string
 	options []string
@@ -421,7 +422,7 @@ func (s *enumsValue) IsCumulative() bool {
 	return true
 }
 
-// -- units.Base2Bytes Value
+// -- units.Base2Bytes Value.
 type bytesValue units.Base2Bytes
 
 func newBytesValue(p *units.Base2Bytes) *bytesValue {
