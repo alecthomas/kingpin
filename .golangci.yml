@@ -1,0 +1,56 @@
+linters-settings:
+  misspell:
+    locale: US
+  govet:
+    enable-all: true
+linters:
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - contextcheck
+    - dupword
+    - durationcheck
+    - errchkjson
+    - errname
+    - exportloopref
+    - fatcontext
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - gocritic
+    - godot
+    - gofmt
+    - gofumpt
+    - goimports
+    - gosec
+    - gosimple
+    - gosmopolitan
+    - govet
+    - ineffassign
+    - makezero
+    - misspell
+    - musttag
+    - nilerr
+    - noctx
+    - nolintlint
+    - paralleltest
+    - prealloc
+    - predeclared
+    - reassign
+    - staticcheck
+    - tagalign
+    - tenv
+    - thelper
+    - tparallel
+    - typecheck
+    - unparam
+    - unused
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+  disable-all: true
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+run:
+  timeout: 5m

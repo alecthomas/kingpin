@@ -7,6 +7,7 @@ import (
 )
 
 func TestResolveWithBuiltin(t *testing.T) {
+	t.Parallel()
 	a := completionsMixin{}
 
 	hintAction1 := func() []string {
@@ -23,6 +24,7 @@ func TestResolveWithBuiltin(t *testing.T) {
 }
 
 func TestResolveWithUser(t *testing.T) {
+	t.Parallel()
 	a := completionsMixin{}
 	hintAction1 := func() []string {
 		return []string{"opt1", "opt2"}
@@ -38,6 +40,7 @@ func TestResolveWithUser(t *testing.T) {
 }
 
 func TestResolveWithCombination(t *testing.T) {
+	t.Parallel()
 	a := completionsMixin{}
 	builtin := func() []string {
 		return []string{"opt1", "opt2"}
@@ -55,6 +58,7 @@ func TestResolveWithCombination(t *testing.T) {
 }
 
 func TestAddHintAction(t *testing.T) {
+	t.Parallel()
 	a := completionsMixin{}
 	hintFunc := func() []string {
 		return []string{"opt1", "opt2"}
@@ -66,6 +70,7 @@ func TestAddHintAction(t *testing.T) {
 }
 
 func TestAddHintActionBuiltin(t *testing.T) {
+	t.Parallel()
 	a := completionsMixin{}
 	hintFunc := func() []string {
 		return []string{"opt1", "opt2"}

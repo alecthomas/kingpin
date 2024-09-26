@@ -124,7 +124,6 @@ func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (choices []
 	}
 	// No Flag directly matched.
 	return options, false, false
-
 }
 
 type cmdGroup struct {
@@ -164,16 +163,6 @@ func newCmdGroup(app *Application) *cmdGroup {
 		app:      app,
 		commands: make(map[string]*CmdClause),
 	}
-}
-
-func (c *cmdGroup) flattenedCommands() (out []*CmdClause) {
-	for _, cmd := range c.commandOrder {
-		if len(cmd.commands) == 0 {
-			out = append(out, cmd)
-		}
-		out = append(out, cmd.flattenedCommands()...)
-	}
-	return
 }
 
 func (c *cmdGroup) addCommand(name, help string) *CmdClause {
@@ -222,16 +211,16 @@ type CmdClauseValidator func(*CmdClause) error
 // A CmdClause is a single top-level command. It encapsulates a set of flags
 // and either subcommands or positional arguments.
 type CmdClause struct {
+	app       *Application
+	validator CmdClauseValidator
+	name      string
+	help      string
+	helpLong  string
 	cmdMixin
-	app            *Application
-	name           string
 	aliases        []string
-	help           string
-	helpLong       string
-	isDefault      bool
-	validator      CmdClauseValidator
-	hidden         bool
 	completionAlts []string
+	isDefault      bool
+	hidden         bool
 }
 
 func newCommand(app *Application, name, help string) *CmdClause {

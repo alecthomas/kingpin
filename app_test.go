@@ -2,14 +2,13 @@ package kingpin
 
 import (
 	"errors"
-	"io/ioutil"
-
-	"github.com/stretchr/testify/assert"
-
+	"io"
 	"sort"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func newTestApp() *Application {
@@ -17,6 +16,7 @@ func newTestApp() *Application {
 }
 
 func TestCommander(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	ping := c.Command("ping", "Ping an IP address.")
 	pingTTL := ping.Flag("ttl", "TTL for ICMP packets").Short('t').Default("5s").Duration()
@@ -33,6 +33,7 @@ func TestCommander(t *testing.T) {
 }
 
 func TestRequiredFlags(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	c.Flag("a", "a").String()
 	c.Flag("b", "b").Required().String()
@@ -44,6 +45,7 @@ func TestRequiredFlags(t *testing.T) {
 }
 
 func TestRepeatableFlags(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	c.Flag("a", "a").String()
 	c.Flag("b", "b").Strings()
@@ -54,6 +56,7 @@ func TestRepeatableFlags(t *testing.T) {
 }
 
 func TestInvalidDefaultFlagValueErrors(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	c.Flag("foo", "foo").Default("a").Int()
 	_, err := c.Parse([]string{})
@@ -61,6 +64,7 @@ func TestInvalidDefaultFlagValueErrors(t *testing.T) {
 }
 
 func TestInvalidDefaultArgValueErrors(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	cmd := c.Command("cmd", "cmd")
 	cmd.Arg("arg", "arg").Default("one").Int()
@@ -69,6 +73,7 @@ func TestInvalidDefaultArgValueErrors(t *testing.T) {
 }
 
 func TestArgsRequiredAfterNonRequiredErrors(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").String()
@@ -78,7 +83,8 @@ func TestArgsRequiredAfterNonRequiredErrors(t *testing.T) {
 }
 
 func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
-	c := newTestApp().Writer(ioutil.Discard)
+	t.Parallel()
+	c := newTestApp().Writer(io.Discard)
 	cmd := c.Command("cmd", "")
 	cmd.Arg("a", "a").Required().String()
 	cmd.Arg("b", "b").Required().String()
@@ -91,6 +97,7 @@ func TestArgsMultipleRequiredThenNonRequired(t *testing.T) {
 }
 
 func TestDispatchCallbackIsCalled(t *testing.T) {
+	t.Parallel()
 	dispatched := false
 	c := newTestApp()
 	c.Command("cmd", "").Action(func(*ParseContext) error {
@@ -104,6 +111,7 @@ func TestDispatchCallbackIsCalled(t *testing.T) {
 }
 
 func TestTopLevelArgWorks(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	s := c.Arg("arg", "help").String()
 	_, err := c.Parse([]string{"foo"})
@@ -112,6 +120,7 @@ func TestTopLevelArgWorks(t *testing.T) {
 }
 
 func TestTopLevelArgCantBeUsedWithCommands(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	c.Arg("arg", "help").String()
 	c.Command("cmd", "help")
@@ -120,6 +129,7 @@ func TestTopLevelArgCantBeUsedWithCommands(t *testing.T) {
 }
 
 func TestTooManyArgs(t *testing.T) {
+	t.Parallel()
 	a := newTestApp()
 	a.Arg("a", "").String()
 	_, err := a.Parse([]string{"a", "b"})
@@ -127,6 +137,7 @@ func TestTooManyArgs(t *testing.T) {
 }
 
 func TestTooManyArgsAfterCommand(t *testing.T) {
+	t.Parallel()
 	a := newTestApp()
 	a.Command("a", "")
 	assert.NoError(t, a.init())
@@ -135,6 +146,7 @@ func TestTooManyArgsAfterCommand(t *testing.T) {
 }
 
 func TestArgsLooksLikeFlagsWithConsumeRemainder(t *testing.T) {
+	t.Parallel()
 	a := newTestApp()
 	a.Arg("opts", "").Required().Strings()
 	_, err := a.Parse([]string{"hello", "-world"})
@@ -142,6 +154,7 @@ func TestArgsLooksLikeFlagsWithConsumeRemainder(t *testing.T) {
 }
 
 func TestCommandParseDoesNotResetFlagsToDefault(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	flag := app.Flag("flag", "").Default("default").String()
 	app.Command("cmd", "")
@@ -152,6 +165,7 @@ func TestCommandParseDoesNotResetFlagsToDefault(t *testing.T) {
 }
 
 func TestCommandParseDoesNotFailRequired(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	flag := app.Flag("flag", "").Required().String()
 	app.Command("cmd", "")
@@ -162,6 +176,7 @@ func TestCommandParseDoesNotFailRequired(t *testing.T) {
 }
 
 func TestSelectedCommand(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	c0 := app.Command("c0", "")
 	c0.Command("c1", "")
@@ -171,6 +186,7 @@ func TestSelectedCommand(t *testing.T) {
 }
 
 func TestSubCommandRequired(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	c0 := app.Command("c0", "")
 	c0.Command("c1", "")
@@ -179,6 +195,7 @@ func TestSubCommandRequired(t *testing.T) {
 }
 
 func TestInterspersedFalse(t *testing.T) {
+	t.Parallel()
 	app := newTestApp().Interspersed(false)
 	a1 := app.Arg("a1", "").String()
 	a2 := app.Arg("a2", "").String()
@@ -192,6 +209,7 @@ func TestInterspersedFalse(t *testing.T) {
 }
 
 func TestInterspersedTrue(t *testing.T) {
+	t.Parallel()
 	// test once with the default value and once with explicit true
 	for i := 0; i < 2; i++ {
 		app := newTestApp()
@@ -214,6 +232,7 @@ func TestInterspersedTrue(t *testing.T) {
 }
 
 func TestDefaultEnvars(t *testing.T) {
+	t.Parallel()
 	a := New("some-app", "").Terminate(nil).DefaultEnvars()
 	f0 := a.Flag("some-flag", "")
 	f0.Bool()
@@ -229,6 +248,7 @@ func TestDefaultEnvars(t *testing.T) {
 }
 
 func TestBashCompletionOptionsWithEmptyApp(t *testing.T) {
+	t.Parallel()
 	a := newTestApp()
 	context, err := a.ParseContext([]string{"--completion-bash"})
 	if err != nil {
@@ -239,6 +259,7 @@ func TestBashCompletionOptionsWithEmptyApp(t *testing.T) {
 }
 
 func TestBashCompletionOptions(t *testing.T) {
+	t.Parallel()
 	a := newTestApp()
 	a.Command("one", "")
 	a.Flag("flag-0", "").String()
@@ -411,10 +432,10 @@ func TestBashCompletionOptions(t *testing.T) {
 
 		assert.Equal(t, c.ExpectedOptions, args, "Expected != Actual: [%v] != [%v]. \nInput was: [%v]", c.ExpectedOptions, args, c.Args)
 	}
-
 }
 
 func TestCmdValidation(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	cmd := c.Command("cmd", "")
 
@@ -436,6 +457,7 @@ func TestCmdValidation(t *testing.T) {
 }
 
 func TestVersion(t *testing.T) {
+	t.Parallel()
 	c := newTestApp()
 	c.Flag("config", "path to config file").Default("config.yaml").ExistingFile()
 	c.Version("1.0.0")
