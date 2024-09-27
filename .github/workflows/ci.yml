@@ -3,15 +3,24 @@ on:
     branches:
       - master
   pull_request:
+
 name: CI
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        go-version: ["oldstable", "stable"]
     steps:
-      - name: Checkout code
+      - name: Checkout Repository
         uses: actions/checkout@v4
-      - name: Init Hermit
-        run: ./bin/hermit env -r >> $GITHUB_ENV
+
+      - name: Setup Golang Environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+
       - name: Test
-        run: go test ./...
+        run: go test ./... -race -shuffle=on -v

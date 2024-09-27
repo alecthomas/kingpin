@@ -10,6 +10,7 @@ import (
 )
 
 func TestFormatTwoColumns(t *testing.T) {
+	t.Parallel()
 	buf := bytes.NewBuffer(nil)
 	formatTwoColumns(buf, 2, 2, 20, [][2]string{
 		{"--hello", "Hello world help with something that is cool."},
@@ -25,9 +26,11 @@ func TestFormatTwoColumns(t *testing.T) {
 }
 
 func TestFormatTwoColumnsWide(t *testing.T) {
+	t.Parallel()
 	samples := [][2]string{
 		{strings.Repeat("x", 29), "29 chars"},
-		{strings.Repeat("x", 30), "30 chars"}}
+		{strings.Repeat("x", 30), "30 chars"},
+	}
 	buf := bytes.NewBuffer(nil)
 	formatTwoColumns(buf, 0, 0, 200, samples)
 	expected := `xxxxxxxxxxxxxxxxxxxxxxxxxxxxx29 chars
@@ -38,6 +41,7 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 }
 
 func TestHiddenCommand(t *testing.T) {
+	t.Parallel()
 	templates := []struct{ name, template string }{
 		{"default", DefaultUsageTemplate},
 		{"Compact", CompactUsageTemplate},
@@ -66,6 +70,7 @@ func TestHiddenCommand(t *testing.T) {
 }
 
 func TestUsageFuncs(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	a := New("test", "Test").Writer(&buf).Terminate(nil)
 	tpl := `{{ add 2 1 }}`
@@ -79,6 +84,7 @@ func TestUsageFuncs(t *testing.T) {
 }
 
 func TestCmdClause_HelpLong(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	tpl := `{{define "FormatUsage"}}{{.HelpLong}}{{end -}}
 {{template "FormatUsage" .Context.SelectedCommand}}`
@@ -93,6 +99,7 @@ func TestCmdClause_HelpLong(t *testing.T) {
 }
 
 func TestArgEnvVar(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 
 	a := New("test", "Test").Writer(&buf).Terminate(nil)
