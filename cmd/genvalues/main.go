@@ -6,6 +6,9 @@ import (
 	"os/exec"
 	"strings"
 	"text/template"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 const (
@@ -15,7 +18,7 @@ const (
 
 {{range .}}
 {{if not .NoValueParser}}
-// -- {{.Type}} Value
+// -- {{.Type}} Value.
 type {{.|ValueName}} struct { v *{{.Type}} }
 
 func new{{.|Name}}Value(p *{{.Type}}) *{{.|ValueName}} {
@@ -69,12 +72,12 @@ func (p *parserMixin) {{.|Plural}}Var(target *[]{{.Type}}) {
 
 type Value struct {
 	Name          string `json:"name"`
-	NoValueParser bool   `json:"no_value_parser"`
 	Type          string `json:"type"`
 	Parser        string `json:"parser"`
 	Format        string `json:"format"`
 	Plural        string `json:"plural"`
 	Help          string `json:"help"`
+	NoValueParser bool   `json:"no_value_parser"`
 }
 
 func fatalIfError(err error) {
@@ -92,11 +95,12 @@ func main() {
 	err = json.NewDecoder(r).Decode(&v)
 	fatalIfError(err)
 
+	c := cases.Title(language.English)
 	valueName := func(v *Value) string {
 		if v.Name != "" {
 			return v.Name
 		}
-		return strings.Title(v.Type)
+		return c.String(v.Type)
 	}
 
 	t, err := template.New("genvalues").Funcs(template.FuncMap{

@@ -1,7 +1,6 @@
 package kingpin
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -9,7 +8,8 @@ import (
 )
 
 func TestParserExpandFromFile(t *testing.T) {
-	f, err := ioutil.TempFile("", "")
+	t.Parallel()
+	f, err := os.CreateTemp("", "")
 	assert.NoError(t, err)
 	defer os.Remove(f.Name())
 	f.WriteString("hello\nworld\n")
@@ -26,7 +26,8 @@ func TestParserExpandFromFile(t *testing.T) {
 }
 
 func TestParserExpandFromFileLeadingArg(t *testing.T) {
-	f, err := ioutil.TempFile("", "")
+	t.Parallel()
+	f, err := os.CreateTemp("", "")
 	assert.NoError(t, err)
 	defer os.Remove(f.Name())
 	f.WriteString("hello\nworld\n")
@@ -45,7 +46,8 @@ func TestParserExpandFromFileLeadingArg(t *testing.T) {
 }
 
 func TestParserExpandFromFileTrailingArg(t *testing.T) {
-	f, err := ioutil.TempFile("", "")
+	t.Parallel()
+	f, err := os.CreateTemp("", "")
 	assert.NoError(t, err)
 	defer os.Remove(f.Name())
 	f.WriteString("hello\nworld\n")
@@ -64,7 +66,8 @@ func TestParserExpandFromFileTrailingArg(t *testing.T) {
 }
 
 func TestParserExpandFromFileMultipleSurroundingArgs(t *testing.T) {
-	f, err := ioutil.TempFile("", "")
+	t.Parallel()
+	f, err := os.CreateTemp("", "")
 	assert.NoError(t, err)
 	defer os.Remove(f.Name())
 	f.WriteString("hello\nworld\n")
@@ -85,7 +88,8 @@ func TestParserExpandFromFileMultipleSurroundingArgs(t *testing.T) {
 }
 
 func TestParserExpandFromFileMultipleFlags(t *testing.T) {
-	f, err := ioutil.TempFile("", "")
+	t.Parallel()
+	f, err := os.CreateTemp("", "")
 	assert.NoError(t, err)
 	defer os.Remove(f.Name())
 	f.WriteString("--flag1=f1\n--flag2=f2\n")
@@ -106,6 +110,7 @@ func TestParserExpandFromFileMultipleFlags(t *testing.T) {
 }
 
 func TestParseContextPush(t *testing.T) {
+	t.Parallel()
 	app := New("test", "")
 	app.Command("foo", "").Command("bar", "")
 	c := tokenize([]string{"foo", "bar"}, false)

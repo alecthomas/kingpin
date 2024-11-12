@@ -47,7 +47,7 @@ Commands:
 {{end -}}
 `
 
-// Usage template where command's optional flags are listed separately
+// Usage template where command's optional flags are listed separately.
 var SeparateOptionalFlagsUsageTemplate = `{{define "FormatCommand" -}}
 {{if .FlagSummary}} {{.FlagSummary}}{{end -}}
 {{range .Args}}{{if not .Hidden}} {{if not .Required}}[{{end}}{{if .PlaceHolder}}{{.PlaceHolder}}{{else}}<{{.Name}}>{{end}}{{if .Value|IsCumulative}}...{{end}}{{if not .Required}}]{{end}}{{end}}{{end -}}
