@@ -255,6 +255,20 @@ func (a *FlagClause) Enum(options ...string) (target *string) {
 	return a.parserMixin.Enum(options...)
 }
 
+func (a *FlagClause) EnumsVar(target *[]string, options ...string) {
+	a.parserMixin.EnumsVar(target, options...)
+	a.addHintActionBuiltin(func() []string {
+		return options
+	})
+}
+
+func (a *FlagClause) Enums(options ...string) (target *[]string) {
+	a.addHintActionBuiltin(func() []string {
+		return options
+	})
+	return a.parserMixin.Enums(options...)
+}
+
 // IsSetByUser let to know if the flag was set by the user
 func (f *FlagClause) IsSetByUser(setByUser *bool) *FlagClause {
 	if setByUser != nil {
