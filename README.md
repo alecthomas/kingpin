@@ -37,7 +37,7 @@
   - [Default Values](#default-values)
   - [Place-holders in Help](#place-holders-in-help)
   - [Consuming all remaining arguments](#consuming-all-remaining-arguments)
-  - [Bash/ZSH Shell Completion](#bashzsh-shell-completion)
+  - [Bash/ZSH/Fish Shell Completion](#bashzshfish-shell-completion)
   - [Supporting -h for help](#supporting--h-for-help)
   - [Custom help](#custom-help)
 
@@ -531,7 +531,7 @@ And use it like so:
 ips := IPList(kingpin.Arg("ips", "IP addresses to ping."))
 ```
 
-### Bash/ZSH Shell Completion
+### Bash/ZSH/Fish Shell Completion
 
 By default, all flags and commands/subcommands generate completions
 internally.
@@ -548,8 +548,9 @@ for your target platform/shell). An alternative is to instruct your end
 user to source a script from their `bash_profile` (or equivalent).
 
 Fortunately Kingpin makes it easy to generate or source a script for use
-with end users shells. `./yourtool --completion-script-bash` and
-`./yourtool --completion-script-zsh` will generate these scripts for you.
+with end users shells. `./yourtool --completion-script-bash`,
+`./yourtool --completion-script-zsh`, and `./yourtool --completion-script-fish`
+will generate these scripts for you.
 
 **Installation by Package**
 
@@ -572,6 +573,18 @@ Or for ZSH
 
 ```
 eval "$(your-cli-tool --completion-script-zsh)"
+```
+
+Or for fish
+
+```
+your-cli-tool --completion-script-fish | source
+```
+
+Or, to install the fish completions permanently:
+
+```
+your-cli-tool --completion-script-fish > ~/.config/fish/completions/your-cli-tool.fish
 ```
 
 #### Additional API

@@ -16,6 +16,7 @@ var (
 		"completion-bash":        true,
 		"completion-script-bash": true,
 		"completion-script-zsh":  true,
+		"completion-script-fish": true,
 	}
 )
 

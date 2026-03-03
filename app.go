@@ -68,6 +68,7 @@ func New(name, help string) *Application {
 	a.Flag("completion-bash", "Output possible completions for the given args.").Hidden().BoolVar(&a.completion)
 	a.Flag("completion-script-bash", "Generate completion script for bash.").Hidden().PreAction(a.generateBashCompletionScript).Bool()
 	a.Flag("completion-script-zsh", "Generate completion script for ZSH.").Hidden().PreAction(a.generateZSHCompletionScript).Bool()
+	a.Flag("completion-script-fish", "Generate completion script for fish.").Hidden().PreAction(a.generateFishCompletionScript).Bool()
 
 	return a
 }
@@ -102,6 +103,15 @@ func (a *Application) generateBashCompletionScript(c *ParseContext) error {
 func (a *Application) generateZSHCompletionScript(c *ParseContext) error {
 	a.Writer(os.Stdout)
 	if err := a.UsageForContextWithTemplate(c, 2, ZshCompletionTemplate); err != nil {
+		return err
+	}
+	a.terminate(0)
+	return nil
+}
+
+func (a *Application) generateFishCompletionScript(c *ParseContext) error {
+	a.Writer(os.Stdout)
+	if err := a.UsageForContextWithTemplate(c, 2, FishCompletionTemplate); err != nil {
 		return err
 	}
 	a.terminate(0)
