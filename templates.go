@@ -262,13 +262,13 @@ fi
 `
 
 var FishCompletionTemplate = `complete -c {{.App.Name}} -f -a '(
-    set -l c (commandline -opc)
-    set -e c[1]
-    set -l r ({{.App.Name}} --completion-bash $c)
-    if test -n "$r"
-        echo $r
+    set -l tokens (commandline -xpc)
+    set -l current (commandline -ct)
+    set -l completions ({{.App.Name}} --completion-bash $tokens[2..] $current)
+    if test -n "$completions"
+        printf "%s\n" $completions
     else
-        __fish_complete_path (commandline -ct)
+        __fish_complete_path $current
     end
 )'
 `
