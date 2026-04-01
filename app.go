@@ -6,7 +6,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"text/template"
 )
 
 var (
@@ -28,17 +27,20 @@ type Application struct {
 	Name string
 	Help string
 
-	author         string
-	version        string
-	errorWriter    io.Writer // Destination for errors.
-	usageWriter    io.Writer // Destination for usage
-	usageTemplate  string
-	usageFuncs     template.FuncMap
-	validator      ApplicationValidator
-	terminate      func(status int) // See Terminate()
-	noInterspersed bool             // can flags be interspersed with args (or must they come first)
-	defaultEnvars  bool
-	completion     bool
+	author           string
+	version          string
+	errorWriter      io.Writer // Destination for errors.
+	usageWriter      io.Writer // Destination for usage
+	hiddenHelpWriter io.Writer // Desitination for hidden help commands.
+	usageTemplate    string
+	usageFuncs       map[string]interface{}
+	templateRenderer func(a *Application, context *ParseContext, indent int, tmpl string) error
+	usageRenderer    UsageRenderer
+	validator        ApplicationValidator
+	terminate        func(status int) // See Terminate()
+	noInterspersed   bool             // can flags be interspersed with args (or must they come first)
+	defaultEnvars    bool
+	completion       bool
 
 	// Help flag. Exposed for user customisation.
 	HelpFlag *FlagClause
@@ -51,12 +53,12 @@ type Application struct {
 // New creates a new Kingpin application instance.
 func New(name, help string) *Application {
 	a := &Application{
-		Name:          name,
-		Help:          help,
-		errorWriter:   os.Stderr, // Left for backwards compatibility purposes.
-		usageWriter:   os.Stderr,
-		usageTemplate: DefaultUsageTemplate,
-		terminate:     os.Exit,
+		Name:             name,
+		Help:             help,
+		errorWriter:      os.Stderr, // Left for backwards compatibility purposes.
+		usageWriter:      os.Stderr,
+		hiddenHelpWriter: os.Stdout,
+		terminate:        os.Exit,
 	}
 	a.flagGroup = newFlagGroup()
 	a.argGroup = newArgGroup()
@@ -73,9 +75,21 @@ func New(name, help string) *Application {
 	return a
 }
 
+// renderHiddenFlag renders usage for hidden help flags (--help-long, --help-man, etc.).
+// A custom UsageRenderer does NOT override these — they are distinct output formats
+// (man pages, completion scripts) that should always produce their advertised output.
+// UsageFuncs overrides ARE applied, since they provide template helper functions that
+// may be needed by the template path.
+func (a *Application) renderHiddenFlag(c *ParseContext, renderer UsageRenderer, tmpl string) error {
+	if a.usageFuncs != nil && a.templateRenderer != nil {
+		return a.templateRenderer(a, c, 2, tmpl)
+	}
+	return a.usageForContextWithUsageRenderer(c, 2, renderer)
+}
+
 func (a *Application) generateLongHelp(c *ParseContext) error {
-	a.Writer(os.Stdout)
-	if err := a.UsageForContextWithTemplate(c, 2, LongHelpTemplate); err != nil {
+	a.Writer(a.hiddenHelpWriter)
+	if err := a.renderHiddenFlag(c, RenderLongHelp, LongHelpTemplate); err != nil {
 		return err
 	}
 	a.terminate(0)
@@ -83,8 +97,8 @@ func (a *Application) generateLongHelp(c *ParseContext) error {
 }
 
 func (a *Application) generateManPage(c *ParseContext) error {
-	a.Writer(os.Stdout)
-	if err := a.UsageForContextWithTemplate(c, 2, ManPageTemplate); err != nil {
+	a.Writer(a.hiddenHelpWriter)
+	if err := a.renderHiddenFlag(c, RenderManPage, ManPageTemplate); err != nil {
 		return err
 	}
 	a.terminate(0)
@@ -92,8 +106,8 @@ func (a *Application) generateManPage(c *ParseContext) error {
 }
 
 func (a *Application) generateBashCompletionScript(c *ParseContext) error {
-	a.Writer(os.Stdout)
-	if err := a.UsageForContextWithTemplate(c, 2, BashCompletionTemplate); err != nil {
+	a.Writer(a.hiddenHelpWriter)
+	if err := a.renderHiddenFlag(c, RenderBashCompletion, BashCompletionTemplate); err != nil {
 		return err
 	}
 	a.terminate(0)
@@ -101,8 +115,8 @@ func (a *Application) generateBashCompletionScript(c *ParseContext) error {
 }
 
 func (a *Application) generateZSHCompletionScript(c *ParseContext) error {
-	a.Writer(os.Stdout)
-	if err := a.UsageForContextWithTemplate(c, 2, ZshCompletionTemplate); err != nil {
+	a.Writer(a.hiddenHelpWriter)
+	if err := a.renderHiddenFlag(c, RenderZshCompletion, ZshCompletionTemplate); err != nil {
 		return err
 	}
 	a.terminate(0)
@@ -110,8 +124,8 @@ func (a *Application) generateZSHCompletionScript(c *ParseContext) error {
 }
 
 func (a *Application) generateFishCompletionScript(c *ParseContext) error {
-	a.Writer(os.Stdout)
-	if err := a.UsageForContextWithTemplate(c, 2, FishCompletionTemplate); err != nil {
+	a.Writer(a.hiddenHelpWriter)
+	if err := a.renderHiddenFlag(c, RenderFishCompletion, FishCompletionTemplate); err != nil {
 		return err
 	}
 	a.terminate(0)
@@ -152,22 +166,47 @@ func (a *Application) ErrorWriter(w io.Writer) *Application {
 	return a
 }
 
-// UsageWriter sets the io.Writer to use for errors.
+// UsageWriter sets the io.Writer to use for usage.
 func (a *Application) UsageWriter(w io.Writer) *Application {
 	a.usageWriter = w
 	return a
 }
 
-// UsageTemplate specifies the text template to use when displaying usage
-// information. The default is UsageTemplate.
-func (a *Application) UsageTemplate(template string) *Application {
-	a.usageTemplate = template
+// HiddenHelpWriter sets the io.Writer to use for usage of hidden help commands.
+func (a *Application) HiddenHelpWriter(w io.Writer) *Application {
+	a.hiddenHelpWriter = w
 	return a
 }
 
-// UsageFuncs adds extra functions that can be used in the usage template.
-func (a *Application) UsageFuncs(funcs template.FuncMap) *Application {
+// UsageTemplate specifies the text template to use when displaying usage
+// information. The default is UsageTemplate.
+//
+// Note: calling this method causes text/template to be linked into the binary,
+// which prevents dead code elimination of reflect.MethodByName. Programs that
+// want smaller binaries should use UsageRenderer instead.
+func (a *Application) UsageTemplate(template string) *Application {
+	a.usageTemplate = template
+	a.templateRenderer = templateRenderFunc
+	return a
+}
+
+// UsageFuncs adds extra functions that can be used in the usage template
+//
+// Note: calling this method causes text/template to be linked into the binary,
+// which prevents dead code elimination of reflect.MethodByName. Programs that
+// want smaller binaries should use UsageRenderer instead..
+func (a *Application) UsageFuncs(funcs map[string]interface{}) *Application {
 	a.usageFuncs = funcs
+	a.templateRenderer = templateRenderFunc
+	return a
+}
+
+// UsageRenderer registers a custom UsageRenderer for the primary --help output.
+// It does not affect hidden help flags (--help-long, --help-man, completion scripts),
+// which always use their built-in renderers or the template path if UsageFuncs is set.
+// For backward compatibility, UsageTemplate takes precedence over UsageRenderer.
+func (a *Application) UsageRenderer(fn UsageRenderer) *Application {
+	a.usageRenderer = fn
 	return a
 }
 

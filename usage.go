@@ -2,18 +2,18 @@ package kingpin
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"go/doc"
 	"io"
 	"strings"
-	"text/template"
 )
 
-var (
-	preIndent = "  "
-)
+var preIndent = "  "
 
-func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string) {
+// FormatTwoColumns formats rows of two-column data (e.g., flags and their descriptions)
+// into aligned output written to w, with the given indent, padding, and total width.
+func FormatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string) {
 	// Find size of first column.
 	s := 0
 	for _, row := range rows {
@@ -45,7 +45,7 @@ func formatTwoColumns(w io.Writer, indent, padding, width int, rows [][2]string)
 func (a *Application) Usage(args []string) {
 	context, err := a.parseContext(true, args)
 	a.FatalIfError(err, "")
-	if err := a.UsageForContextWithTemplate(context, 2, a.usageTemplate); err != nil {
+	if err := a.UsageForContext(context); err != nil {
 		panic(err)
 	}
 }
@@ -72,7 +72,8 @@ func formatCmdUsage(app *ApplicationModel, cmd *CmdModel) string {
 	return strings.Join(s, " ")
 }
 
-func formatFlag(haveShort bool, flag *FlagModel) string {
+// FormatFlagCompact formats a flag name without placeholder value for compact display.
+func FormatFlagCompact(haveShort bool, flag *FlagModel) string {
 	flagString := ""
 	flagName := flag.Name
 	if flag.IsBoolFlag() {
@@ -87,6 +88,12 @@ func formatFlag(haveShort bool, flag *FlagModel) string {
 			flagString += fmt.Sprintf("--%s", flagName)
 		}
 	}
+	return flagString
+}
+
+// FormatFlag formats a flag with its placeholder value and cumulative indicator.
+func FormatFlag(haveShort bool, flag *FlagModel) string {
+	flagString := FormatFlagCompact(haveShort, flag)
 	if !flag.IsBoolFlag() {
 		flagString += fmt.Sprintf("=%s", flag.FormatPlaceHolder())
 	}
@@ -96,130 +103,62 @@ func formatFlag(haveShort bool, flag *FlagModel) string {
 	return flagString
 }
 
-type templateParseContext struct {
-	SelectedCommand *CmdModel
-	*FlagGroupModel
-	*ArgGroupModel
-}
-
-type templateContext struct {
-	App     *ApplicationModel
-	Width   int
-	Context *templateParseContext
-}
-
 // UsageForContext displays usage information from a ParseContext (obtained from
 // Application.ParseContext() or Action(f) callbacks).
 func (a *Application) UsageForContext(context *ParseContext) error {
-	return a.UsageForContextWithTemplate(context, 2, a.usageTemplate)
+	if a.usageTemplate != "" && a.templateRenderer != nil {
+		return a.templateRenderer(a, context, 2, a.usageTemplate)
+	}
+
+	if a.usageRenderer != nil {
+		return a.usageForContextWithUsageRenderer(context, 2, a.usageRenderer)
+	}
+
+	if a.usageFuncs != nil && a.templateRenderer != nil {
+		return a.templateRenderer(a, context, 2, DefaultUsageTemplate)
+	}
+
+	return a.usageForContextWithUsageRenderer(context, 2, RenderDefault)
 }
 
-// UsageForContextWithTemplate is the base usage function. You generally don't need to use this.
-func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent int, tmpl string) error {
-	width := guessWidth(a.usageWriter)
-	funcs := template.FuncMap{
-		"Indent": func(level int) string {
-			return strings.Repeat(" ", level*indent)
-		},
-		"Wrap": func(indent int, s string) string {
-			buf := bytes.NewBuffer(nil)
-			indentText := strings.Repeat(" ", indent)
-			doc.ToText(buf, s, indentText, "  "+indentText, width-indent)
-			return buf.String()
-		},
-		"FormatFlag": formatFlag,
-		"FlagsToTwoColumns": func(f []*FlagModel) [][2]string {
-			rows := [][2]string{}
-			haveShort := false
-			for _, flag := range f {
-				if flag.Short != 0 {
-					haveShort = true
-					break
-				}
-			}
-			for _, flag := range f {
-				if !flag.Hidden {
-					rows = append(rows, [2]string{formatFlag(haveShort, flag), flag.HelpWithEnvar()})
-				}
-			}
-			return rows
-		},
-		"RequiredFlags": func(f []*FlagModel) []*FlagModel {
-			requiredFlags := []*FlagModel{}
-			for _, flag := range f {
-				if flag.Required {
-					requiredFlags = append(requiredFlags, flag)
-				}
-			}
-			return requiredFlags
-		},
-		"OptionalFlags": func(f []*FlagModel) []*FlagModel {
-			optionalFlags := []*FlagModel{}
-			for _, flag := range f {
-				if !flag.Required {
-					optionalFlags = append(optionalFlags, flag)
-				}
-			}
-			return optionalFlags
-		},
-		"ArgsToTwoColumns": func(a []*ArgModel) [][2]string {
-			rows := [][2]string{}
-			for _, arg := range a {
-				if !arg.Hidden {
-					var s string
-					if arg.PlaceHolder != "" {
-						s = arg.PlaceHolder
-					} else {
-						s = "<" + arg.Name + ">"
-					}
-					if !arg.Required {
-						s = "[" + s + "]"
-					}
-					rows = append(rows, [2]string{s, arg.HelpWithEnvar()})
-				}
-			}
-			return rows
-		},
-		"FormatTwoColumns": func(rows [][2]string) string {
-			buf := bytes.NewBuffer(nil)
-			formatTwoColumns(buf, indent, indent, width, rows)
-			return buf.String()
-		},
-		"FormatTwoColumnsWithIndent": func(rows [][2]string, indent, padding int) string {
-			buf := bytes.NewBuffer(nil)
-			formatTwoColumns(buf, indent, padding, width, rows)
-			return buf.String()
-		},
-		"FormatAppUsage":     formatAppUsage,
-		"FormatCommandUsage": formatCmdUsage,
-		"IsCumulative": func(value Value) bool {
-			r, ok := value.(remainderArg)
-			return ok && r.IsCumulative()
-		},
-		"Char": func(c rune) string {
-			return string(c)
-		},
-	}
-	for k, v := range a.usageFuncs {
-		funcs[k] = v
+// UsageForContextWithUsageRenderer renders usage without using text/template.
+// This is the fallback path when no UsageRenderer is set and the template doesn't match
+// a built-in renderer. Callers who want to avoid pulling in text/template should
+// use UsageRenderer or one of the built-in renderer constants.
+func (a *Application) UsageForContextWithUsageRenderer(context *ParseContext, indent int) error {
+	return a.usageForContextWithUsageRenderer(context, indent, a.usageRenderer)
+}
+
+func (a *Application) usageForContextWithUsageRenderer(context *ParseContext, indent int, fn UsageRenderer) error {
+	if fn == nil {
+		return errors.New("no usage renderer provided")
 	}
 
-	t, err := template.New("usage").Funcs(funcs).Parse(tmpl)
-	if err != nil {
-		return err
-	}
+	width := guessWidth(a.usageWriter)
 	var selectedCommand *CmdModel
 	if context.SelectedCommand != nil {
 		selectedCommand = context.SelectedCommand.Model()
 	}
-	ctx := templateContext{
-		App:   a.Model(),
-		Width: width,
-		Context: &templateParseContext{
+
+	return fn(a.usageWriter, &UsageContext{
+		App:    a.Model(),
+		Indent: indent,
+		Width:  width,
+		Context: &UsageParseContext{
 			SelectedCommand: selectedCommand,
 			FlagGroupModel:  context.flags.Model(),
 			ArgGroupModel:   context.arguments.Model(),
 		},
-	}
-	return t.Execute(a.usageWriter, ctx)
+	})
+}
+
+// UsageForContextWithTemplate renders usage using text/template for custom template strings.
+// This is the fallback path when no UsageRenderer is set. Callers who want to avoid pulling in text/template
+// should specify a UsageRenderer and call UsageForContextWithUsageRenderer instead.
+//
+// Note: calling this method directly will cause text/template to be linked into the binary.
+// For dead code elimination, prefer UsageRenderer with a UsageRenderer.
+func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent int, tmpl string) error {
+
+	return templateRenderFunc(a, context, indent, tmpl)
 }
