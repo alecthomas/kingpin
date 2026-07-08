@@ -196,7 +196,7 @@ $ go get gopkg.in/alecthomas/kingpin.v1
 
 - *2014-06-27* -- Stable v1.1.0 release.
     - Bug fixes.
-    - Always return an error (rather than panicing) when misconfigured.
+    - Always return an error (rather than panicking) when misconfigured.
     - `OpenFile(flag, perm)` value type added, for finer control over opening files.
     - Significantly improved usage formatting.
 

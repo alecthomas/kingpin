@@ -31,7 +31,7 @@ type Application struct {
 	version          string
 	errorWriter      io.Writer // Destination for errors.
 	usageWriter      io.Writer // Destination for usage
-	hiddenHelpWriter io.Writer // Desitination for hidden help commands.
+	hiddenHelpWriter io.Writer // Destination for hidden help commands.
 	usageTemplate    string
 	usageFuncs       map[string]interface{}
 	templateRenderer func(a *Application, context *ParseContext, indent int, tmpl string) error
@@ -703,7 +703,7 @@ func (a *Application) completionOptions(context *ParseContext) []string {
 
 		if strings.HasPrefix(prevArg, "--") && !strings.HasPrefix(currArg, "--") {
 			// Matches: 	./myApp --flag value
-			// Wont Match: 	./myApp --flag --
+			// Won't Match: 	./myApp --flag --
 			flagName = prevArg[2:] // Strip the "--"
 			flagValue = currArg
 		} else if strings.HasPrefix(currArg, "--") {
