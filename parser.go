@@ -173,12 +173,12 @@ func (p *ParseContext) Next() *Token {
 	arg := p.args[0]
 	p.next()
 
-	if p.argsOnly {
-		return &Token{p.argi, TokenArg, arg}
-	}
-
 	if arg == "--" {
 		return p.Next()
+	}
+
+	if p.argsOnly {
+		return &Token{p.argi, TokenArg, arg}
 	}
 
 	if strings.HasPrefix(arg, "--") {
