@@ -120,3 +120,11 @@ func TestParseContextPush(t *testing.T) {
 	b = c.Next()
 	assert.Equal(t, "bar", b.Value)
 }
+
+func TestBareDashIsPositionalArg(t *testing.T) {
+	app := New("test", "")
+	arg := app.Arg("input", "filename or - for stdin").String()
+	_, err := app.Parse([]string{"-"})
+	assert.NoError(t, err)
+	assert.Equal(t, "-", *arg)
+}
