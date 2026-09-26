@@ -93,7 +93,7 @@ func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (choices []
 
 	for _, flag := range c.flagGroup.flagOrder {
 		// Loop through each flag and determine if a match exists
-		if flag.name == flagName {
+		if flag.name == flagName || (strings.HasPrefix(flagName, "-") && string(flag.shorthand) == flagName[1:]) {
 			// User typed entire flag. Need to look for flag options.
 			options = flag.resolveCompletions()
 			if len(options) == 0 {
