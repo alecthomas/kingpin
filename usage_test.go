@@ -85,7 +85,8 @@ func TestHiddenCommand(t *testing.T) {
 			var buf bytes.Buffer
 			a := New("test", "Test").Writer(&buf).Terminate(nil)
 			a.Command("visible", "visible")
-			a.Command("hidden", "hidden").Hidden()
+			hidden := a.Command("hidden", "hidden").Hidden()
+			hidden.Command("nested", "nested visible when directly requested")
 			if tp.template != "" {
 				a.UsageTemplate(tp.template)
 			}
@@ -101,6 +102,19 @@ func TestHiddenCommand(t *testing.T) {
 			assert.Contains(t, usage, "visible")
 		})
 	}
+}
+
+func TestHiddenCommandDirectHelpShowsVisibleChild(t *testing.T) {
+	var buf bytes.Buffer
+	a := New("test", "Test").Writer(&buf).Terminate(nil)
+	hidden := a.Command("hidden", "Hidden command").Hidden()
+	hidden.Command("visible-child", "Visible child")
+	hidden.Command("hidden-child", "Hidden child").Hidden()
+
+	_, err := a.Parse([]string{"help", "hidden"})
+	require.NoError(t, err)
+	assert.Contains(t, buf.String(), "hidden visible-child")
+	assert.NotContains(t, buf.String(), "hidden hidden-child")
 }
 
 func TestUsageFuncs(t *testing.T) {
