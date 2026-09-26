@@ -154,6 +154,9 @@ type CmdGroupModel struct {
 
 func (c *CmdGroupModel) FlattenedCommands() (out []*CmdModel) {
 	for _, cmd := range c.Commands {
+		if cmd.Hidden {
+			continue
+		}
 		if len(cmd.Commands) == 0 {
 			out = append(out, cmd)
 		}
