@@ -690,7 +690,8 @@ func (a *Application) completionOptions(context *ParseContext) []string {
 		target = context.SelectedCommand.cmdMixin
 	}
 
-	if (currArg != "" && strings.HasPrefix(currArg, "--")) || strings.HasPrefix(prevArg, "--") {
+	if (currArg != "" && strings.HasPrefix(currArg, "--")) || strings.HasPrefix(prevArg, "--") ||
+		(len(currArg) > 1 && strings.HasPrefix(currArg, "-")) || (len(prevArg) > 1 && strings.HasPrefix(prevArg, "-")) {
 		if context.argsOnly {
 			return nil
 		}
@@ -701,16 +702,22 @@ func (a *Application) completionOptions(context *ParseContext) []string {
 			flagValue string // The value assigned to a flag (if given) (could be half complete)
 		)
 
-		if strings.HasPrefix(prevArg, "--") && !strings.HasPrefix(currArg, "--") {
+		if len(prevArg) > 1 && strings.HasPrefix(prevArg, "-") && !strings.HasPrefix(currArg, "-") {
 			// Matches: 	./myApp --flag value
 			// Won't Match: 	./myApp --flag --
-			flagName = prevArg[2:] // Strip the "--"
+			if strings.HasPrefix(prevArg, "--") {
+				flagName = prevArg[2:] // Strip the "--"
+			} else {
+				flagName = prevArg // Preserve the "-" to identify shorthand flags.
+			}
 			flagValue = currArg
 		} else if strings.HasPrefix(currArg, "--") {
 			// Matches: 	./myApp --flag --
 			// Matches:		./myApp --flag somevalue --
 			// Matches: 	./myApp --
 			flagName = currArg[2:] // Strip the "--"
+		} else if len(currArg) > 1 && strings.HasPrefix(currArg, "-") {
+			flagName = currArg
 		}
 
 		options, flagMatched, valueMatched := target.FlagCompletion(flagName, flagValue)

@@ -414,6 +414,29 @@ func TestBashCompletionOptions(t *testing.T) {
 
 }
 
+func TestBashCompletionShortFlagHints(t *testing.T) {
+	a := newTestApp()
+	a.Flag("output", "").Short('o').HintOptions("json", "yaml").String()
+	a.Command("run", "").Flag("format", "").Short('f').HintAction(func() []string {
+		return []string{"text", "html"}
+	}).String()
+
+	for _, tc := range []struct {
+		args []string
+		want []string
+	}{
+		{[]string{"--completion-bash", "-o"}, []string{"json", "yaml"}},
+		{[]string{"--completion-bash", "-o", "j"}, []string{"json", "yaml"}},
+		{[]string{"--completion-bash", "run", "-f"}, []string{"text", "html"}},
+		{[]string{"--completion-bash", "run", "-f", "t"}, []string{"text", "html"}},
+		{[]string{"--completion-bash", "run", "-o"}, []string{"json", "yaml"}},
+		{[]string{"--completion-bash", "run", "--format"}, []string{"text", "html"}},
+	} {
+		context, _ := a.ParseContext(tc.args)
+		assert.Equal(t, tc.want, a.completionOptions(context), tc.args)
+	}
+}
+
 func TestCmdValidation(t *testing.T) {
 	c := newTestApp()
 	cmd := c.Command("cmd", "")
