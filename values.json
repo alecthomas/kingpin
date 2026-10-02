@@ -6,7 +6,7 @@
   {"type": "uint16", "parser": "strconv.ParseUint(s, 0, 16)"},
   {"type": "uint32", "parser": "strconv.ParseUint(s, 0, 32)"},
   {"type": "uint64", "parser": "strconv.ParseUint(s, 0, 64)"},
-  {"type": "int", "parser": "strconv.ParseFloat(s, 64)", "plural": "Ints"},
+  {"type": "int", "parser": "parseIntValue(s)", "plural": "Ints"},
   {"type": "int8", "parser": "strconv.ParseInt(s, 0, 8)"},
   {"type": "int16", "parser": "strconv.ParseInt(s, 0, 16)"},
   {"type": "int32", "parser": "strconv.ParseInt(s, 0, 32)"},
