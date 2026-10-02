@@ -390,3 +390,52 @@ func TestIsSetByUser(t *testing.T) {
 	assert.True(t, isSet)
 	assert.False(t, isSet2)
 }
+
+func TestIntFlagExactInteger(t *testing.T) {
+	parse := func(s string) (int, error) {
+		app := newTestApp()
+		n := app.Flag("n", "").Int()
+		_, err := app.Parse([]string{"--n=" + s})
+		if err != nil {
+			return 0, err
+		}
+		return *n, nil
+	}
+
+	n, err := parse("9007199254740993")
+	assert.NoError(t, err)
+	assert.Equal(t, 9007199254740993, n)
+
+	n, err = parse("-9007199254740993")
+	assert.NoError(t, err)
+	assert.Equal(t, -9007199254740993, n)
+
+	n, err = parse("9.007199254740993e15")
+	assert.NoError(t, err)
+	assert.Equal(t, 9007199254740993, n)
+
+	n, err = parse("1e2")
+	assert.NoError(t, err)
+	assert.Equal(t, 100, n)
+
+	n, err = parse("1e16")
+	assert.NoError(t, err)
+	assert.Equal(t, 10000000000000000, n)
+
+	n, err = parse("1.5")
+	assert.NoError(t, err)
+	assert.Equal(t, 1, n)
+
+	n, err = parse("010")
+	assert.NoError(t, err)
+	assert.Equal(t, 10, n)
+
+	_, err = parse("9223372036854775808")
+	assert.Error(t, err)
+
+	_, err = parse("1e20")
+	assert.Error(t, err)
+
+	_, err = parse("0x10")
+	assert.Error(t, err)
+}

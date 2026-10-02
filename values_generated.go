@@ -320,7 +320,7 @@ func newIntValue(p *int) *intValue {
 }
 
 func (f *intValue) Set(s string) error {
-	v, err := strconv.ParseFloat(s, 64)
+	v, err := parseIntValue(s)
 	if err == nil {
 		*f.v = (int)(v)
 	}

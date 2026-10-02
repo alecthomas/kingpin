@@ -5,11 +5,14 @@ package kingpin
 import (
 	"encoding"
 	"fmt"
+	"math"
+	"math/big"
 	"net"
 	"net/url"
 	"os"
 	"reflect"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -475,6 +478,37 @@ func (c *counterValue) Get() interface{}   { return (int)(*c) }
 func (c *counterValue) IsBoolFlag() bool   { return true }
 func (c *counterValue) String() string     { return fmt.Sprintf("%d", *c) }
 func (c *counterValue) IsCumulative() bool { return true }
+
+// parseIntValue parses an int flag. The generated parser used ParseFloat,
+// which rounds an integer above 2^53. 9007199254740993 was stored as
+// 9007199254740992. A base-10 integer is parsed with ParseInt. A whole
+// number that does not fit in int is an error. A fraction still truncates
+// toward zero.
+func parseIntValue(s string) (int, error) {
+	if v, err := strconv.ParseInt(s, 10, strconv.IntSize); err == nil {
+		return int(v), nil
+	}
+	f, ferr := strconv.ParseFloat(s, 64)
+	if ferr != nil {
+		return 0, ferr
+	}
+	bf := new(big.Float).SetPrec(256)
+	if _, ok := bf.SetString(s); ok && bf.IsInt() {
+		i, acc := bf.Int(nil)
+		if acc != big.Exact || !i.IsInt64() {
+			return 0, strconv.ErrRange
+		}
+		n := i.Int64()
+		if int64(int(n)) != n {
+			return 0, strconv.ErrRange
+		}
+		return int(n), nil
+	}
+	if f >= float64(math.MaxInt) || f < float64(math.MinInt) {
+		return 0, strconv.ErrRange
+	}
+	return int(f), nil
+}
 
 func resolveHost(value string) (net.IP, error) {
 	if ip := net.ParseIP(value); ip != nil {
