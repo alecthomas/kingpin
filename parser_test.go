@@ -8,6 +8,83 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestParserArgsOnly(t *testing.T) {
+
+	for _, tt := range []struct {
+		name     string
+		when     func(app *Application)
+		parse    []string
+		wantArgs []string
+		wantFlag string
+	}{
+		{
+			name:     "flag before terminator",
+			parse:    []string{"--flag=flag", "a1", "--", "a2"},
+			wantArgs: []string{"a1", "a2"},
+			wantFlag: "flag",
+		},
+		{
+			name:     "flag after terminator",
+			parse:    []string{"--", "--flag=flag", "a1", "a2"},
+			wantArgs: []string{"--flag=flag", "a1", "a2"},
+			wantFlag: "",
+		},
+		{
+			name:     "multiple terminators",
+			parse:    []string{"a0", "--", "--flag=flag", "--", "a1", "a2"},
+			wantArgs: []string{"a0", "--flag=flag", "a1", "a2"},
+			wantFlag: "",
+		},
+		{
+			name:     "not interspersed: flag before terminator",
+			when:     func(app *Application) { app.Interspersed(false) },
+			parse:    []string{"--flag=flag", "a1", "--", "a2"},
+			wantArgs: []string{"a1", "a2"},
+			wantFlag: "flag",
+		},
+		{
+			name:     "not interspersed: flag after terminator",
+			when:     func(app *Application) { app.Interspersed(false) },
+			parse:    []string{"--", "--flag=flag", "a1", "a2"},
+			wantArgs: []string{"--flag=flag", "a1", "a2"},
+			wantFlag: "",
+		},
+		{
+			name:     "not interspersed: multiple terminators",
+			when:     func(app *Application) { app.Interspersed(false) },
+			parse:    []string{"a0", "--", "--flag=flag", "--", "a1", "a2"},
+			wantArgs: []string{"a0", "--flag=flag", "a1", "a2"},
+			wantFlag: "",
+		},
+		{
+			name:     "not interspersed: flag before multiple terminators",
+			when:     func(app *Application) { app.Interspersed(false) },
+			parse:    []string{"--flag=flag", "a0", "--", "a1", "--", "a2"},
+			wantArgs: []string{"a0", "a1", "a2"},
+			wantFlag: "flag",
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var (
+				app  = New("test", "")
+				args []string
+				flag string
+			)
+			app.Arg("arg", "").StringsVar(&args)
+			app.Flag("flag", "").StringVar(&flag)
+
+			if tt.when != nil {
+				tt.when(app)
+			}
+
+			_, err := app.Parse(tt.parse)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantArgs, args)
+			assert.Equal(t, tt.wantFlag, flag)
+		})
+	}
+}
+
 func TestParserExpandFromFile(t *testing.T) {
 	f, err := ioutil.TempFile("", "")
 	assert.NoError(t, err)
