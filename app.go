@@ -267,7 +267,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 			return "", parseErr
 		}
 
-		a.maybeHelp(context)
+		helpShown := a.maybeHelp(context)
 		if !context.EOL() {
 			return "", fmt.Errorf("unexpected argument '%s'", context.Peek())
 		}
@@ -277,7 +277,7 @@ func (a *Application) Parse(args []string) (command string, err error) {
 		}
 
 		command, err = a.execute(context, selected)
-		if err == ErrCommandNotSpecified {
+		if err == ErrCommandNotSpecified && !helpShown {
 			a.writeUsage(context, nil)
 		}
 	}
@@ -298,14 +298,16 @@ func (a *Application) writeUsage(context *ParseContext, err error) {
 	}
 }
 
-func (a *Application) maybeHelp(context *ParseContext) {
+func (a *Application) maybeHelp(context *ParseContext) bool {
 	for _, element := range context.Elements {
 		if flag, ok := element.Clause.(*FlagClause); ok && flag == a.HelpFlag {
 			// Re-parse the command-line ignoring defaults, so that help works correctly.
 			context, _ = a.parseContext(true, context.rawArgs)
 			a.writeUsage(context, nil)
+			return true
 		}
 	}
+	return false
 }
 
 // Version adds a --version flag for displaying the application version.
