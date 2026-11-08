@@ -103,6 +103,27 @@ func TestHiddenCommand(t *testing.T) {
 	}
 }
 
+func TestHelpWithReturningTerminate(t *testing.T) {
+	for _, args := range [][]string{nil, {"--help"}, {"--help", "subcommand"}} {
+		t.Run(fmt.Sprint(args), func(t *testing.T) {
+			var output bytes.Buffer
+			var statuses []int
+			app := New("test", "Test application.").Writer(&output).Terminate(func(status int) {
+				statuses = append(statuses, status)
+			})
+			app.Command("subcommand", "A subcommand.")
+			_, err := app.Parse(args)
+			if len(args) < 2 {
+				require.ErrorIs(t, err, ErrCommandNotSpecified)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, []int{0}, statuses)
+			assert.Equal(t, 1, strings.Count(output.String(), "usage:"))
+		})
+	}
+}
+
 func TestUsageFuncs(t *testing.T) {
 	var buf bytes.Buffer
 	a := New("test", "Test").Writer(&buf).Terminate(nil)
