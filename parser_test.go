@@ -3,10 +3,80 @@ package kingpin
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestTerminatorAfterArgumentExpansion(t *testing.T) {
+	tests := []struct {
+		name         string
+		args         []string
+		fileContents string
+		wantCount    int
+		wantArgs     []string
+	}{
+		{
+			name:      "single short flag",
+			args:      []string{"-v", "--", "--name=value", "--"},
+			wantCount: 1,
+			wantArgs:  []string{"--name=value", "--"},
+		},
+		{
+			name:      "combined short flags",
+			args:      []string{"-vvv", "--", "--name=value", "--"},
+			wantCount: 3,
+			wantArgs:  []string{"--name=value", "--"},
+		},
+		{
+			name:      "interspersed combined short flags",
+			args:      []string{"before", "-vvv", "--", "--name=value"},
+			wantCount: 3,
+			wantArgs:  []string{"before", "--name=value"},
+		},
+		{
+			name:         "terminator inside arguments file",
+			args:         []string{"@args", "--name=tail"},
+			fileContents: "-v\n--\n--name=value\n--\n",
+			wantCount:    1,
+			wantArgs:     []string{"--name=value", "--", "--name=tail"},
+		},
+		{
+			name:         "arguments file before terminator",
+			args:         []string{"@args", "--", "--name=value"},
+			fileContents: "-vvv\n",
+			wantCount:    3,
+			wantArgs:     []string{"--name=value"},
+		},
+		{
+			name:     "file expansion disabled after terminator",
+			args:     []string{"--", "@does-not-exist"},
+			wantArgs: []string{"@does-not-exist"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.fileContents != "" {
+				path := filepath.Join(t.TempDir(), "args")
+				if err := ioutil.WriteFile(path, []byte(tt.fileContents), 0600); err != nil {
+					t.Fatal(err)
+				}
+				tt.args[0] = "@" + path
+			}
+			app := newTestApp()
+			count := app.Flag("verbose", "").Short('v').Counter()
+			name := app.Flag("name", "").String()
+			args := app.Arg("args", "").Strings()
+
+			_, err := app.Parse(tt.args)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.wantCount, *count)
+			assert.Equal(t, tt.wantArgs, *args)
+			assert.Empty(t, *name)
+		})
+	}
+}
 
 func TestParserExpandFromFile(t *testing.T) {
 	f, err := ioutil.TempFile("", "")

@@ -166,10 +166,6 @@ func (p *ParseContext) Next() *Token {
 		return &Token{Index: p.argi, Type: TokenEOL}
 	}
 
-	if p.argi > 0 && p.argi <= len(p.rawArgs) && p.rawArgs[p.argi-1] == "--" {
-		// If the previous argument was a --, from now on only arguments are parsed.
-		p.argsOnly = true
-	}
 	arg := p.args[0]
 	p.next()
 
@@ -178,6 +174,9 @@ func (p *ParseContext) Next() *Token {
 	}
 
 	if arg == "--" {
+		// A trailing -- can still be an incomplete flag during shell completion.
+		// Otherwise, switch modes based on the remaining expanded arguments.
+		p.argsOnly = len(p.args) > 0
 		return p.Next()
 	}
 
