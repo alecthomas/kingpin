@@ -445,3 +445,36 @@ func TestVersion(t *testing.T) {
 	_, err := c.Parse([]string{"--version"})
 	assert.NoError(t, err)
 }
+
+func TestCustomVersionFlagPreservesDefaults(t *testing.T) {
+	t.Setenv("KINGPIN_TEST_CONFIG", "from-env.yaml")
+	for _, subcommand := range []bool{false, true} {
+		name := "root"
+		if subcommand {
+			name = "subcommand"
+		}
+		t.Run(name, func(t *testing.T) {
+			c := newTestApp()
+			directory := c.Flag("directory", "Installation directory.").Default("default-dir").String()
+			config := c.Flag("config", "Configuration file.").Envar("KINGPIN_TEST_CONFIG").String()
+			var version, target *string
+			args := []string{"--version", "2.0.0"}
+			if subcommand {
+				command := c.Command("install", "Install a release.")
+				version = command.Flag("version", "Release to install.").String()
+				target = command.Arg("target", "Installation target.").Default("default-target").String()
+				args = append([]string{"install"}, args...)
+			} else {
+				version = c.Flag("version", "Release to install.").String()
+				target = c.Arg("target", "Installation target.").Default("default-target").String()
+			}
+
+			_, err := c.Parse(args)
+			assert.NoError(t, err)
+			assert.Equal(t, "2.0.0", *version)
+			assert.Equal(t, "default-dir", *directory)
+			assert.Equal(t, "from-env.yaml", *config)
+			assert.Equal(t, "default-target", *target)
+		})
+	}
+}

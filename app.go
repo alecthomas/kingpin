@@ -463,7 +463,7 @@ func (a *Application) setDefaults(context *ParseContext) error {
 				return nil
 			}
 
-			if flag.name == "version" {
+			if flag == a.VersionFlag {
 				return nil
 			}
 			flagElements[flag.name] = element
