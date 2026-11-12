@@ -40,7 +40,7 @@ func (p *parserMixin) Duration() (target *time.Duration) {
 	return
 }
 
-// Bytes parses numeric byte units. eg. 1.5KB
+// Bytes parses numeric byte units. eg. 1.5KB.
 func (p *parserMixin) Bytes() (target *units.Base2Bytes) {
 	target = new(units.Base2Bytes)
 	p.BytesVar(target)
@@ -128,7 +128,7 @@ func (p *parserMixin) DurationVar(target *time.Duration) {
 	p.SetValue(newDurationValue(target))
 }
 
-// BytesVar parses numeric byte units. eg. 1.5KB
+// BytesVar parses numeric byte units. eg. 1.5KB.
 func (p *parserMixin) BytesVar(target *units.Base2Bytes) {
 	p.SetValue(newBytesValue(target))
 }
@@ -158,7 +158,7 @@ func (p *parserMixin) FileVar(target **os.File) {
 	p.SetValue(newFileValue(target, os.O_RDONLY, 0))
 }
 
-// OpenFileVar calls os.OpenFile(flag, perm)
+// OpenFileVar calls os.OpenFile(flag, perm).
 func (p *parserMixin) OpenFileVar(target **os.File, flag int, perm os.FileMode) {
 	p.SetValue(newFileValue(target, flag, perm))
 }

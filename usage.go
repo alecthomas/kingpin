@@ -159,6 +159,5 @@ func (a *Application) usageForContextWithUsageRenderer(context *ParseContext, in
 // Note: calling this method directly will cause text/template to be linked into the binary.
 // For dead code elimination, prefer UsageRenderer with a UsageRenderer.
 func (a *Application) UsageForContextWithTemplate(context *ParseContext, indent int, tmpl string) error {
-
 	return templateRenderFunc(a, context, indent, tmpl)
 }

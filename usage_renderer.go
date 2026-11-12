@@ -11,9 +11,9 @@ import (
 // UsageContext contains all data needed to render usage output.
 type UsageContext struct {
 	App     *ApplicationModel
+	Context *UsageParseContext
 	Width   int
 	Indent  int
-	Context *UsageParseContext
 }
 
 // UsageParseContext contains parsed context for usage rendering.

@@ -8,17 +8,15 @@ import (
 
 // Data model for Kingpin command-line structure.
 
-var (
-	ignoreInCount = map[string]bool{
-		"help":                   true,
-		"help-long":              true,
-		"help-man":               true,
-		"completion-bash":        true,
-		"completion-script-bash": true,
-		"completion-script-zsh":  true,
-		"completion-script-fish": true,
-	}
-)
+var ignoreInCount = map[string]bool{
+	"help":                   true,
+	"help-long":              true,
+	"help-man":               true,
+	"completion-bash":        true,
+	"completion-script-bash": true,
+	"completion-script-zsh":  true,
+	"completion-script-fish": true,
+}
 
 type FlagGroupModel struct {
 	Flags []*FlagModel
@@ -29,7 +27,6 @@ func (f *FlagGroupModel) FlagSummary() string {
 	count := 0
 
 	for _, flag := range f.Flags {
-
 		if !ignoreInCount[flag.Name] {
 			count++
 		}
@@ -49,15 +46,15 @@ func (f *FlagGroupModel) FlagSummary() string {
 }
 
 type FlagModel struct {
+	Value       Value
 	Name        string
 	Help        string
-	Short       rune
-	Default     []string
 	Envar       string
 	PlaceHolder string
+	Default     []string
+	Short       rune
 	Required    bool
 	Hidden      bool
-	Value       Value
 }
 
 func (f *FlagModel) String() string {
@@ -104,7 +101,7 @@ type ArgGroupModel struct {
 
 func (a *ArgGroupModel) ArgSummary() string {
 	depth := 0
-	out := []string{}
+	out := make([]string, 0, len(a.Args))
 	for _, arg := range a.Args {
 		var h string
 		if arg.PlaceHolder != "" {
@@ -130,14 +127,14 @@ func (a *ArgModel) HelpWithEnvar() string {
 }
 
 type ArgModel struct {
+	Value       Value
 	Name        string
 	Help        string
-	Default     []string
 	Envar       string
 	PlaceHolder string
+	Default     []string
 	Required    bool
 	Hidden      bool
-	Value       Value
 }
 
 func (a *ArgModel) String() string {
@@ -163,17 +160,17 @@ func (c *CmdGroupModel) FlattenedCommands() (out []*CmdModel) {
 }
 
 type CmdModel struct {
-	Name        string
-	Aliases     []string
-	Help        string
-	HelpLong    string
-	FullCommand string
-	Depth       int
-	Hidden      bool
-	Default     bool
 	*FlagGroupModel
 	*ArgGroupModel
 	*CmdGroupModel
+	Name        string
+	Help        string
+	HelpLong    string
+	FullCommand string
+	Aliases     []string
+	Depth       int
+	Hidden      bool
+	Default     bool
 }
 
 func (c *CmdModel) String() string {
@@ -181,13 +178,13 @@ func (c *CmdModel) String() string {
 }
 
 type ApplicationModel struct {
+	*ArgGroupModel
+	*CmdGroupModel
+	*FlagGroupModel
 	Name    string
 	Help    string
 	Version string
 	Author  string
-	*ArgGroupModel
-	*CmdGroupModel
-	*FlagGroupModel
 }
 
 func (a *Application) Model() *ApplicationModel {

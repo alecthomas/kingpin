@@ -1,6 +1,7 @@
 package kingpin
 
 import (
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,6 +18,7 @@ func TestDeadCodeElimination(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("go tool nm not reliable on Windows")
 	}
+	t.Parallel()
 
 	dir := t.TempDir()
 	filename := filepath.Join(dir, "main.go")
@@ -39,10 +41,10 @@ func main() {
 	require.NoError(t, err)
 
 	binPath := filepath.Join(dir, "test_binary")
-	buf, err := exec.Command("go", "build", "-trimpath", "-o", binPath, filename).CombinedOutput()
+	buf, err := exec.CommandContext(context.Background(), "go", "build", "-trimpath", "-o", binPath, filename).CombinedOutput()
 	require.NoError(t, err, "go build failed: %s", buf)
 
-	buf, err = exec.Command("go", "tool", "nm", binPath).CombinedOutput()
+	buf, err = exec.CommandContext(context.Background(), "go", "tool", "nm", binPath).CombinedOutput()
 	require.NoError(t, err, "go tool nm failed: %s", buf)
 
 	require.NotContains(t, string(buf), "MethodByName", "text/template was not eliminated by dead code elimination")

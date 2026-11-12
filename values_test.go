@@ -2,13 +2,13 @@ package kingpin
 
 import (
 	"net"
+	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"testing"
 )
 
 func TestAccumulatorStrings(t *testing.T) {
+	t.Parallel()
 	target := []string{}
 	acc := newAccumulator(&target, func(v interface{}) Value { return newStringValue(v.(*string)) })
 	acc.Set("a")
@@ -18,6 +18,7 @@ func TestAccumulatorStrings(t *testing.T) {
 }
 
 func TestStrings(t *testing.T) {
+	t.Parallel()
 	app := New("", "")
 	app.Arg("a", "").Required().String()
 	app.Arg("b", "").Required().String()
@@ -27,6 +28,7 @@ func TestStrings(t *testing.T) {
 }
 
 func TestEnum(t *testing.T) {
+	t.Parallel()
 	app := New("", "")
 	a := app.Arg("a", "").Enum("one", "two", "three")
 	_, err := app.Parse([]string{"moo"})
@@ -37,6 +39,7 @@ func TestEnum(t *testing.T) {
 }
 
 func TestEnumVar(t *testing.T) {
+	t.Parallel()
 	app := New("", "")
 	var a string
 	app.Arg("a", "").EnumVar(&a, "one", "two", "three")
@@ -48,6 +51,7 @@ func TestEnumVar(t *testing.T) {
 }
 
 func TestCounter(t *testing.T) {
+	t.Parallel()
 	app := New("", "")
 	c := app.Flag("f", "").Counter()
 	_, err := app.Parse([]string{"--f", "--f", "--f"})
@@ -56,6 +60,7 @@ func TestCounter(t *testing.T) {
 }
 
 func TestIPv4Addr(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	flag := app.Flag("addr", "").ResolvedIP()
 	_, err := app.Parse([]string{"--addr", net.IPv4(1, 2, 3, 4).String()})
@@ -65,6 +70,7 @@ func TestIPv4Addr(t *testing.T) {
 }
 
 func TestInvalidIPv4Addr(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Flag("addr", "").ResolvedIP()
 	_, err := app.Parse([]string{"--addr", "1.2.3.256"})
@@ -72,6 +78,7 @@ func TestInvalidIPv4Addr(t *testing.T) {
 }
 
 func TestIPv6Addr(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	flag := app.Flag("addr", "").ResolvedIP()
 	_, err := app.Parse([]string{"--addr", net.IPv6interfacelocalallnodes.String()})
@@ -81,6 +88,7 @@ func TestIPv6Addr(t *testing.T) {
 }
 
 func TestHexBytes(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	actual := app.Arg("bytes", "").HexBytes()
 	_, err := app.Parse([]string{"01020aff"})
@@ -89,6 +97,7 @@ func TestHexBytes(t *testing.T) {
 }
 
 func TestSetValueDoesNotReset(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	mapping := map[string]string{
 		"key": "value",

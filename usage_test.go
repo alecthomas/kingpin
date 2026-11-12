@@ -13,6 +13,7 @@ import (
 )
 
 func TestFormatTwoColumns(t *testing.T) {
+	t.Parallel()
 	buf := bytes.NewBuffer(nil)
 	FormatTwoColumns(buf, 2, 2, 20, [][2]string{
 		{"--hello", "Hello world help with something that is cool."},
@@ -28,9 +29,11 @@ func TestFormatTwoColumns(t *testing.T) {
 }
 
 func TestFormatTwoColumnsWide(t *testing.T) {
+	t.Parallel()
 	samples := [][2]string{
 		{strings.Repeat("x", 29), "29 chars"},
-		{strings.Repeat("x", 30), "30 chars"}}
+		{strings.Repeat("x", 30), "30 chars"},
+	}
 	buf := bytes.NewBuffer(nil)
 	FormatTwoColumns(buf, 0, 0, 200, samples)
 	expected := `xxxxxxxxxxxxxxxxxxxxxxxxxxxxx29 chars
@@ -41,10 +44,11 @@ xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 }
 
 func TestHiddenCommand(t *testing.T) {
+	t.Parallel()
 	templates := []struct {
+		renderer UsageRenderer
 		name     string
 		template string
-		renderer UsageRenderer
 	}{
 		{
 			name:     "default template",
@@ -81,7 +85,9 @@ func TestHiddenCommand(t *testing.T) {
 	}
 
 	for _, tp := range templates {
+		tp := tp
 		t.Run(tp.name, func(t *testing.T) {
+			t.Parallel()
 			var buf bytes.Buffer
 			a := New("test", "Test").Writer(&buf).Terminate(nil)
 			a.Command("visible", "visible")
@@ -104,6 +110,7 @@ func TestHiddenCommand(t *testing.T) {
 }
 
 func TestUsageFuncs(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	a := New("test", "Test").Writer(&buf).Terminate(nil)
 	tpl := `{{ add 2 1 }}`
@@ -129,6 +136,7 @@ func TestUsageFuncs(t *testing.T) {
 }
 
 func TestUsageFuncsApplyToHiddenFlagPaths(t *testing.T) {
+	t.Parallel()
 	for _, tp := range []struct {
 		name string
 		flag string
@@ -142,7 +150,9 @@ func TestUsageFuncsApplyToHiddenFlagPaths(t *testing.T) {
 			flag: "--help-man",
 		},
 	} {
+		tp := tp
 		t.Run(tp.name, func(t *testing.T) {
+			t.Parallel()
 			var buf bytes.Buffer
 			a := New("test", "Test help").HiddenHelpWriter(&buf).Terminate(nil)
 			a.Flag("verbose", "Verbose output.").Short('v').Bool()
@@ -160,6 +170,7 @@ func TestUsageFuncsApplyToHiddenFlagPaths(t *testing.T) {
 }
 
 func TestUsageRenderer(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	a := New("test", "Test").Writer(&buf).Terminate(nil)
 	a.UsageRenderer(func(w io.Writer, ctx *UsageContext) error {
@@ -174,6 +185,7 @@ func TestUsageRenderer(t *testing.T) {
 }
 
 func TestCmdClause_HelpLong(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	tpl := `{{define "FormatUsage"}}{{.HelpLong}}{{end -}}
 {{template "FormatUsage" .Context.SelectedCommand}}`
@@ -189,6 +201,7 @@ func TestCmdClause_HelpLong(t *testing.T) {
 }
 
 func TestArgEnvVar(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 
 	a := New("test", "Test").Writer(&buf).Terminate(nil)
@@ -203,6 +216,7 @@ func TestArgEnvVar(t *testing.T) {
 }
 
 func TestRendererPrioritizedWhenUsageFuncsSet(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	a := New("test", "Test").UsageWriter(&buf).Terminate(nil)
 	a.UsageFuncs(map[string]interface{}{
@@ -217,14 +231,16 @@ func TestRendererPrioritizedWhenUsageFuncsSet(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "FROM_RENDERER", buf.String())
-
 }
 
 func TestUsageRendererDoesNotOverrideHiddenFlags(t *testing.T) {
+	t.Parallel()
 	flags := []string{"--help-long", "--help-man", "--completion-script-bash", "--completion-script-zsh", "--completion-script-fish"}
 
 	for _, flag := range flags {
+		flag := flag
 		t.Run(flag, func(t *testing.T) {
+			t.Parallel()
 			var buf bytes.Buffer
 			a := New("test", "Test help").HiddenHelpWriter(&buf).Terminate(nil)
 			a.UsageRenderer(func(w io.Writer, ctx *UsageContext) error {
@@ -242,6 +258,7 @@ func TestUsageRendererDoesNotOverrideHiddenFlags(t *testing.T) {
 }
 
 func TestUsageTemplatePreferredOverUsageRenderer(t *testing.T) {
+	t.Parallel()
 	var buf bytes.Buffer
 	a := New("test", "Test").UsageWriter(&buf).Terminate(nil)
 	a.UsageTemplate("TEMPLATE:{{ .App.Name }}")
@@ -257,6 +274,7 @@ func TestUsageTemplatePreferredOverUsageRenderer(t *testing.T) {
 }
 
 func TestRenderersMatchTemplates(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		name     string
 		renderer UsageRenderer
@@ -319,8 +337,11 @@ func TestRenderersMatchTemplates(t *testing.T) {
 	}
 
 	for _, test := range tests {
+		test := test
 		for _, context := range contexts {
+			context := context
 			t.Run(test.name+"/"+context.name, func(t *testing.T) {
+				t.Parallel()
 				var templateBuf, rendererBuf bytes.Buffer
 				makeApp := func(w *bytes.Buffer) *Application {
 					a := New("test", "A test application.").UsageWriter(w).Terminate(nil).Version("1.0").Author("Test Author")

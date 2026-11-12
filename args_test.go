@@ -1,14 +1,14 @@
 package kingpin
 
 import (
-	"io/ioutil"
-	"os"
+	"io"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestArgRemainder(t *testing.T) {
+	t.Parallel()
 	app := New("test", "")
 	v := app.Arg("test", "").Strings()
 	args := []string{"hello", "world"}
@@ -18,6 +18,7 @@ func TestArgRemainder(t *testing.T) {
 }
 
 func TestArgRemainderErrorsWhenNotLast(t *testing.T) {
+	t.Parallel()
 	a := newArgGroup()
 	a.Arg("test", "").Strings()
 	a.Arg("test2", "").String()
@@ -25,9 +26,10 @@ func TestArgRemainderErrorsWhenNotLast(t *testing.T) {
 }
 
 func TestArgMultipleRequired(t *testing.T) {
+	t.Parallel()
 	terminated := false
 	app := New("test", "")
-	app.Version("0.0.0").Writer(ioutil.Discard)
+	app.Version("0.0.0").Writer(io.Discard)
 	app.Arg("a", "").Required().String()
 	app.Arg("b", "").Required().String()
 	app.Terminate(func(int) { terminated = true })
@@ -43,6 +45,7 @@ func TestArgMultipleRequired(t *testing.T) {
 }
 
 func TestInvalidArgsDefaultCanBeOverridden(t *testing.T) {
+	t.Parallel()
 	app := New("test", "")
 	app.Arg("a", "").Default("invalid").Bool()
 	_, err := app.Parse([]string{})
@@ -50,6 +53,7 @@ func TestInvalidArgsDefaultCanBeOverridden(t *testing.T) {
 }
 
 func TestArgMultipleValuesDefault(t *testing.T) {
+	t.Parallel()
 	app := New("test", "")
 	a := app.Arg("a", "").Default("default1", "default2").Strings()
 	_, err := app.Parse([]string{})
@@ -58,6 +62,7 @@ func TestArgMultipleValuesDefault(t *testing.T) {
 }
 
 func TestRequiredArgWithEnvarMissingErrors(t *testing.T) {
+	t.Parallel()
 	app := newTestApp()
 	app.Arg("t", "").Envar("TEST_ARG_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
@@ -65,7 +70,7 @@ func TestRequiredArgWithEnvarMissingErrors(t *testing.T) {
 }
 
 func TestArgRequiredWithEnvar(t *testing.T) {
-	os.Setenv("TEST_ARG_ENVAR", "123")
+	t.Setenv("TEST_ARG_ENVAR", "123")
 	app := newTestApp()
 	flag := app.Arg("t", "").Envar("TEST_ARG_ENVAR").Required().Int()
 	_, err := app.Parse([]string{})
@@ -74,7 +79,7 @@ func TestArgRequiredWithEnvar(t *testing.T) {
 }
 
 func TestSubcommandArgRequiredWithEnvar(t *testing.T) {
-	os.Setenv("TEST_ARG_ENVAR", "123")
+	t.Setenv("TEST_ARG_ENVAR", "123")
 	app := newTestApp()
 	cmd := app.Command("command", "")
 	flag := cmd.Arg("t", "").Envar("TEST_ARG_ENVAR").Required().Int()

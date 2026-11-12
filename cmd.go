@@ -69,12 +69,12 @@ ElementLoop:
 		}
 	}
 
-	if argsSatisfied < len(c.argGroup.args) && !allSatisfied {
+	if argsSatisfied < len(c.args) && !allSatisfied {
 		// Since not all args have been satisfied, show options for the current one
 		options = append(options, c.argGroup.args[argsSatisfied].resolveCompletions()...)
 	} else {
 		// If all args are satisfied, then go back to completing commands
-		for _, cmd := range c.cmdGroup.commandOrder {
+		for _, cmd := range c.commandOrder {
 			if !cmd.hidden {
 				options = append(options, cmd.name)
 			}
@@ -91,7 +91,7 @@ func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (choices []
 
 	options := []string{}
 
-	for _, flag := range c.flagGroup.flagOrder {
+	for _, flag := range c.flagOrder {
 		// Loop through each flag and determine if a match exists
 		if flag.name == flagName {
 			// User typed entire flag. Need to look for flag options.
@@ -124,7 +124,6 @@ func (c *cmdMixin) FlagCompletion(flagName string, flagValue string) (choices []
 	}
 	// No Flag directly matched.
 	return options, false, false
-
 }
 
 type cmdGroup struct {
@@ -164,16 +163,6 @@ func newCmdGroup(app *Application) *cmdGroup {
 		app:      app,
 		commands: make(map[string]*CmdClause),
 	}
-}
-
-func (c *cmdGroup) flattenedCommands() (out []*CmdClause) {
-	for _, cmd := range c.commandOrder {
-		if len(cmd.commands) == 0 {
-			out = append(out, cmd)
-		}
-		out = append(out, cmd.flattenedCommands()...)
-	}
-	return
 }
 
 func (c *cmdGroup) addCommand(name, help string) *CmdClause {
@@ -222,16 +211,16 @@ type CmdClauseValidator func(*CmdClause) error
 // A CmdClause is a single top-level command. It encapsulates a set of flags
 // and either subcommands or positional arguments.
 type CmdClause struct {
+	app       *Application
+	validator CmdClauseValidator
+	name      string
+	help      string
+	helpLong  string
 	cmdMixin
-	app            *Application
-	name           string
 	aliases        []string
-	help           string
-	helpLong       string
-	isDefault      bool
-	validator      CmdClauseValidator
-	hidden         bool
 	completionAlts []string
+	isDefault      bool
+	hidden         bool
 }
 
 func newCommand(app *Application, name, help string) *CmdClause {
